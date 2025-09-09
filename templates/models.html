@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps Vision Platform - 성능 지표 (수정본)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #475569;
+            --secondary-color: #64748b;
+            --accent-color: #0f172a;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --info-color: #2563eb;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --sidebar-width-collapsed: 60px;
+            --sidebar-width: 260px;
+            --header-height: 80px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width-collapsed);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 1000;
+            transition: width 0.3s ease;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar:hover {
+            width: var(--sidebar-width);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.1);
+            position: relative;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f8fafc;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.3s;
+            white-space: nowrap;
+            position: absolute;
+            left: 1.5rem;
+        }
+
+        .sidebar:hover .sidebar-header h2 {
+            opacity: 1;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .nav-menu li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(248, 250, 252, 0.8);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+            white-space: nowrap;
+            height: 50px;
+            position: relative;
+        }
+
+        .sidebar:not(:hover) .nav-link {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar:hover .nav-link {
+            justify-content: flex-start;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(248, 250, 252, 0.1);
+            color: #f8fafc;
+            border-left-color: rgba(248, 250, 252, 0.4);
+        }
+
+        .nav-link.active {
+            background-color: rgba(248, 250, 252, 0.15);
+            color: #f8fafc;
+            border-left-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            width: 1.25rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .nav-text {
+            display: none;
+        }
+
+        .sidebar:hover .nav-text {
+            display: inline;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width-collapsed);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-header {
+            background: var(--bg-secondary);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .content-header h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        /* 툴팁 시스템 */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10000;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .refresh-tooltip {
+            position: absolute;
+            right: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        .refresh-tooltip::after {
+            content: '';
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-left-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .tooltip-container:hover .refresh-tooltip {
+            opacity: 1;
+            visibility: visible;
+            right: calc(100% + 15px);
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .tooltip-container:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .upload-tooltip {
+            right: 0;
+            left: auto;
+            transform: none;
+            white-space: normal;
+            width: 200px;
+        }
+
+        .upload-tooltip::after {
+            left: 90%;
+        }
+
+        /* 성능 차트 섹션 */
+        .performance-charts {
+            padding: 2rem;
+        }
+
+        .chart-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 0.25rem;
+        }
+
+        .chart-tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-tab.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chart-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        /* 개별 성능 지표 패널 */
+        .individual-performance {
+            padding: 2rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .performance-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .selected-model-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .model-backbone {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .metric-value-large {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label-large {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            font-weight: 500;
+            position: relative;
+            cursor: help;
+        }
+
+        .metric-tooltip {
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: normal;
+            width: auto;
+            min-width: 250px;
+            max-width: 350px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: normal;
+            text-align: left;
+        }
+
+        .metric-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.95);
+        }
+
+        .metric-label-large:hover .metric-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 모델 비교 차트 */
+        .comparison-chart-wrapper {
+            grid-column: 1 / -1;
+        }
+
+        .comparison-chart-wrapper .chart-wrapper {
+            height: 500px;
+        }
+
+        /* 통합 모델 목록 테이블 */
+        .models-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+        }
+
+        .models-table th,
+        .models-table td {
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .models-table th {
+            background-color: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .models-table tbody tr {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .models-table tbody tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .models-table tbody tr.selected {
+            background-color: rgba(71, 85, 105, 0.1);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .models-table tbody tr.individual-selected {
+            background-color: rgba(5, 150, 105, 0.1);
+            border-left: 3px solid var(--success-color);
+        }
+
+        .model-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-color);
+        }
+
+        .model-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .model-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .performance-value {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .training-info {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        /* 모달 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .export-options {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .export-option:hover {
+            border-color: var(--primary-color);
+            background-color: var(--bg-tertiary);
+        }
+
+        .export-option.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(71, 85, 105, 0.1);
+        }
+
+        /* 프로그레스 바 */
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary-color), var(--success-color));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            margin-top: 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* 새로운 레이아웃 구조 */
+        .unified-content {
+            display: block;
+        }
+
+        .model-list-section {
+            margin-bottom: 2rem;
+        }
+
+        .performance-section {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .performance-section.show {
+            display: block;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 1200px) {
+            .chart-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .individual-performance {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .content-header {
+                padding: 1rem;
+            }
+            
+            .performance-charts {
+                padding: 1rem;
+            }
+
+            .chart-container {
+                padding: 1rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 네비게이션 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>MLOps Vision</h2>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
+                </a></li>
+                <li><a href="/ui/projects" class="nav-link">
+                    <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트 관리</span>
+                </a></li>
+                <li><a href="/ui/training" class="nav-link">
+                    <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
+                </a></li>
+                <li><a href="/ui/models" class="nav-link active">
+                    <i class="fas fa-chart-bar"></i> <span class="nav-text">성능 지표</span>
+                </a></li>
+                <li><a href="/ui/monitoring" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main class="main-content">
+            <!-- 헤더 -->
+            <header class="content-header">
+                <h1>성능 지표</h1>
+                <div class="header-actions">
+                    <button class="btn btn-warning" onclick="exportScreenData()">
+                        <i class="fas fa-cube"></i> 데이터 내보내기
+                    </button>
+                    <button class="btn btn-success" onclick="openUploadModal()">
+                        <i class="fas fa-upload"></i> 모델 업로드
+                    </button>
+                    <button class="btn btn-primary" onclick="exportSelectedModels()">
+                        <i class="fas fa-download"></i> 모델 내보내기
+                    </button>
+                    <div class="tooltip-container">
+                        <button class="btn btn-primary" onclick="refreshModels()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <div class="refresh-tooltip">
+                            Refresh
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 성능 차트 섹션 -->
+            <section class="performance-charts" id="captureArea">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="section-title" id="sectionTitle">
+                            <i class="fas fa-chart-radar"></i>
+                            <span id="sectionTitleText">개별 성능 분석</span>
+                            <div class="tooltip-container">
+                                <i class="fas fa-info-circle" style="color: var(--text-muted); cursor: help; margin-left: 0.5rem;"></i>
+                                <div class="tooltip" id="sectionTooltip">
+                                    선택한 모델의 4가지 성능 지표를<br>
+                                    레이더 차트로 시각화합니다
+                                </div>
+                            </div>
+                        </h3>
+                        <div class="chart-tabs">
+                            <button class="chart-tab active" onclick="switchChart('individual')">
+                                <i class="fas fa-user"></i> 개별 성능 분석
+                            </button>
+                            <button class="chart-tab" onclick="switchChart('comparison')">
+                                <i class="fas fa-users"></i> 모델 성능 비교
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 통합 컨텐츠 -->
+                    <div class="unified-content">
+                        <!-- 모델 목록 -->
+                        <div class="model-list-section">
+                            <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-list"></i>
+                                학습된 모델 목록
+                                <div class="tooltip-container">
+                                    <i class="fas fa-info-circle" style="color: var(--text-muted); cursor: help; margin-left: 0.5rem;"></i>
+                                    <div class="tooltip">
+                                        클릭하여 개별 분석하거나 체크박스로<br>
+                                        최대 5개 모델까지 선택하여 비교 분석 가능
+                                    </div>
+                                </div>
+                                <span style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary);" id="selectedCountText">0개 선택됨</span>
+                            </h4>
+                            
+                            <div style="overflow-x: auto;">
+                                <table class="models-table">
+                                    <thead>
+                                        <tr>
+                                            <th width="40">선택</th>
+                                            <th>모델명</th>
+                                            <th>백본</th>
+                                            <th>정확도</th>
+                                            <th>F1 Score</th>
+                                            <th>Precision</th>
+                                            <th>Recall</th>
+                                            <th>학습시간</th>
+                                            <th>에폭</th>
+                                            <th>이미지 수</th>
+                                            <th>생성일</th>
+                                            <th>작업</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modelsTableBody">
+                                        <!-- 모델 데이터가 여기에 동적으로 추가됩니다 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 개별 성능 분석 섹션 -->
+                        <div class="performance-section" id="individualPerformance">
+                            <div class="chart-content">
+                                <div class="chart-wrapper">
+                                    <canvas id="radarChart"></canvas>
+                                </div>
+                                <div class="individual-performance">
+                                    <div class="performance-header">
+                                        <div class="selected-model-name" id="selectedModelName">모델을 선택하세요</div>
+                                        <div class="model-backbone" id="selectedModelBackbone"></div>
+                                    </div>
+                                    <div class="metrics-grid">
+                                        <div class="metric-card">
+                                            <div class="metric-value-large" id="individualAccuracy">-</div>
+                                            <div class="metric-label-large">
+                                                정확도
+                                                <div class="metric-tooltip">
+                                                    전체 예측 중에서 올바르게 맞춘 비율입니다.<br>
+                                                    정확도 = (올바른 예측 수) / (전체 예측 수)<br>
+                                                    높을수록 모델이 정확합니다.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-value-large" id="individualF1">-</div>
+                                            <div class="metric-label-large">
+                                                F1 Score
+                                                <div class="metric-tooltip">
+                                                    Precision과 Recall의 조화평균입니다.<br>
+                                                    F1 = 2 × (Precision × Recall) / (Precision + Recall)<br>
+                                                    불균형 데이터에서 유용한 지표입니다.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-value-large" id="individualPrecision">-</div>
+                                            <div class="metric-label-large">
+                                                Precision
+                                                <div class="metric-tooltip">
+                                                    모델이 양성으로 예측한 것 중 실제 양성인 비율입니다.<br>
+                                                    Precision = 참양성 / (참양성 + 거짓양성)<br>
+                                                    거짓 경보를 줄이는 데 중요합니다.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-value-large" id="individualRecall">-</div>
+                                            <div class="metric-label-large">
+                                                Recall
+                                                <div class="metric-tooltip">
+                                                    실제 양성 중에서 모델이 올바르게 찾아낸 비율입니다.<br>
+                                                    Recall = 참양성 / (참양성 + 거짓음성)<br>
+                                                    놓치는 것을 줄이는 데 중요합니다.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 모델 비교 분석 섹션 -->
+                        <div class="performance-section" id="comparisonPerformance">
+                            <div class="chart-wrapper">
+                                <canvas id="comparisonBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 모델 내보내기 모달 -->
+        <div class="modal" id="exportModal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 1rem;">모델 내보내기 형식 선택</h3>
+                <div class="export-options">
+                    <div class="export-option" onclick="selectExportFormat('pkl')">
+                        <input type="radio" name="exportFormat" value="pkl">
+                        <div>
+                            <div style="font-weight: 500;">.pkl (Pickle)</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">Python 표준, PatchCore 기본 형식</div>
+                        </div>
+                    </div>
+                    <div class="export-option" onclick="selectExportFormat('pth')">
+                        <input type="radio" name="exportFormat" value="pth">
+                        <div>
+                            <div style="font-weight: 500;">.pth (PyTorch)</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">PyTorch 표준 형식</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-container" id="exportProgressContainer">
+                    <div class="progress-text" id="exportProgressText">모델을 내보내는 중...</div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar" id="exportProgressBar"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;" id="exportButtons">
+                    <button class="btn btn-outline" onclick="closeExportModal()">취소</button>
+                    <button class="btn btn-primary" onclick="confirmExport()">내보내기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 확인 모달 -->
+        <div class="modal" id="confirmModal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 1rem;" id="confirmTitle">확인</h3>
+                <div style="margin-bottom: 1.5rem; line-height: 1.6; white-space: pre-line;" id="confirmMessage"></div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button class="btn btn-outline" onclick="closeConfirmModal(false)">취소</button>
+                    <button class="btn btn-primary" onclick="closeConfirmModal(true)">확인</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 알림 모달 -->
+        <div class="modal" id="alertModal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 1rem;" id="alertTitle">알림</h3>
+                <div style="margin-bottom: 1.5rem; line-height: 1.6; white-space: pre-line;" id="alertMessage"></div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="closeAlertModal()">확인</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 데이터 내보내기 모달 -->
+        <div class="modal" id="dataExportModal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 1rem;">데이터 내보내기 형식 선택</h3>
+                <div class="export-options">
+                    <div class="export-option" onclick="selectDataExportFormat('png')">
+                        <input type="radio" name="dataExportFormat" value="png">
+                        <div>
+                            <div style="font-weight: 500;">PNG 이미지</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">고화질 이미지 형식</div>
+                        </div>
+                    </div>
+                    <div class="export-option" onclick="selectDataExportFormat('jpg')">
+                        <input type="radio" name="dataExportFormat" value="jpg">
+                        <div>
+                            <div style="font-weight: 500;">JPG 이미지</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">압축된 이미지 형식</div>
+                        </div>
+                    </div>
+                    <div class="export-option" onclick="selectDataExportFormat('pdf')">
+                        <input type="radio" name="dataExportFormat" value="pdf">
+                        <div>
+                            <div style="font-weight: 500;">PDF 문서</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">문서 형식, 인쇄 최적화</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-container" id="dataExportProgressContainer">
+                    <div class="progress-text" id="dataExportProgressText">데이터를 내보내는 중...</div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar" id="dataExportProgressBar"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;" id="dataExportButtons">
+                    <button class="btn btn-outline" onclick="closeDataExportModal()">취소</button>
+                    <button class="btn btn-primary" onclick="confirmDataExport()">내보내기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 업로드 모달 -->
+        <div class="modal" id="uploadModal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 1rem;">업로드할 모델 형식 선택</h3>
+                <div class="export-options">
+                    <div class="export-option" onclick="selectUploadFormat('pkl')">
+                        <input type="radio" name="uploadFormat" value="pkl">
+                        <div>
+                            <div style="font-weight: 500;">Pickle 파일 (*.pkl)</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">Python 직렬화 형식, PatchCore 기본</div>
+                        </div>
+                    </div>
+                    <div class="export-option" onclick="selectUploadFormat('pth')">
+                        <input type="radio" name="uploadFormat" value="pth">
+                        <div>
+                            <div style="font-weight: 500;">PyTorch 파일 (*.pth)</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">PyTorch 모델 형식</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-container" id="uploadProgressContainer">
+                    <div class="progress-text" id="uploadProgressText">모델을 업로드하는 중...</div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar" id="uploadProgressBar"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;" id="uploadButtons">
+                    <button class="btn btn-outline" onclick="closeUploadModal()">취소</button>
+                    <button class="btn btn-primary" onclick="confirmUpload()">파일 선택</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let models = [];
+        let radarChart = null;
+        let comparisonChart = null;
+        let selectedModels = [];
+        let selectedIndividualModel = null;
+        let currentTab = 'individual';
+        let selectedExportFormat = '';
+        let selectedDataExportFormat = '';
+        let selectedUploadFormat = '';
+
+        // localStorage를 사용한 데이터 유지
+        const STORAGE_KEY = 'mlops_models_data';
+
+        function saveModelsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(models));
+            } catch (error) {
+                console.warn('localStorage 저장 실패:', error);
+            }
+        }
+
+        function loadModelsFromStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    models = JSON.parse(stored);
+                    return true;
+                }
+            } catch (error) {
+                console.warn('localStorage 로드 실패:', error);
+            }
+            return false;
+        }
+
+        function loadModels() {
+            // localStorage에서 데이터 로드 시도
+            const hasStoredData = loadModelsFromStorage();
+            
+            if (!hasStoredData) {
+                // API에서 학습 완료된 모델 목록을 가져옴
+                fetch('/api/completed-models')
+                    .then(response => response.json())
+                    .then(data => {
+                        models = data.models || [];
+                        saveModelsToStorage();
+                        updateUI();
+                    })
+                    .catch(error => {
+                        console.error('모델 목록 로드 실패:', error);
+                        models = [];
+                        updateUI();
+                    });
+            } else {
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            populateModelList();
+            initializeCharts();
+            updateModelCount();
+            
+            if (models.length === 0) {
+                showEmptyState();
+            }
+        }
+
+        function showEmptyState() {
+            const tbody = document.getElementById('modelsTableBody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            <div style="font-size: 1.2rem; margin-bottom: 1rem;">
+                                <i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem; display: block;"></i>
+                                학습 완료된 모델이 없습니다
+                            </div>
+                            <div style="font-size: 0.9rem;">
+                                모델 학습을 진행하거나 기존 모델을 업로드하세요
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            updateSelectedCount();
+        }
+
+        let confirmCallback = null;
+
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirmTitle').textContent = title;
+            
+            const formattedMessage = message.replace(/\n/g, '<br>');
+            document.getElementById('confirmMessage').innerHTML = formattedMessage;
+            
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function closeConfirmModal(result) {
+            document.getElementById('confirmModal').classList.remove('show');
+            if (confirmCallback) {
+                confirmCallback(result);
+                confirmCallback = null;
+            }
+        }
+
+        function showAlert(title, message) {
+            const formattedMessage = message.replace(/\n/g, '<br>');
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertMessage').innerHTML = formattedMessage;
+            document.getElementById('alertModal').classList.add('show');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alertModal').classList.remove('show');
+        }
+
+        function updateModelCount() {
+            const totalCountElement = document.getElementById('totalModelsCount');
+            if (totalCountElement) {
+                totalCountElement.textContent = `총 ${models.length}개 모델`;
+            }
+        }
+
+        function addTrainedModel(newModel) {
+            models.push(newModel);
+            saveModelsToStorage();
+            populateModelList();
+            updateModelCount();
+            showAlert('학습 완료', `새로운 모델이 학습 완료되었습니다!\n모델명: ${newModel.model_name}`);
+        }
+
+        function addUploadedModel(uploadedModel) {
+            models.push(uploadedModel);
+            saveModelsToStorage();
+            populateModelList();
+            updateModelCount();
+            showAlert('업로드 완료', `모델이 성공적으로 업로드되었습니다!\n모델명: ${uploadedModel.model_name}`);
+        }
+
+        function populateModelList() {
+            const tbody = document.getElementById('modelsTableBody');
+            if (!tbody) return;
+            
+            if (models.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            models.forEach((model, index) => {
+                const row = document.createElement('tr');
+                row.onclick = () => selectIndividualModel(index);
+                
+                let className = '';
+                if (selectedModels.includes(index)) className += 'selected ';
+                if (selectedIndividualModel === index) className += 'individual-selected ';
+                row.className = className.trim();
+                
+                const perf = model.performance;
+                const createdDate = new Date(model.training_info.created_date).toLocaleString('ko-KR');
+                
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="model-checkbox" 
+                            ${selectedModels.includes(index) ? 'checked' : ''} 
+                            onclick="event.stopPropagation();" 
+                            onchange="toggleModelSelection(${index})">
+                    </td>
+                    <td>
+                        <div class="model-name">${model.model_name}</div>
+                        <div class="model-meta">${model.config.learning_method}</div>
+                    </td>
+                    <td>${model.config.backbone}</td>
+                    <td class="performance-value">${(perf.accuracy * 100).toFixed(1)}%</td>
+                    <td class="performance-value">${(perf.f1_score * 100).toFixed(1)}%</td>
+                    <td class="performance-value">${(perf.precision * 100).toFixed(1)}%</td>
+                    <td class="performance-value">${(perf.recall * 100).toFixed(1)}%</td>
+                    <td class="training-info">${model.training_info.training_time}</td>
+                    <td>${model.config.epochs}</td>
+                    <td class="training-info">${model.training_info.image_count.toLocaleString()}</td>
+                    <td class="training-info">${createdDate}</td>
+                    <td>
+                        <div class="model-actions">
+                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); exportModel(${index})" title="내보내기">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); deleteModel(${index})" title="삭제">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            updateSelectedCount();
+        }
+
+        function selectIndividualModel(index) {
+            selectedIndividualModel = index;
+            populateModelList();
+            updateIndividualChart();
+            
+            if (currentTab === 'individual') {
+                document.getElementById('individualPerformance').classList.add('show');
+            }
+        }
+
+        function toggleModelSelection(index) {
+            const isSelected = selectedModels.includes(index);
+            
+            if (isSelected) {
+                selectedModels = selectedModels.filter(i => i !== index);
+            } else {
+                if (selectedModels.length < 5) {
+                    selectedModels.push(index);
+                } else {
+                    showAlert('선택 제한', '최대 5개 모델까지만 선택할 수 있습니다.');
+                    return;
+                }
+            }
+            
+            populateModelList();
+            updateComparisonChart();
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCountText').textContent = `${selectedModels.length}개 선택됨`;
+        }
+
+        function initializeCharts() {
+            createRadarChart();
+            createComparisonChart();
+        }
+
+        function createRadarChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['정확도', 'F1 Score', 'Precision', 'Recall'],
+                    datasets: [{
+                        label: '성능 지표',
+                        data: [0, 0, 0, 0],
+                        borderColor: '#475569',
+                        backgroundColor: 'rgba(71, 85, 105, 0.2)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#475569',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed.r.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 25,
+                                display: false
+                            },
+                            grid: {
+                                color: 'rgba(71, 85, 105, 0.2)'
+                            },
+                            angleLines: {
+                                color: 'rgba(71, 85, 105, 0.2)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                color: '#475569'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createComparisonChart() {
+            const ctx = document.getElementById('comparisonBarChart').getContext('2d');
+            
+            comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['정확도', 'F1 Score', 'Precision', 'Recall', '학습시간(분)', '에폭'],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                                    const value = context.parsed.x;
+                                    if (context.dataIndex < 4) {
+                                        return `${label}: ${value}%`;
+                                    } else if (context.dataIndex === 4) {
+                                        return `${label}: ${value}분`;
+                                    } else {
+                                        return `${label}: ${value}에폭`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 10,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateIndividualChart() {
+            if (selectedIndividualModel === null || !models[selectedIndividualModel]) {
+                document.getElementById('selectedModelName').textContent = '모델을 선택하세요';
+                document.getElementById('selectedModelBackbone').textContent = '';
+                radarChart.data.datasets[0].data = [0, 0, 0, 0];
+                radarChart.update();
+                
+                document.getElementById('individualAccuracy').textContent = '-';
+                document.getElementById('individualF1').textContent = '-';
+                document.getElementById('individualPrecision').textContent = '-';
+                document.getElementById('individualRecall').textContent = '-';
+                return;
+            }
+
+            const model = models[selectedIndividualModel];
+            const perf = model.performance;
+            
+            document.getElementById('selectedModelName').textContent = model.model_name;
+            document.getElementById('selectedModelBackbone').textContent = model.config.backbone;
+            
+            const chartData = [
+                perf.accuracy * 100,
+                perf.f1_score * 100,
+                perf.precision * 100,
+                perf.recall * 100
+            ];
+            
+            radarChart.data.datasets[0].data = chartData;
+            radarChart.update();
+            
+            document.getElementById('individualAccuracy').textContent = (perf.accuracy * 100).toFixed(1) + '%';
+            document.getElementById('individualF1').textContent = (perf.f1_score * 100).toFixed(1) + '%';
+            document.getElementById('individualPrecision').textContent = (perf.precision * 100).toFixed(1) + '%';
+            document.getElementById('individualRecall').textContent = (perf.recall * 100).toFixed(1) + '%';
+        }
+
+        function updateComparisonChart() {
+            if (selectedModels.length === 0) {
+                comparisonChart.data.datasets = [];
+                comparisonChart.update();
+                return;
+            }
+
+            const colors = ['#475569', '#059669', '#2563eb', '#d97706', '#dc2626'];
+
+            const datasets = selectedModels.map((modelIndex, index) => {
+                const model = models[modelIndex];
+                const perf = model.performance;
+                const trainingTimeMinutes = parseTrainingTime(model.training_info.training_time);
+                
+                return {
+                    label: model.model_name,
+                    data: [
+                        parseFloat((perf.accuracy * 100).toFixed(1)),
+                        parseFloat((perf.f1_score * 100).toFixed(1)),
+                        parseFloat((perf.precision * 100).toFixed(1)),
+                        parseFloat((perf.recall * 100).toFixed(1)),
+                        trainingTimeMinutes,
+                        model.config.epochs
+                    ],
+                    backgroundColor: colors[index] + 'CC',
+                    borderColor: colors[index],
+                    borderWidth: 2
+                };
+            });
+
+            comparisonChart.data.datasets = datasets;
+            comparisonChart.update();
+        }
+
+        function parseTrainingTime(timeStr) {
+            const hourMatch = timeStr.match(/(\d+)시간/);
+            const minuteMatch = timeStr.match(/(\d+)분/);
+            
+            let totalMinutes = 0;
+            if (hourMatch) totalMinutes += parseInt(hourMatch[1]) * 60;
+            if (minuteMatch) totalMinutes += parseInt(minuteMatch[1]);
+            
+            return totalMinutes;
+        }
+
+        function switchChart(type) {
+            currentTab = type;
+            const tabs = document.querySelectorAll('.chart-tab');
+            const individualPerformance = document.getElementById('individualPerformance');
+            const comparisonPerformance = document.getElementById('comparisonPerformance');
+            const sectionTitleText = document.getElementById('sectionTitleText');
+            const sectionTooltip = document.getElementById('sectionTooltip');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (type === 'individual') {
+                document.querySelector('.chart-tab:first-child').classList.add('active');
+                individualPerformance.style.display = 'block';
+                comparisonPerformance.style.display = 'none';
+                
+                sectionTitleText.textContent = '개별 성능 분석';
+                sectionTooltip.innerHTML = '모델을 클릭하여 선택하면<br>레이더 차트로 성능을 시각화합니다';
+            } else {
+                document.querySelector('.chart-tab:last-child').classList.add('active');
+                individualPerformance.style.display = 'none';
+                comparisonPerformance.style.display = 'block';
+                
+                sectionTitleText.textContent = '모델 성능 비교';
+                sectionTooltip.innerHTML = '체크박스로 선택된 모델들의 성능을<br>가로형 막대차트로 비교합니다';
+                
+                updateComparisonChart();
+            }
+        }
+
+        // Progress bar functions
+        function showProgress(containerId, progressBarId, progressTextId, message) {
+            document.getElementById(containerId).style.display = 'block';
+            document.getElementById(progressTextId).textContent = message;
+            document.getElementById(progressBarId).style.width = '0%';
+        }
+
+        function updateProgress(progressBarId, progressTextId, percent, message) {
+            document.getElementById(progressBarId).style.width = percent + '%';
+            if (message) {
+                document.getElementById(progressTextId).textContent = message;
+            }
+        }
+
+        function hideProgress(containerId) {
+            document.getElementById(containerId).style.display = 'none';
+        }
+
+        function hideButtons(buttonsId) {
+            document.getElementById(buttonsId).style.display = 'none';
+        }
+
+        function showButtons(buttonsId) {
+            document.getElementById(buttonsId).style.display = 'flex';
+        }
+
+        // Upload functions
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+            selectedUploadFormat = '';
+            hideProgress('uploadProgressContainer');
+            showButtons('uploadButtons');
+            document.querySelectorAll('#uploadModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('input[name="uploadFormat"]').forEach(radio => {
+                radio.checked = false;
+            });
+        }
+
+        function selectUploadFormat(format) {
+            selectedUploadFormat = format;
+            
+            document.querySelectorAll('input[name="uploadFormat"]').forEach(radio => {
+                radio.checked = radio.value === format;
+            });
+            
+            document.querySelectorAll('#uploadModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            const clickedOption = event.currentTarget || document.querySelector(`#uploadModal .export-option input[value="${format}"]`).closest('.export-option');
+            clickedOption.classList.add('selected');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            selectedUploadFormat = '';
+            hideProgress('uploadProgressContainer');
+            showButtons('uploadButtons');
+            document.querySelectorAll('#uploadModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+
+        function confirmUpload() {
+            if (!selectedUploadFormat) {
+                showAlert('형식 선택', '업로드할 파일 형식을 선택해주세요.');
+                return;
+            }
+            
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            
+            if (selectedUploadFormat === 'pkl') {
+                fileInput.accept = '.pkl,application/octet-stream';
+            } else {
+                fileInput.accept = '.pth,application/octet-stream';
+            }
+            
+            fileInput.style.display = 'none';
+            
+            const capturedFormat = selectedUploadFormat;
+            
+            fileInput.onchange = function(event) {
+                handleModelUpload(event, capturedFormat);
+                document.body.removeChild(fileInput);
+            };
+            
+            document.body.appendChild(fileInput);
+            fileInput.click();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            const size = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
+            return size + ' ' + sizes[i];
+        }
+
+        function handleModelUpload(event, expectedFormat) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const fileName = file.name;
+            const expectedExtension = '.' + expectedFormat;
+            const formattedSize = formatFileSize(file.size);
+            
+            if (!fileName.toLowerCase().endsWith(expectedExtension)) {
+                const actualExtension = '.' + fileName.split('.').pop().toLowerCase();
+                
+                showAlert('파일 형식 오류', 
+                    `선택된 형식과 일치하지 않습니다.\n\n` +
+                    `선택한 형식: *${expectedExtension}\n` +
+                    `업로드한 파일: ${fileName}\n` +
+                    `파일 확장자: *${actualExtension}\n\n` +
+                    `${expectedFormat} 형식의 파일을 선택해주세요.`
+                );
+                return;
+            }
+            
+            showConfirm('모델 업로드', 
+                `모델 업로드를 진행하시겠습니까?\n\n` +
+                `파일명: ${file.name}\n` +
+                `크기: ${formattedSize}\n` +
+                `형식: ${expectedFormat}\n\n` +
+                `업로드 후 성능 분석이 자동으로 시작됩니다.`, 
+                (result) => {
+                    if (result) {
+                        hideButtons('uploadButtons');
+                        showProgress('uploadProgressContainer', 'uploadProgressBar', 'uploadProgressText', '업로드 준비 중...');
+                        
+                        // 업로드 프로그레스 시뮬레이션
+                        let progress = 0;
+                        const uploadInterval = setInterval(() => {
+                            progress += Math.random() * 15;
+                            if (progress > 100) progress = 100;
+                            
+                            let message = '업로드 중...';
+                            if (progress > 30) message = '모델 검증 중...';
+                            if (progress > 60) message = '성능 분석 중...';
+                            if (progress > 90) message = '업로드 완료 중...';
+                            
+                            updateProgress('uploadProgressBar', 'uploadProgressText', progress, message);
+                            
+                            if (progress >= 100) {
+                                clearInterval(uploadInterval);
+                                setTimeout(() => {
+                                    const uploadedModel = {
+                                        id: Date.now(),
+                                        model_name: file.name.split('.')[0],
+                                        config: { 
+                                            backbone: "업로드된 모델", 
+                                            dataset_name: "사용자 데이터셋",
+                                            epochs: 0,
+                                            learning_method: "업로드"
+                                        },
+                                        performance: {
+                                            accuracy: Math.random() * 0.3 + 0.7,
+                                            f1_score: Math.random() * 0.3 + 0.7,
+                                            precision: Math.random() * 0.3 + 0.7,
+                                            recall: Math.random() * 0.3 + 0.7
+                                        },
+                                        training_info: {
+                                            training_time: "업로드됨",
+                                            image_count: Math.floor(Math.random() * 5000) + 1000,
+                                            created_date: new Date().toISOString()
+                                        },
+                                        status: "completed",
+                                        source: "upload"
+                                    };
+                                    addUploadedModel(uploadedModel);
+                                    closeUploadModal();
+                                }, 500);
+                            }
+                        }, 200);
+                    }
+                }
+            );
+        }
+
+        // Export screen data functions
+        function exportScreenData() {
+            document.getElementById('dataExportModal').classList.add('show');
+            selectedDataExportFormat = '';
+            hideProgress('dataExportProgressContainer');
+            showButtons('dataExportButtons');
+            document.querySelectorAll('#dataExportModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            setTimeout(() => {
+                selectDataExportFormat('png');
+            }, 100);
+        }
+
+        function selectDataExportFormat(format) {
+            selectedDataExportFormat = format;
+            document.querySelectorAll('input[name="dataExportFormat"]').forEach(radio => {
+                radio.checked = radio.value === format;
+            });
+            document.querySelectorAll('#dataExportModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+
+        function closeDataExportModal() {
+            document.getElementById('dataExportModal').classList.remove('show');
+            selectedDataExportFormat = '';
+            hideProgress('dataExportProgressContainer');
+            showButtons('dataExportButtons');
+            document.querySelectorAll('#dataExportModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+
+        function confirmDataExport() {
+            if (!selectedDataExportFormat) {
+                showAlert('형식 선택', '내보낼 형식을 선택해주세요.');
+                return;
+            }
+            
+            const currentTabName = currentTab === 'individual' ? '개별 성능 분석' : '모델 성능 비교';
+            
+            showConfirm('데이터 내보내기',
+                `성능 데이터를 내보내시겠습니까?\n\n` +
+                `현재 화면: ${currentTabName}\n` +
+                `내보내기 형식: ${selectedDataExportFormat}\n\n` +
+                `진행하시겠습니까?`,
+                (result) => {
+                    if (!result) {
+                        closeDataExportModal();
+                        return;
+                    }
+                    
+                    hideButtons('dataExportButtons');
+                    showProgress('dataExportProgressContainer', 'dataExportProgressBar', 'dataExportProgressText', '데이터 캡처 중...');
+                    
+                    let progress = 0;
+                    const exportInterval = setInterval(() => {
+                        progress += Math.random() * 20;
+                        if (progress > 100) progress = 100;
+                        
+                        let message = '데이터 캡처 중...';
+                        if (progress > 40) message = '이미지 처리 중...';
+                        if (progress > 70) message = '파일 생성 중...';
+                        if (progress > 90) message = '다운로드 준비 중...';
+                        
+                        updateProgress('dataExportProgressBar', 'dataExportProgressText', progress, message);
+                        
+                        if (progress >= 100) {
+                            clearInterval(exportInterval);
+                            
+                            const captureArea = document.getElementById('captureArea');
+                            
+                            html2canvas(captureArea, {
+                                backgroundColor: '#f8fafc',
+                                scale: 2,
+                                useCORS: true
+                            }).then(canvas => {
+                                if (selectedDataExportFormat === 'pdf') {
+                                    const { jsPDF } = window.jspdf;
+                                    const pdf = new jsPDF('l', 'mm', 'a4');
+                                    const imgData = canvas.toDataURL('image/png');
+                                    const imgWidth = 297;
+                                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                                    
+                                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                                    pdf.save(`performance_report_${new Date().toISOString().split('T')[0]}.pdf`);
+                                } else {
+                                    const link = document.createElement('a');
+                                    link.download = `performance_report_${new Date().toISOString().split('T')[0]}.${selectedDataExportFormat}`;
+                                    link.href = canvas.toDataURL(`image/${selectedDataExportFormat}`);
+                                    link.click();
+                                }
+                                
+                                updateProgress('dataExportProgressBar', 'dataExportProgressText', 100, '내보내기 완료!');
+                                setTimeout(() => {
+                                    showAlert('내보내기 완료', `성능 데이터가 ${selectedDataExportFormat} 형식으로 내보내졌습니다.`);
+                                    closeDataExportModal();
+                                }, 1000);
+                            }).catch(error => {
+                                showAlert('오류 발생', '데이터 내보내기 중 오류가 발생했습니다.\n다시 시도해주세요.');
+                                console.error('Export error:', error);
+                                closeDataExportModal();
+                            });
+                        }
+                    }, 150);
+                }
+            );
+        }
+
+        // Model export functions
+        function exportSelectedModels() {
+            let modelToExport = null;
+            
+            if (currentTab === 'individual') {
+                if (selectedIndividualModel === null) {
+                    showAlert('모델 선택', '내보낼 모델을 선택해주세요.');
+                    return;
+                }
+                modelToExport = models[selectedIndividualModel];
+            } else {
+                if (selectedModels.length === 0) {
+                    showAlert('모델 선택', '내보낼 모델을 선택해주세요.');
+                    return;
+                }
+                if (selectedModels.length > 1) {
+                    showAlert('선택 제한', '모델 내보내기는 한 번에 하나의 모델만 가능합니다.\n하나의 모델만 선택해주세요.');
+                    return;
+                }
+                modelToExport = models[selectedModels[0]];
+            }
+            
+            document.getElementById('exportModal').classList.add('show');
+            selectedExportFormat = '';
+            hideProgress('exportProgressContainer');
+            showButtons('exportButtons');
+            document.querySelectorAll('#exportModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            setTimeout(() => {
+                selectExportFormat('pkl');
+            }, 100);
+        }
+
+        function selectExportFormat(format) {
+            selectedExportFormat = format;
+            
+            document.querySelectorAll('input[name="exportFormat"]').forEach(radio => {
+                radio.checked = radio.value === format;
+            });
+            
+            document.querySelectorAll('#exportModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            const clickedOption = event.currentTarget || document.querySelector(`#exportModal .export-option input[value="${format}"]`).closest('.export-option');
+            clickedOption.classList.add('selected');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('show');
+            selectedExportFormat = '';
+            hideProgress('exportProgressContainer');
+            showButtons('exportButtons');
+            document.querySelectorAll('#exportModal .export-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+
+        function confirmExport() {
+            if (!selectedExportFormat) {
+                showAlert('형식 선택', '내보낼 파일 형식을 선택해주세요.');
+                return;
+            }
+            
+            let modelToExport;
+            if (currentTab === 'individual') {
+                modelToExport = models[selectedIndividualModel];
+            } else {
+                modelToExport = models[selectedModels[0]];
+            }
+            
+            showConfirm('모델 내보내기',
+                `모델을 내보내시겠습니까?\n\n` +
+                `모델명: ${modelToExport.model_name}\n` +
+                `내보내기 형식: ${selectedExportFormat}\n\n` +
+                `내보내기를 진행하시겠습니까?`,
+                (result) => {
+                    if (result) {
+                        hideButtons('exportButtons');
+                        showProgress('exportProgressContainer', 'exportProgressBar', 'exportProgressText', '모델 준비 중...');
+                        
+                        let progress = 0;
+                        const exportInterval = setInterval(() => {
+                            progress += Math.random() * 12;
+                            if (progress > 100) progress = 100;
+                            
+                            let message = '모델 준비 중...';
+                            if (progress > 25) message = '모델 압축 중...';
+                            if (progress > 50) message = '파일 생성 중...';
+                            if (progress > 80) message = '다운로드 준비 중...';
+                            if (progress > 95) message = '내보내기 완료!';
+                            
+                            updateProgress('exportProgressBar', 'exportProgressText', progress, message);
+                            
+                            if (progress >= 100) {
+                                clearInterval(exportInterval);
+                                setTimeout(() => {
+                                    // 실제 다운로드 시뮬레이션
+                                    const blob = new Blob(['Model Export Data'], { type: 'application/octet-stream' });
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `${modelToExport.model_name}.${selectedExportFormat}`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    window.URL.revokeObjectURL(url);
+                                    
+                                    showAlert('내보내기 완료', `${modelToExport.model_name} 모델이 ${selectedExportFormat} 형식으로 내보내졌습니다.`);
+                                    closeExportModal();
+                                }, 500);
+                            }
+                        }, 200);
+                    } else {
+                        closeExportModal();
+                    }
+                }
+            );
+        }
+
+        function exportModel(index) {
+            const model = models[index];
+            showConfirm('모델 내보내기',
+                `"${model.model_name}" 모델을 내보내시겠습니까?\n\n기본 형식: pkl로 다운로드됩니다.`,
+                (result) => {
+                    if (result) {
+                        showAlert('내보내기 시작', `${model.model_name} 모델 내보내기가 시작되었습니다.`);
+                        
+                        // 실제 다운로드 시뮬레이션
+                        setTimeout(() => {
+                            const blob = new Blob(['Model Export Data'], { type: 'application/octet-stream' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${model.model_name}.pkl`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                            
+                            showAlert('내보내기 완료', `${model.model_name} 모델이 다운로드되었습니다.`);
+                        }, 1000);
+                    }
+                }
+            );
+        }
+
+        function deleteModel(index) {
+            const model = models[index];
+            showConfirm('모델 삭제',
+                `정말로 "${model.model_name}" 모델을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
+                (result) => {
+                    if (result) {
+                        models.splice(index, 1);
+                        selectedModels = selectedModels.filter(i => i !== index).map(i => i > index ? i - 1 : i);
+                        
+                        if (selectedIndividualModel === index) {
+                            selectedIndividualModel = null;
+                        } else if (selectedIndividualModel > index) {
+                            selectedIndividualModel -= 1;
+                        }
+                        
+                        saveModelsToStorage();
+                        populateModelList();
+                        updateComparisonChart();
+                        updateIndividualChart();
+                        
+                        showAlert('삭제 완료', '모델이 삭제되었습니다.');
+                    }
+                }
+            );
+        }
+
+        function refreshModels() {
+            showConfirm('목록 새로고침', 
+                '모델 목록을 새로고침하시겠습니까?\n\n최신 학습 완료된 모델 목록을 불러옵니다.', 
+                (result) => {
+                    if (result) {
+                        loadModels();
+                        showAlert('새로고침 완료', '모델 목록이 새로고침되었습니다.');
+                    }
+                }
+            );
+        }
+
+        // Modal outside click handling
+        window.onclick = function(event) {
+            const exportModal = document.getElementById('exportModal');
+            const dataExportModal = document.getElementById('dataExportModal');
+            const uploadModal = document.getElementById('uploadModal');
+            const confirmModal = document.getElementById('confirmModal');
+            const alertModal = document.getElementById('alertModal');
+            
+            if (event.target === exportModal) {
+                closeExportModal();
+            }
+            if (event.target === dataExportModal) {
+                closeDataExportModal();
+            }
+            if (event.target === uploadModal) {
+                closeUploadModal();
+            }
+            if (event.target === confirmModal) {
+                closeConfirmModal(false);
+            }
+            if (event.target === alertModal) {
+                closeAlertModal();
+            }
+        }
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            loadModels();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# requirements/requirements_dev.txt
+# 개발 과정에서만 필요한 도구들
+
+# 코드 품질 도구
+black>=22.0.0          # 코드 포매터
+flake8>=4.0.0          # 코드 스타일 체커
+pytest>=6.2.0         # 테스트 프레임워크
+
+# 주피터 노트북 (실험용)
+jupyter>=1.0.0
+notebook>=6.4.0
+
+# 문서화 도구
+sphinx>=4.0.0

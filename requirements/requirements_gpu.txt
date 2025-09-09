@@ -1,0 +1,12 @@
+# requirements/requirements_gpu.txt
+# GPU 환경에서 사용할 고성능 라이브러리들
+# 기본 라이브러리들을 먼저 설치한 후에 이 파일을 사용하세요
+
+# GPU 가속 PyTorch (CUDA 11.8 버전)
+--index-url https://download.pytorch.org/whl/cu118
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# GPU 가속 FAISS
+faiss-gpu>=1.7.0

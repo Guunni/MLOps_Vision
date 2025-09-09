@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps Vision Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 전역 스타일 및 변수 */
+        :root {
+            /* 기존 보라색 대신 차분한 청회색 계열 */
+            --primary-color: #475569;      /* 차분한 슬레이트 블루 */
+            --secondary-color: #64748b;    /* 중간 톤 그레이 */
+            --accent-color: #0f172a;       /* 진한 네이비 */
+            
+            --success-color: #059669;      /* 차분한 그린 */
+            --warning-color: #d97706;      /* 따뜻한 오렌지 */
+            --error-color: #dc2626;        /* 차분한 레드 */
+            --info-color: #2563eb;         /* 차분한 블루 */
+            
+            --bg-primary: #f8fafc;         /* 연한 그레이 배경 */
+            --bg-secondary: #ffffff;       /* 순백색 */
+            --bg-tertiary: #f1f5f9;        /* 매우 연한 그레이 */
+            --text-primary: #0f172a;       /* 진한 네이비 텍스트 */
+            --text-secondary: #64748b;     /* 중간 그레이 텍스트 */
+            --text-muted: #94a3b8;         /* 연한 그레이 텍스트 */
+            --border-color: #e2e8f0;       /* 연한 그레이 보더 */
+            
+            --sidebar-width-collapsed: 60px;  /* 축소된 사이드바 폭 */
+            --sidebar-width: 260px;
+            --header-height: 80px;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* 앱 컨테이너 */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 사이드바 스타일 - 호버 효과 추가 */
+        .sidebar {
+            width: var(--sidebar-width-collapsed); /* 기본: 축소된 상태 */
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 1000;
+            transition: width 0.3s ease;
+            border-right: 1px solid var(--border-color);
+        }
+
+        /* 호버 시 사이드바 확장 */
+        .sidebar:hover {
+            width: var(--sidebar-width);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.1);
+            position: relative;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #f8fafc;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.3s; /* 사이드바 확장 완료 후 0.3초 지연 */
+            white-space: nowrap;
+            position: absolute;
+            left: 1.5rem;
+        }
+
+        .sidebar:hover .sidebar-header h2 {
+            opacity: 1;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .nav-menu li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(248, 250, 252, 0.8);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+            white-space: nowrap;
+            height: 50px; /* 고정 높이 */
+            position: relative;
+        }
+
+        /* 축소 상태에서는 아이콘만 중앙 정렬 */
+        .sidebar:not(:hover) .nav-link {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar:hover .nav-link {
+            justify-content: flex-start;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(248, 250, 252, 0.1);
+            color: #f8fafc;
+            border-left-color: rgba(248, 250, 252, 0.4);
+        }
+
+        .nav-link.active {
+            background-color: rgba(248, 250, 252, 0.15);
+            color: #f8fafc;
+            border-left-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            width: 1.25rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        /* 네비게이션 텍스트 숨김/표시 */
+        .nav-text {
+            display: none;
+        }
+
+        .sidebar:hover .nav-text {
+            display: inline;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width-collapsed);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-header {
+            background: var(--bg-secondary);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .content-header h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            position: relative;
+        }
+
+        /* 새로고침 버튼 컨테이너 */
+        .refresh-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 새로고침 툴팁 */
+        .refresh-tooltip {
+            position: absolute;
+            right: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        .refresh-tooltip::after {
+            content: '';
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-left-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .refresh-container:hover .refresh-tooltip {
+            opacity: 1;
+            visibility: visible;
+            right: calc(100% + 15px);
+        }
+
+        /* 상태 카드 그리드 */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .status-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .card-icon.system-status {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        }
+
+        .card-icon.datasets {
+            background: linear-gradient(135deg, var(--success-color), #047857);
+        }
+
+        .card-icon.models {
+            background: linear-gradient(135deg, var(--warning-color), #c2410c);
+        }
+
+        .card-icon.training {
+            background: linear-gradient(135deg, var(--info-color), #1d4ed8);
+        }
+
+        .card-content h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .status-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .status-detail {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* 빠른 액션 섹션 */
+        .quick-actions {
+            padding: 0 2rem 2rem;
+        }
+
+        .quick-actions h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .action-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .action-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background-color: var(--bg-tertiary);
+        }
+
+        .action-card i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .action-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .action-card p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* 로딩 오버레이 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        .loading-overlay p {
+            color: white;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .content-header {
+                padding: 1rem;
+            }
+            
+            .quick-actions {
+                padding: 0 1rem 1rem;
+            }
+        }
+
+        /* 상태별 색상 */
+        .status-success { color: var(--success-color); }
+        .status-warning { color: var(--warning-color); }
+        .status-error { color: var(--error-color); }
+        .status-info { color: var(--info-color); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 네비게이션 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>MLOps Vision</h2>
+            </div>            
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link active">
+                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
+                </a></li>
+                <li><a href="/ui/datasets" class="nav-link">
+                    <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
+                </a></li>
+                <li><a href="/ui/training" class="nav-link">
+                    <i class="fas fa-brain"></i> <span class="nav-text">학습 관리</span>
+                </a></li>
+                <li><a href="/ui/models" class="nav-link">
+                    <i class="fas fa-cube"></i> <span class="nav-text">모델 관리</span>
+                </a></li>
+                <li><a href="/ui/monitoring" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main class="main-content">
+            <!-- 헤더 -->
+            <header class="content-header">
+                <h1>Dashboard</h1>
+                <div class="header-actions">
+                    <div class="refresh-container">
+                        <button class="btn btn-primary" onclick="refreshStatus()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <div class="refresh-tooltip">Refresh</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 상태 카드들 -->
+            <section class="status-grid">
+                <div class="status-card">
+                    <div class="card-icon system-status">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>시스템 상태</h3>
+                        <p class="status-value" id="system-status">확인 중...</p>
+                        <span class="status-detail" id="system-detail">PatchCore 설치 상태 확인 중</span>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="card-icon datasets">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>데이터셋</h3>
+                        <p class="status-value" id="datasets-count">0</p>
+                        <span class="status-detail">사용 가능한 데이터셋</span>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="card-icon models">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>학습된 모델</h3>
+                        <p class="status-value" id="models-count">0</p>
+                        <span class="status-detail">완료된 모델</span>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="card-icon training">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>학습 상태</h3>
+                        <p class="status-value" id="training-status">대기 중</p>
+                        <span class="status-detail" id="training-detail">현재 진행 중인 학습 없음</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 빠른 액션 버튼들 -->
+            <section class="quick-actions">
+                <h2>빠른 시작</h2>
+                <div class="actions-grid">
+                    <button class="action-card" onclick="setupSystem()">
+                        <i class="fas fa-play-circle"></i>
+                        <h3>시스템 설정</h3>
+                        <p>PatchCore 환경을 자동으로 설정합니다</p>
+                    </button>
+
+                    <button class="action-card" onclick="uploadDataset()">
+                        <i class="fas fa-upload"></i>
+                        <h3>데이터셋 업로드</h3>
+                        <p>새로운 이미지 데이터셋을 업로드합니다</p>
+                    </button>
+
+                    <button class="action-card" onclick="startTraining()">
+                        <i class="fas fa-rocket"></i>
+                        <h3>학습 시작</h3>
+                        <p>새로운 모델 학습을 시작합니다</p>
+                    </button>
+
+                    <button class="action-card" onclick="viewModels()">
+                        <i class="fas fa-eye"></i>
+                        <h3>모델 보기</h3>
+                        <p>학습된 모델들을 확인하고 관리합니다</p>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p>처리 중...</p>
+    </div>
+
+    <script>
+        function refreshStatus() {
+            // 새로고침 기능
+        }
+
+        function setupSystem() {
+            // 시스템 설정 기능
+        }
+
+        function uploadDataset() {
+            // 데이터셋 업로드 기능
+        }
+
+        function startTraining() {
+            // 학습 시작 기능
+        }
+
+        function viewModels() {
+            // 모델 보기 기능
+        }
+    </script>
+</body>
+</html>

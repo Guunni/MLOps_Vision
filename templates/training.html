@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps Vision Platform - 학습 관리</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 기존 CSS 변수들 유지 */
+        :root {
+            --primary-color: #475569;
+            --secondary-color: #64748b;
+            --accent-color: #0f172a;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --info-color: #2563eb;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --sidebar-width-collapsed: 60px;
+            --sidebar-width: 260px;
+            --header-height: 80px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* 앱 컨테이너 */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 사이드바 스타일 */
+        .sidebar {
+            width: var(--sidebar-width-collapsed);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 1000;
+            transition: width 0.3s ease;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar:hover {
+            width: var(--sidebar-width);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.1);
+            position: relative;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f8fafc;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.3s;
+            white-space: nowrap;
+            position: absolute;
+            left: 1.5rem;
+        }
+
+        .sidebar:hover .sidebar-header h2 {
+            opacity: 1;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .nav-menu li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(248, 250, 252, 0.8);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+            white-space: nowrap;
+            height: 50px;
+            position: relative;
+        }
+
+        .sidebar:not(:hover) .nav-link {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar:hover .nav-link {
+            justify-content: flex-start;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(248, 250, 252, 0.1);
+            color: #f8fafc;
+            border-left-color: rgba(248, 250, 252, 0.4);
+        }
+
+        .nav-link.active {
+            background-color: rgba(248, 250, 252, 0.15);
+            color: #f8fafc;
+            border-left-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            width: 1.25rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .nav-text {
+            display: none;
+        }
+
+        .sidebar:hover .nav-text {
+            display: inline;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width-collapsed);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-header {
+            background: var(--bg-secondary);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .content-header h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .refresh-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .refresh-tooltip {
+            position: absolute;
+            right: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        .refresh-tooltip::after {
+            content: '';
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-left-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .refresh-container:hover .refresh-tooltip {
+            opacity: 1;
+            visibility: visible;
+            right: calc(100% + 15px);
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 학습 설정 섹션 */
+        .training-config {
+            padding: 2rem;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .config-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        /* 툴팁이 있는 라벨 스타일 */
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: help;
+        }
+
+        .help-icon {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            position: relative;
+        }
+
+        /* 툴팁 스타일 개선 */
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: normal;
+            width: auto;
+            min-width: 200px;
+            max-width: 320px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            word-break: keep-all;
+            word-wrap: break-word;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .help-icon:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+            bottom: calc(100% + 12px);
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.1);
+        }
+
+        /* 슬라이더와 입력 필드 조합 */
+        .range-input-group {
+            display: grid;
+            grid-template-columns: 1fr 120px;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .form-range {
+            width: 100%;
+            margin: 0;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-tertiary);
+            outline: none;
+        }
+
+        .form-range::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .range-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .range-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.1);
+        }
+
+        /* 데이터 분할 섹션 */
+        .data-split-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .split-item {
+            text-align: center;
+        }
+
+        .split-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .split-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* 학습 상태 섹션 */
+        .training-status {
+            padding: 0 2rem 2rem;
+        }
+
+        .status-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-idle {
+            background-color: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+        }
+
+        .status-training {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--info-color);
+        }
+
+        .status-completed {
+            background-color: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-error {
+            background-color: rgba(220, 38, 38, 0.1);
+            color: var(--error-color);
+        }
+
+        .progress-section {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* 학습 기록 */
+        .training-history {
+            padding: 0 2rem 2rem;
+        }
+
+        .history-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-info h4 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .history-meta {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 1024px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+            .data-split-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .content-header {
+                padding: 1rem;
+            }
+            
+            .training-config,
+            .training-status,
+            .training-history {
+                padding: 1rem;
+            }
+
+            .range-input-group {
+                grid-template-columns: 1fr 100px;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 네비게이션 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>MLOps Vision</h2>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
+                </a></li>
+                <li><a href="/ui/datasets" class="nav-link">
+                    <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
+                </a></li>
+                <li><a href="/ui/training" class="nav-link active">
+                    <i class="fas fa-brain"></i> <span class="nav-text">학습 관리</span>
+                </a></li>
+                <li><a href="/ui/models" class="nav-link">
+                    <i class="fas fa-cube"></i> <span class="nav-text">모델 관리</span>
+                </a></li>
+                <li><a href="/ui/monitoring" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main class="main-content">
+            <!-- 헤더 -->
+            <header class="content-header">
+                <h1>학습 관리</h1>
+                <div class="header-actions">
+                    <div class="refresh-container">
+                        <button class="btn btn-primary" onclick="refreshTraining()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <div class="refresh-tooltip">Refresh</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 학습 설정 섹션 -->
+            <section class="training-config">
+                <div class="config-grid">
+                    <!-- 기본 설정 -->
+                    <div class="config-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-cog"></i>
+                            기본 설정
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                데이터셋 선택
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        학습에 사용할 데이터셋을 선택합니다.<br>
+                                        정상 이미지와 이상 이미지가 포함된<br>
+                                        데이터셋이 필요합니다.
+                                    </div>
+                                </i>
+                            </label>
+                            <select class="form-select" id="datasetSelect">
+                                <option value="">데이터셋을 선택하세요</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                모델 백본
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        이미지에서 특징을 추출하는 사전 훈련된 모델입니다.<br>
+                                        • Wide ResNet-50: 가장 좋은 성능 (권장)<br>
+                                        • ResNet-18: 빠른 속도, 가벼운 모델<br>
+                                        • ResNet-50: 높은 정확도, 더 무거운 모델<br>
+                                        • EfficientNet-B0: 메모리 효율적
+                                    </div>
+                                </i>
+                            </label>
+                            <select class="form-select" id="backboneSelect">
+                                <option value="wideresnet50">Wide ResNet-50</option>
+                                <option value="resnet18">ResNet-18</option>
+                                <option value="resnet50">ResNet-50</option>
+                                <option value="efficientnet_b0">EfficientNet-B0</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                학습 타입
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        • 새 학습: 처음부터 완전히 새로 학습<br>
+                                        • 전이 학습: 기존 모델을 새 데이터에 맞게 조정<br>
+                                        • 재학습: 기존 모델을 완전히 다시 학습<br>
+                                        처음에는 '새 학습'을 추천합니다.
+                                    </div>
+                                </i>
+                            </label>
+                            <select class="form-select" id="trainingType">
+                                <option value="new">새 학습</option>
+                                <option value="transfer">전이 학습</option>
+                                <option value="retrain">재학습</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                에폭 수
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        전체 데이터를 몇 번 반복해서 학습할지 정합니다.<br>
+                                        • 적은 에폭: 학습 부족 가능성<br>
+                                        • 많은 에폭: 과학습 가능성<br>
+                                        보통 10~50 사이에서 시작합니다.
+                                    </div>
+                                </i>
+                            </label>
+                            <input type="number" class="form-input" id="epochs" value="10" min="1" max="1000">
+                        </div>
+                    </div>
+
+                    <!-- 고급 설정 -->
+                    <div class="config-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-sliders-h"></i>
+                            고급 설정
+                        </h3>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                학습률
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        학습률은 모델이 얼마나 빠르게 학습할지를 결정합니다.<br>
+                                        • 너무 크면: 학습이 불안정해지고 성능이 나빠집니다<br>
+                                        • 너무 작으면: 학습이 매우 느려집니다<br>
+                                        일반적으로 0.001~0.01 사이 값을 사용합니다.
+                                    </div>
+                                </i>
+                            </label>
+                            <div class="range-input-group">
+                                <input type="range" class="form-range" id="learningRateSlider" min="0.0001" max="0.1" step="0.0001" value="0.001">
+                                <input type="number" class="range-input" id="learningRateInput" min="0.0001" max="0.1" step="0.0001" value="0.001">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                배치 크기
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        한 번에 처리할 이미지 개수입니다.<br>
+                                        • 작은 값(8-16): 메모리 적게 사용, 학습 더 안정적<br>
+                                        • 큰 값(32-64): 메모리 많이 사용, 학습 속도 빠름<br>
+                                        GPU 메모리에 따라 조정하세요.
+                                    </div>
+                                </i>
+                            </label>
+                            <select class="form-select" id="batchSize">
+                                <option value="8">8</option>
+                                <option value="16">16</option>
+                                <option value="32" selected>32</option>
+                                <option value="64">64</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                샘플링 비율
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        전체 특징 중에서 사용할 비율입니다.<br>
+                                        PatchCore 알고리즘에서 메모리 절약을 위해<br>
+                                        특징을 일부만 선택해서 사용합니다.<br>
+                                        0.3 정도가 적절합니다.
+                                    </div>
+                                </i>
+                            </label>
+                            <div class="range-input-group">
+                                <input type="range" class="form-range" id="samplingRatioSlider" min="0.1" max="1.0" step="0.1" value="0.3">
+                                <input type="number" class="range-input" id="samplingRatioInput" min="0.1" max="1.0" step="0.1" value="0.3">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                이미지 크기
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        학습에 사용할 각 이미지의 크기입니다.<br>
+                                        (배치 크기와는 다릅니다)<br>
+                                        • 작은 크기: 빠른 학습, 낮은 정확도<br>
+                                        • 큰 크기: 느린 학습, 높은 정확도<br>
+                                        256x256이 성능과 속도의 균형점입니다.
+                                    </div>
+                                </i>
+                            </label>
+                            <select class="form-select" id="imageSize">
+                                <option value="224">224x224</option>
+                                <option value="256" selected>256x256</option>
+                                <option value="320">320x320</option>
+                                <option value="512">512x512</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 데이터 분할 설정 -->
+                <div class="config-section" style="margin-top: 2rem;">
+                    <h3 class="section-title">
+                        <i class="fas fa-chart-pie"></i>
+                        데이터 분할 설정
+                        <i class="fas fa-question-circle help-icon">
+                            <div class="tooltip">
+                                전체 데이터를 용도별로 나누는 비율입니다.<br>
+                                • 학습용: 모델을 훈련시키는 데이터<br>
+                                • 검증용: 학습 중 성능을 확인하는 데이터<br>
+                                • 테스트용: 최종 성능을 평가하는 데이터<br>
+                                합계는 항상 100%가 됩니다.
+                            </div>
+                        </i>
+                    </h3>
+                    <div class="data-split-grid">
+                        <div class="form-group">
+                            <label class="form-label">학습 데이터</label>
+                            <div class="range-input-group">
+                                <input type="range" class="form-range" id="trainRatioSlider" min="0.5" max="0.9" step="0.05" value="0.7
+                                <div class="range-input-group">
+                                <input type="range" class="form-range" id="trainRatioSlider" min="0.5" max="0.9" step="0.05" value="0.7">
+                                <input type="number" class="range-input" id="trainRatioInput" min="0.5" max="0.9" step="0.05" value="0.7">
+                            </div>
+                            <div class="split-item">
+                                <div class="split-percentage" id="trainPercentage">70%</div>
+                                <div class="split-label">학습</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">검증 데이터</label>
+                            <div class="range-input-group">
+                                <input type="range" class="form-range" id="valRatioSlider" min="0.1" max="0.4" step="0.05" value="0.2">
+                                <input type="number" class="range-input" id="valRatioInput" min="0.1" max="0.4" step="0.05" value="0.2">
+                            </div>
+                            <div class="split-item">
+                                <div class="split-percentage" id="valPercentage">20%</div>
+                                <div class="split-label">검증</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">테스트 데이터</label>
+                            <div class="split-item" style="margin-top: 2rem;">
+                                <div class="split-percentage" id="testPercentage">10%</div>
+                                <div class="split-label">테스트 (자동 계산)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 학습 시작 버튼 -->
+                <div style="margin-top: 2rem; text-align: center;">
+                    <button class="btn btn-success" onclick="startTraining()" id="startBtn" style="padding: 1rem 2rem; font-size: 1rem;">
+                        <i class="fas fa-play"></i> 학습 시작
+                    </button>
+                    <button class="btn btn-danger" onclick="stopTraining()" id="stopBtn" style="padding: 1rem 2rem; font-size: 1rem; display: none;">
+                        <i class="fas fa-stop"></i> 학습 중단
+                    </button>
+                </div>
+            </section>
+
+            <!-- 현재 학습 상태 -->
+            <section class="training-status">
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-chart-line"></i>
+                            현재 학습 상태
+                        </h3>
+                        <span class="status-badge status-idle" id="statusBadge">대기중</span>
+                    </div>
+                    
+                    <div id="trainingInfo" style="display: none;">
+                        <p><strong>모델:</strong> <span id="currentModel">-</span></p>
+                        <p><strong>데이터셋:</strong> <span id="currentDataset">-</span></p>
+                        <p><strong>시작 시간:</strong> <span id="startTime">-</span></p>
+                        
+                        <div class="progress-section">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span id="progressText">0%</span>
+                                <span id="etaText">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="idleState">
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h4>학습 대기 중</h4>
+                            <p>학습을 시작하려면 위에서 설정을 구성하고 시작 버튼을 클릭하세요</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 학습 기록 -->
+            <section class="training-history">
+                <div class="history-card">
+                    <h3 class="section-title">
+                        <i class="fas fa-history"></i>
+                        학습 기록
+                    </h3>
+                    
+                    <div id="historyList">
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h4>학습 기록이 없습니다</h4>
+                            <p>첫 번째 모델 학습을 시작해보세요</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // 슬라이더와 입력 필드 동기화 함수
+        function syncSliderAndInput(sliderId, inputId, callback) {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+            
+            slider.addEventListener('input', function() {
+                input.value = this.value;
+                if (callback) callback();
+            });
+            
+            input.addEventListener('input', function() {
+                slider.value = this.value;
+                if (callback) callback();
+            });
+        }
+
+        // 데이터 분할 비율 업데이트
+        function updateDataSplitRatios() {
+            const trainRatio = parseFloat(document.getElementById('trainRatioInput').value);
+            const valRatio = parseFloat(document.getElementById('valRatioInput').value);
+            const testRatio = Math.max(0, 1.0 - trainRatio - valRatio);
+            
+            // 비율 검증 및 조정
+            if (trainRatio + valRatio > 1.0) {
+                const adjustedValRatio = 1.0 - trainRatio;
+                document.getElementById('valRatioSlider').value = adjustedValRatio;
+                document.getElementById('valRatioInput').value = adjustedValRatio;
+            }
+            
+            // 퍼센티지 표시 업데이트
+            document.getElementById('trainPercentage').textContent = (trainRatio * 100).toFixed(0) + '%';
+            document.getElementById('valPercentage').textContent = (parseFloat(document.getElementById('valRatioInput').value) * 100).toFixed(0) + '%';
+            document.getElementById('testPercentage').textContent = (testRatio * 100).toFixed(0) + '%';
+        }
+
+        // 이벤트 리스너 추가
+        document.addEventListener('DOMContentLoaded', function() {
+            // 슬라이더와 입력 필드 동기화
+            syncSliderAndInput('learningRateSlider', 'learningRateInput');
+            syncSliderAndInput('samplingRatioSlider', 'samplingRatioInput');
+            syncSliderAndInput('trainRatioSlider', 'trainRatioInput', updateDataSplitRatios);
+            syncSliderAndInput('valRatioSlider', 'valRatioInput', updateDataSplitRatios);
+            
+            // 초기 표시 업데이트
+            updateDataSplitRatios();
+            
+            // 데이터셋 목록 로드
+            loadDatasets();
+        });
+
+        function loadDatasets() {
+            // 실제 구현에서는 API에서 데이터셋 목록을 가져옴
+            fetch('/datasets')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('datasetSelect');
+                    select.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
+                    
+                    data.datasets.forEach(dataset => {
+                        const option = document.createElement('option');
+                        option.value = dataset.name;
+                        option.textContent = `${dataset.name} (${dataset.image_count}개 이미지)`;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('데이터셋 목록 로드 실패:', error);
+                });
+        }
+
+        function refreshTraining() {
+            console.log('학습 상태 새로고침');
+            
+            // 서버에서 현재 학습 상태 가져오기
+            fetch('/training/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_training_active) {
+                        // 학습 진행 중인 경우
+                        document.getElementById('startBtn').style.display = 'none';
+                        document.getElementById('stopBtn').style.display = 'inline-flex';
+                        document.getElementById('statusBadge').textContent = '학습중';
+                        document.getElementById('statusBadge').className = 'status-badge status-training';
+                        document.getElementById('trainingInfo').style.display = 'block';
+                        document.getElementById('idleState').style.display = 'none';
+                        
+                        // 진행률 업데이트
+                        const progress = data.current_training?.progress || 0;
+                        document.getElementById('progressFill').style.width = progress + '%';
+                        document.getElementById('progressText').textContent = progress + '%';
+                    } else {
+                        // 학습 대기 상태
+                        document.getElementById('startBtn').style.display = 'inline-flex';
+                        document.getElementById('stopBtn').style.display = 'none';
+                        document.getElementById('statusBadge').textContent = '대기중';
+                        document.getElementById('statusBadge').className = 'status-badge status-idle';
+                        document.getElementById('trainingInfo').style.display = 'none';
+                        document.getElementById('idleState').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('학습 상태 새로고침 실패:', error);
+                });
+        }
+
+        function startTraining() {
+            const config = {
+                dataset_name: document.getElementById('datasetSelect').value,
+                backbone: document.getElementById('backboneSelect').value,
+                training_type: document.getElementById('trainingType').value,
+                epochs: parseInt(document.getElementById('epochs').value),
+                learning_rate: parseFloat(document.getElementById('learningRateInput').value),
+                batch_size: parseInt(document.getElementById('batchSize').value),
+                sampling_ratio: parseFloat(document.getElementById('samplingRatioInput').value),
+                image_size: parseInt(document.getElementById('imageSize').value),
+                train_ratio: parseFloat(document.getElementById('trainRatioInput').value),
+                val_ratio: parseFloat(document.getElementById('valRatioInput').value)
+            };
+            
+            if (!config.dataset_name) {
+                alert('데이터셋을 선택해주세요.');
+                return;
+            }
+            
+            console.log('학습 시작:', config);
+            
+            // 서버로 학습 시작 요청
+            fetch('/training/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // UI 업데이트
+                    document.getElementById('startBtn').style.display = 'none';
+                    document.getElementById('stopBtn').style.display = 'inline-flex';
+                    document.getElementById('statusBadge').textContent = '학습중';
+                    document.getElementById('statusBadge').className = 'status-badge status-training';
+                    document.getElementById('trainingInfo').style.display = 'block';
+                    document.getElementById('idleState').style.display = 'none';
+                    
+                    // 학습 정보 업데이트
+                    document.getElementById('currentModel').textContent = config.backbone;
+                    document.getElementById('currentDataset').textContent = config.dataset_name;
+                    document.getElementById('startTime').textContent = new Date().toLocaleString();
+                    
+                    alert('학습이 시작되었습니다.');
+                } else {
+                    alert('학습 시작 실패: ' + (data.error || data.message));
+                }
+            })
+            .catch(error => {
+                console.error('학습 시작 실패:', error);
+                alert('학습 시작 중 오류가 발생했습니다.');
+            });
+        }
+
+        function stopTraining() {
+            if (confirm('학습을 중단하시겠습니까?')) {
+                console.log('학습 중단');
+                
+                // 서버로 학습 중단 요청
+                fetch('/training/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // UI 업데이트
+                        document.getElementById('startBtn').style.display = 'inline-flex';
+                        document.getElementById('stopBtn').style.display = 'none';
+                        document.getElementById('statusBadge').textContent = '대기중';
+                        document.getElementById('statusBadge').className = 'status-badge status-idle';
+                        document.getElementById('trainingInfo').style.display = 'none';
+                        document.getElementById('idleState').style.display = 'block';
+                        
+                        alert('학습이 중단되었습니다.');
+                    } else {
+                        alert('학습 중단 실패: ' + (data.error || data.message));
+                    }
+                })
+                .catch(error => {
+                    console.error('학습 중단 실패:', error);
+                    alert('학습 중단 중 오류가 발생했습니다.');
+                });
+            }
+        }
+
+        // 페이지 로드 시 학습 상태 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshTraining();
+        });
+    </script>
+</body>
+</html>

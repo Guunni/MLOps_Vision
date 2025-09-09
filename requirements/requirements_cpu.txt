@@ -1,0 +1,12 @@
+# requirements/requirements_cpu.txt
+# CPU 환경에서 사용할 라이브러리들
+# 기본 라이브러리들을 먼저 설치한 후에 이 파일을 사용하세요
+
+# PyTorch 공식 CPU 저장소에서 설치
+--find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+torch
+torchvision
+torchaudio
+
+# CPU 전용 FAISS
+faiss-cpu>=1.7.0

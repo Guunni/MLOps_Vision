@@ -1,0 +1,4 @@
+기본 설치
+python install_requirements.py
+개발 도구 설치
+python install_requirements.py --dev
