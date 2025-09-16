@@ -679,7 +679,7 @@
         }
 
         .performance-section {
-            display: none;
+            display: block;
             margin-top: 2rem;
         }
 
@@ -745,7 +745,7 @@
                     <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
                 </a></li>
                 <li><a href="/ui/projects" class="nav-link">
-                    <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트 관리</span>
+                    <i class="fas fa-folder-open"></i> <span class="nav-text">데이터 셋</span>
                 </a></li>
                 <li><a href="/ui/training" class="nav-link">
                     <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
@@ -1141,6 +1141,17 @@
             }
             
             updateSelectedCount();
+        }
+
+        function initializeDefaultRadarChart() {
+            // 개별 성능 분석 섹션을 기본적으로 표시
+            const individualSection = document.getElementById('individualPerformance');
+            if (individualSection) {
+                individualSection.style.display = 'block';
+            }
+            
+            // 기본 빈 레이더 차트 생성
+            createEmptyRadarChart();
         }
 
         let confirmCallback = null;
@@ -2030,6 +2041,7 @@
         // Initialization
         document.addEventListener('DOMContentLoaded', function() {
             loadModels();
+            initializeDefaultRadarChart();
         });
     </script>
 </body>
