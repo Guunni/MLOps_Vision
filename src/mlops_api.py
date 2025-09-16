@@ -17,6 +17,9 @@ import tempfile
 import shutil
 from datetime import datetime
 import threading
+import threading
+import sqlite3
+import uuid
 
 # 우리가 만든 모듈들 import
 from patchcore_manager import PatchCoreManager
@@ -35,7 +38,7 @@ logger = logging.getLogger(__name__)
 # FastAPI 앱 생성
 app = FastAPI(
     title="MLOps Vision Platform",
-    description="PatchCore 기반 Vision 검사 MLOps 통합 플랫폼",
+    description="Vision 검사 MLOps 통합 플랫폼",
     version="1.0.0"
 )
 
@@ -48,6 +51,56 @@ patchcore_manager = PatchCoreManager()
 dataset_manager = DatasetManager()
 trainer = PatchCoreTrainer()
 model_manager = PatchCoreModelManager()
+
+def init_database():
+    """데이터베이스 초기화"""
+    conn = sqlite3.connect('mlops_vision.db')
+    cursor = conn.cursor()
+    
+    # 프로젝트 테이블 생성
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS projects (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # 데이터셋 테이블 (프로젝트 연결)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS project_datasets (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            path TEXT NOT NULL,
+            image_count INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (project_id) REFERENCES projects (id)
+        )
+    ''')
+    
+    # 모델 테이블 (프로젝트 연결)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS project_models (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            dataset_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            backbone TEXT,
+            performance_data TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (project_id) REFERENCES projects (id),
+            FOREIGN KEY (dataset_id) REFERENCES project_datasets (id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+# 애플리케이션 시작 시 DB 초기화
+init_database()
 
 # Pydantic 모델 정의 (API 요청/응답 스키마)
 class TrainingConfigModel(BaseModel):
@@ -107,6 +160,11 @@ async def get_training_page(request: Request):
 async def get_models_page(request: Request):
     """모델 관리 페이지"""
     return templates.TemplateResponse("models.html", {"request": request})
+
+@app.get("/ui/projects", response_class=HTMLResponse)
+async def get_projects_page(request: Request):
+    """프로젝트 관리 페이지"""
+    return templates.TemplateResponse("projects.html", {"request": request})
 
 @app.get("/ui/monitoring", response_class=HTMLResponse)
 async def get_monitoring_page(request: Request):
@@ -267,6 +325,230 @@ async def force_reinstall_system():
         raise HTTPException(status_code=500, detail=str(e))
 
 # =============================================================================
+# 프로젝트 관리 API
+# =============================================================================
+
+@app.get("/api/projects")
+async def get_projects():
+    """모든 프로젝트 목록 조회"""
+    try:
+        conn = sqlite3.connect('mlops_vision.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT p.*, 
+                   COUNT(DISTINCT pd.id) as dataset_count,
+                   COUNT(DISTINCT pm.id) as model_count
+            FROM projects p
+            LEFT JOIN project_datasets pd ON p.id = pd.project_id
+            LEFT JOIN project_models pm ON p.id = pm.project_id
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+        ''')
+        
+        rows = cursor.fetchall()
+        projects = []
+        
+        for row in rows:
+            projects.append({
+                "id": row[0],
+                "name": row[1],
+                "description": row[2],
+                "created_at": row[3],
+                "updated_at": row[4],
+                "dataset_count": row[5],
+                "model_count": row[6]
+            })
+        
+        conn.close()
+        return {"success": True, "projects": projects}
+        
+    except Exception as e:
+        logger.error(f"프로젝트 목록 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/projects")
+async def create_project(project_data: dict):
+    """새 프로젝트 생성"""
+    try:
+        project_name = project_data.get("name")
+        project_description = project_data.get("description", "")
+        
+        if not project_name:
+            raise HTTPException(status_code=400, detail="프로젝트 이름이 필요합니다")
+        
+        project_id = str(uuid.uuid4())
+        
+        conn = sqlite3.connect('mlops_vision.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO projects (id, name, description)
+            VALUES (?, ?, ?)
+        ''', (project_id, project_name, project_description))
+        
+        conn.commit()
+        
+        # 생성된 프로젝트 정보 반환
+        cursor.execute('SELECT * FROM projects WHERE id = ?', (project_id,))
+        row = cursor.fetchone()
+        
+        project = {
+            "id": row[0],
+            "name": row[1],
+            "description": row[2],
+            "created_at": row[3],
+            "updated_at": row[4],
+            "dataset_count": 0,
+            "model_count": 0
+        }
+        
+        conn.close()
+        return {"success": True, "project": project}
+        
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="이미 존재하는 프로젝트 이름입니다")
+    except Exception as e:
+        logger.error(f"프로젝트 생성 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/projects/{project_id}")
+async def update_project(project_id: str, project_data: dict):
+    """프로젝트 정보 수정"""
+    try:
+        project_name = project_data.get("name")
+        project_description = project_data.get("description", "")
+        
+        if not project_name:
+            raise HTTPException(status_code=400, detail="프로젝트 이름이 필요합니다")
+        
+        conn = sqlite3.connect('mlops_vision.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE projects 
+            SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (project_name, project_description, project_id))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
+        
+        conn.commit()
+        
+        # 수정된 프로젝트 정보 반환
+        cursor.execute('SELECT * FROM projects WHERE id = ?', (project_id,))
+        row = cursor.fetchone()
+        
+        project = {
+            "id": row[0],
+            "name": row[1],
+            "description": row[2],
+            "created_at": row[3],
+            "updated_at": row[4]
+        }
+        
+        conn.close()
+        return {"success": True, "project": project}
+        
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="이미 존재하는 프로젝트 이름입니다")
+    except Exception as e:
+        logger.error(f"프로젝트 수정 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/projects/{project_id}")
+async def delete_project(project_id: str):
+    """프로젝트 삭제"""
+    try:
+        conn = sqlite3.connect('mlops_vision.db')
+        cursor = conn.cursor()
+        
+        # 프로젝트 존재 확인
+        cursor.execute('SELECT name FROM projects WHERE id = ?', (project_id,))
+        project = cursor.fetchone()
+        
+        if not project:
+            conn.close()
+            raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
+        
+        # 관련 데이터 삭제 (모델 -> 데이터셋 -> 프로젝트 순)
+        cursor.execute('DELETE FROM project_models WHERE project_id = ?', (project_id,))
+        cursor.execute('DELETE FROM project_datasets WHERE project_id = ?', (project_id,))
+        cursor.execute('DELETE FROM projects WHERE id = ?', (project_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return {"success": True, "message": f"프로젝트 '{project[0]}'가 삭제되었습니다"}
+        
+    except Exception as e:
+        logger.error(f"프로젝트 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/projects/{project_id}")
+async def get_project_detail(project_id: str):
+    """프로젝트 상세 정보 조회"""
+    try:
+        conn = sqlite3.connect('mlops_vision.db')
+        cursor = conn.cursor()
+        
+        # 프로젝트 기본 정보
+        cursor.execute('SELECT * FROM projects WHERE id = ?', (project_id,))
+        project_row = cursor.fetchone()
+        
+        if not project_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
+        
+        # 데이터셋 목록
+        cursor.execute('SELECT * FROM project_datasets WHERE project_id = ?', (project_id,))
+        dataset_rows = cursor.fetchall()
+        
+        datasets = []
+        for row in dataset_rows:
+            datasets.append({
+                "id": row[0],
+                "name": row[2],
+                "path": row[3],
+                "image_count": row[4],
+                "created_at": row[5]
+            })
+        
+        # 모델 목록
+        cursor.execute('SELECT * FROM project_models WHERE project_id = ?', (project_id,))
+        model_rows = cursor.fetchall()
+        
+        models = []
+        for row in model_rows:
+            models.append({
+                "id": row[0],
+                "dataset_id": row[2],
+                "name": row[3],
+                "backbone": row[4],
+                "performance_data": json.loads(row[5]) if row[5] else {},
+                "created_at": row[6]
+            })
+        
+        project = {
+            "id": project_row[0],
+            "name": project_row[1],
+            "description": project_row[2],
+            "created_at": project_row[3],
+            "updated_at": project_row[4],
+            "datasets": datasets,
+            "models": models
+        }
+        
+        conn.close()
+        return {"success": True, "project": project}
+        
+    except Exception as e:
+        logger.error(f"프로젝트 상세 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# =============================================================================
 # 데이터셋 관리 API
 # =============================================================================
 
@@ -331,7 +613,7 @@ async def get_dataset_info(dataset_name: str):
         raise
     except Exception as e:
         logger.error(f"데이터셋 정보 조회 실패: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) 
 
 # =============================================================================
 # 학습 관리 API
