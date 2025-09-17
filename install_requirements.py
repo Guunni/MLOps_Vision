@@ -211,7 +211,8 @@ def install_dev_packages():
         "jupyterlab>=4.0.0", 
         "black>=23.0.0",
         "pytest>=7.0.0",
-        "plotly>=5.15.0"
+        "plotly>=5.15.0",
+        "GitPython>=3.0.0"
     ]
     
     success_count = 0
