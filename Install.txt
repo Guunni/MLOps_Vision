@@ -10,5 +10,17 @@ python install_requirements.py --force-cpu --dev
 # 기본 패키지 건너뛰고 PyTorch만
 python install_requirements.py --skip-base
 
-가상 환경 사용
+# 검증
+python install_validation.py
+
+# 가상 환경 사용
 venv_mlops_vision\Scripts\activate
+
+# git 사용법
+git branch - branch 확인
+git status - 작업내용(변경사항) 확인
+git add. - 변경사항 전체 추가
+git add 파일이름 - 추가할 파일이름
+git commit -m "내용" - 커밋 작성
+git push - git 업로드
+git git push origin main - 처음 push 할 때

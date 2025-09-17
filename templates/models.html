@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MLOps Vision Platform - 성능 지표 (수정본)</title>
+    <title>MLOps Vision Platform - 성능 지표</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -669,6 +669,63 @@
             color: var(--text-secondary);
         }
 
+        .performance-section.show {
+            display: block;
+        }
+        
+        /* 다음 스타일들 추가 */
+        .breadcrumb-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+        }
+
+        .header-title-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .project-selector {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            min-width: 200px;
+            font-size: 0.875rem;
+        }
+
+        .project-selector:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.1);
+        }
+
         /* 새로운 레이아웃 구조 */
         .unified-content {
             display: block;
@@ -685,6 +742,10 @@
 
         .performance-section.show {
             display: block;
+        }
+
+        #comparisonPerformance {
+            display: none;
         }
 
         /* 반응형 디자인 */
@@ -745,7 +806,10 @@
                     <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
                 </a></li>
                 <li><a href="/ui/projects" class="nav-link">
-                    <i class="fas fa-folder-open"></i> <span class="nav-text">데이터 셋</span>
+                    <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트</span>
+                </a></li>
+                <li><a href="/ui/datasets" class="nav-link">
+                    <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
                 </a></li>
                 <li><a href="/ui/training" class="nav-link">
                     <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
@@ -763,7 +827,23 @@
         <main class="main-content">
             <!-- 헤더 -->
             <header class="content-header">
-                <h1>성능 지표</h1>
+                <div class="breadcrumb-container">
+                    <nav class="breadcrumb" id="breadcrumbNav">
+                        <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <a href="/ui/projects" class="breadcrumb-item">프로젝트</a>
+                        <span class="breadcrumb-separator" id="projectSeparator" style="display: none;">/</span>
+                        <span class="breadcrumb-item" id="selectedProjectBreadcrumb" style="display: none;"></span>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-item active">성능 지표</span>
+                    </nav>
+                    <div class="header-title-section">
+                        <h1>성능 지표</h1>
+                        <select id="projectSelector" class="project-selector">
+                            <option value="">모든 프로젝트</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="header-actions">
                     <button class="btn btn-warning" onclick="exportScreenData()">
                         <i class="fas fa-cube"></i> 데이터 내보내기
@@ -869,8 +949,8 @@
                                             <div class="metric-label-large">
                                                 정확도
                                                 <div class="metric-tooltip">
-                                                    전체 예측 중에서 올바르게 맞춘 비율입니다.<br>
-                                                    정확도 = (올바른 예측 수) / (전체 예측 수)<br>
+                                                    전체 예측 중 올바르게 맞춘 비율입니다.<br>
+                                                    정확도 = (올바른 예측) / (전체 예측)<br>
                                                     높을수록 모델이 정확합니다.
                                                 </div>
                                             </div>
@@ -891,7 +971,8 @@
                                             <div class="metric-label-large">
                                                 Precision
                                                 <div class="metric-tooltip">
-                                                    모델이 양성으로 예측한 것 중 실제 양성인 비율입니다.<br>
+                                                    모델이 양성으로 예측한 것 중<br>
+                                                    실제 양성인 비율입니다.<br>
                                                     Precision = 참양성 / (참양성 + 거짓양성)<br>
                                                     거짓 경보를 줄이는 데 중요합니다.
                                                 </div>
@@ -902,7 +983,8 @@
                                             <div class="metric-label-large">
                                                 Recall
                                                 <div class="metric-tooltip">
-                                                    실제 양성 중에서 모델이 올바르게 찾아낸 비율입니다.<br>
+                                                    실제 양성 중에서 모델이 올바르게<br>
+                                                    찾아낸 비율입니다.<br>
                                                     Recall = 참양성 / (참양성 + 거짓음성)<br>
                                                     놓치는 것을 줄이는 데 중요합니다.
                                                 </div>
@@ -941,7 +1023,7 @@
                         <div>
                             <div style="font-weight: 500;">.pth (PyTorch)</div>
                             <div style="font-size: 0.875rem; color: var(--text-secondary);">PyTorch 표준 형식</div>
-                        </div>
+                        </div>*
                     </div>
                 </div>
                 <div class="progress-container" id="exportProgressContainer">
@@ -1064,6 +1146,8 @@
         let selectedExportFormat = '';
         let selectedDataExportFormat = '';
         let selectedUploadFormat = '';
+        let projects = [];
+        let selectedProjectId = null;
 
         // localStorage를 사용한 데이터 유지
         const STORAGE_KEY = 'mlops_models_data';
@@ -1143,11 +1227,112 @@
             updateSelectedCount();
         }
 
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function setURLParameter(name, value) {
+            const url = new URL(window.location);
+            if (value) {
+                url.searchParams.set(name, value);
+            } else {
+                url.searchParams.delete(name);
+            }
+            window.history.pushState({}, '', url);
+        }
+
+        // 페이지 로드 시 URL에서 프로젝트 ID 확인
+        function initializeFromURL() {
+            const projectId = getURLParameter('project');
+            if (projectId) {
+                selectedProjectId = projectId;
+                document.getElementById('projectSelector').value = projectId;
+                
+                // 프로젝트가 로드된 후 URL에서 가져온 프로젝트 선택
+                setTimeout(() => {
+                    const project = projects.find(p => p.id === projectId);
+                    if (project) {
+                        updateBreadcrumb(project.name);
+                        // 프로젝트별 모델 필터링 로직
+                        onProjectSelect(projectId);
+                    }
+                }, 500);
+            }
+        }
+
+        // 브레드크럼 업데이트 함수
+        function updateBreadcrumb(projectName) {
+            const projectSeparator = document.getElementById('projectSeparator');
+            const projectBreadcrumb = document.getElementById('selectedProjectBreadcrumb');
+            
+            if (projectName) {
+                projectSeparator.style.display = 'inline';
+                projectBreadcrumb.style.display = 'inline';
+                projectBreadcrumb.textContent = projectName;
+            } else {
+                projectSeparator.style.display = 'none';
+                projectBreadcrumb.style.display = 'none';
+            }
+        }
+
+        // 프로젝트 목록 로드
+        function loadProjects() {
+            fetch('/api/projects')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        projects = data.projects;
+                        updateProjectSelector();
+                    }
+                })
+                .catch(error => console.error('프로젝트 목록 로드 실패:', error));
+        }
+
+        // 프로젝트 선택기 업데이트
+        function updateProjectSelector() {
+            const selector = document.getElementById('projectSelector');
+            if (selector) {
+                selector.innerHTML = '<option value="">모든 프로젝트</option>';
+                
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    selector.appendChild(option);
+                });
+            }
+        }
+
+        // 프로젝트 선택 시 필터링
+        function onProjectSelect(projectId) {
+            selectedProjectId = projectId;
+            
+            // URL 파라미터 업데이트
+            setURLParameter('project', projectId);
+            
+            if (projectId) {
+                const project = projects.find(p => p.id === projectId);
+                if (project) {
+                    updateBreadcrumb(project.name);
+                    // 프로젝트별 모델 필터링 로직 추가 예정
+                }
+            } else {
+                updateBreadcrumb(null);
+                // 전체 모델 표시
+            }
+        }
+
         function initializeDefaultRadarChart() {
-            // 개별 성능 분석 섹션을 기본적으로 표시
+            // 개별 성능 분석 섹션만 기본 표시
             const individualSection = document.getElementById('individualPerformance');
+            const comparisonSection = document.getElementById('comparisonPerformance');
+            
             if (individualSection) {
                 individualSection.style.display = 'block';
+            }
+            if (comparisonSection) {
+                comparisonSection.style.display = 'none';
             }
             
             // 기본 빈 레이더 차트 생성
@@ -2040,8 +2225,19 @@
 
         // Initialization
         document.addEventListener('DOMContentLoaded', function() {
+            loadProjects();
             loadModels();
             initializeDefaultRadarChart();
+            
+            // URL에서 초기화
+            setTimeout(() => {
+                initializeFromURL();
+            }, 1000);
+            
+            // 프로젝트 선택 이벤트 리스너
+            document.getElementById('projectSelector').addEventListener('change', function() {
+                onProjectSelect(this.value);
+            });
         });
     </script>
 </body>

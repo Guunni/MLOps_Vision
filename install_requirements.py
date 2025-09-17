@@ -107,7 +107,8 @@ def install_base_packages():
         "opencv-python>=4.8.0",
         "tqdm>=4.65.0",
         "fastapi>=0.100.0",
-        "uvicorn>=0.23.0"
+        "uvicorn>=0.23.0",
+        "python-multipart>=0.0.6"
     ]
     
     print("📋 기본 패키지 목록:")
@@ -223,7 +224,104 @@ def install_dev_packages():
     print(f"📊 개발 도구: {success_count}/{len(dev_packages)} 설치 완료")
     return success_count > 0
 
-def create_requirements_directory():
+def validate_environment():
+    """설치된 환경을 검증합니다."""
+    print("\n" + "="*50)
+    print("🔍 MLOps Vision 환경 검증 시작")
+    print("="*50)
+    
+    validation_results = []
+    
+    # 1. 기본 라이브러리 확인
+    try:
+        import numpy as np
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        print('✅ 기본 과학 계산 라이브러리: 정상')
+        validation_results.append(True)
+    except ImportError as e:
+        print(f'❌ 기본 라이브러리 오류: {e}')
+        validation_results.append(False)
+
+    # 2. 이미지 처리 라이브러리 확인
+    try:
+        import cv2
+        from PIL import Image
+        print('✅ 이미지 처리 라이브러리: 정상')
+        validation_results.append(True)
+    except ImportError as e:
+        print(f'❌ 이미지 처리 라이브러리 오류: {e}')
+        validation_results.append(False)
+
+    # 3. PyTorch 환경 확인
+    try:
+        import torch
+        import torchvision
+        print(f'✅ PyTorch {torch.__version__}: 정상')
+        print(f'   CUDA 사용 가능: {torch.cuda.is_available()}')
+        if torch.cuda.is_available():
+            print(f'   GPU 장치 수: {torch.cuda.device_count()}')
+        else:
+            print('   CPU 모드로 실행됩니다')
+        validation_results.append(True)
+    except ImportError as e:
+        print(f'❌ PyTorch 오류: {e}')
+        validation_results.append(False)
+
+    # 4. FAISS 라이브러리 확인
+    try:
+        import faiss
+        print('✅ FAISS 라이브러리: 정상')
+        
+        # FAISS 기능 테스트
+        import numpy as np
+        test_vectors = np.random.random((100, 64)).astype('float32')
+        index = faiss.IndexFlatL2(64)
+        index.add(test_vectors)
+        print(f'   FAISS 인덱스 테스트: {index.ntotal}개 벡터 저장 성공')
+        validation_results.append(True)
+    except ImportError as e:
+        print(f'❌ FAISS 오류: {e}')
+        validation_results.append(False)
+    except Exception as e:
+        print(f'❌ FAISS 기능 테스트 실패: {e}')
+        validation_results.append(False)
+
+    # 5. 웹 API 라이브러리 확인
+    try:
+        import fastapi
+        import uvicorn
+        print('✅ 웹 API 라이브러리: 정상')
+        validation_results.append(True)
+    except ImportError as e:
+        print(f'❌ 웹 API 라이브러리 오류: {e}')
+        validation_results.append(False)
+
+    # 6. 시각화 라이브러리 확인
+    try:
+        import plotly
+        import sklearn
+        print('✅ 시각화 및 ML 라이브러리: 정상')
+        validation_results.append(True)
+    except ImportError as e:
+        print(f'❌ 시각화 라이브러리 오류: {e}')
+        validation_results.append(False)
+
+    # 검증 결과 요약
+    success_count = sum(validation_results)
+    total_count = len(validation_results)
+    
+    print("\n" + "="*50)
+    print(f"📊 검증 결과: {success_count}/{total_count} 통과")
+    
+    if success_count == total_count:
+        print('🎉 모든 환경 검증이 완료되었습니다!')
+        print('이제 PatchCore 구현을 시작할 준비가 되었습니다.')
+        return True
+    else:
+        print('⚠️ 일부 라이브러리에 문제가 있습니다.')
+        print('누락된 패키지를 다시 설치해주세요.')
+        return False
     """requirements 디렉토리를 생성합니다."""
     req_dir = Path('requirements')
     req_dir.mkdir(exist_ok=True)
@@ -247,6 +345,8 @@ def main():
                        help='개발용 도구들도 함께 설치')
     parser.add_argument('--skip-base', action='store_true',
                        help='기본 패키지 설치 건너뛰기 (이미 설치된 경우)')
+    parser.add_argument('--validate', action='store_true',
+                       help='설치 후 환경 검증 실행')
     parser.add_argument('--use-files', action='store_true',
                        help='requirements 파일 사용 (있는 경우)')
     args = parser.parse_args()
@@ -328,11 +428,23 @@ def main():
     print(f"   • PyTorch: {'🎮 GPU 버전' if use_gpu else '🖥️ CPU 버전'}")
     print(f"   • 개발 도구: {'✅' if args.dev else '❌'}")
     
+    # 7단계: 환경 검증 (선택사항)
+    if args.validate:
+        print_step("검증", "환경 검증")
+        validation_success = validate_environment()
+        if not validation_success:
+            print("\n🔧 문제 해결 방법:")
+            print("   1. 가상환경이 활성화되어 있는지 확인")
+            print("   2. 'python install_requirements.py --dev' 재실행")
+            print("   3. 개별 패키지 수동 설치 시도")
+    
     print("\n🔧 다음 단계:")
     print("   1. 'python -c \"import torch; print(torch.__version__)\"' 로 설치 확인")
     if use_gpu:
         print("   2. 'python -c \"import torch; print(torch.cuda.is_available())\"' 로 CUDA 확인")
-    print("   3. 'python -c \"import numpy, pandas, cv2; print('모든 라이브러리 OK')\"' 로 전체 확인")
+    print("   3. 'python install_validation.py' 로 전체 환경 검증")
+    if not args.validate:
+        print("   4. 또는 'python install_requirements.py --validate' 로 설치+검증 한번에")
 
 if __name__ == '__main__':
     main()

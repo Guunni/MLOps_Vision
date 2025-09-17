@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps Vision Platform - 프로젝트</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #475569;
+            --secondary-color: #64748b;
+            --accent-color: #0f172a;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --info-color: #2563eb;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --sidebar-width-collapsed: 60px;
+            --sidebar-width: 260px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 사이드바 */
+        .sidebar {
+            width: var(--sidebar-width-collapsed);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 1000;
+            transition: width 0.3s ease;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar:hover {
+            width: var(--sidebar-width);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.1);
+            position: relative;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f8fafc;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.3s;
+            white-space: nowrap;
+            position: absolute;
+            left: 1.5rem;
+        }
+
+        .sidebar:hover .sidebar-header h2 {
+            opacity: 1;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .nav-menu li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(248, 250, 252, 0.8);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+            white-space: nowrap;
+            height: 50px;
+            position: relative;
+        }
+
+        .sidebar:not(:hover) .nav-link {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar:hover .nav-link {
+            justify-content: flex-start;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(248, 250, 252, 0.1);
+            color: #f8fafc;
+            border-left-color: rgba(248, 250, 252, 0.4);
+        }
+
+        .nav-link.active {
+            background-color: rgba(248, 250, 252, 0.15);
+            color: #f8fafc;
+            border-left-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            width: 1.25rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .nav-text {
+            display: none;
+        }
+
+        .sidebar:hover .nav-text {
+            display: inline;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width-collapsed);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-header {
+            background: var(--bg-secondary);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .breadcrumb-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+        }
+
+        .header-title-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-title-section h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: rgba(71, 85, 105, 0.05);
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* 메인 컨텐츠 영역 */
+        .content-body {
+            padding: 2rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        /* 섹션 스타일 */
+        .form-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .project-datasets {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: rgba(71, 85, 105, 0.05);
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        /* 프로젝트 카드 그리드 */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .project-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .project-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.1);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .project-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .project-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .status-active {
+            background-color: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-paused {
+            background-color: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
+        }
+
+        .status-completed {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--info-color);
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .project-status-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
+        }
+
+        .dataset-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .project-datasets {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(71, 85, 105, 0.05);
+            border-radius: var(--radius-md);
+        }
+
+        .datasets-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }      
+
+        .dataset-name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .dataset-type {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .datasets-table {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .dataset-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+        }
+
+        .dataset-row:last-child {
+            border-bottom: none;
+        }
+
+        .dataset-row:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .dataset-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .dataset-type {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .dataset-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        .dataset-more-row {
+            padding: 0.5rem;
+            text-align: center;
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .dataset-more-row:hover {
+            background: rgba(71, 85, 105, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .dataset-date {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .dataset-more {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border: 1px dashed var(--border-color);
+        }        
+
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90%;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.1);
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 1024px) {
+            .projects-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .content-header {
+                padding: 1rem;
+            }
+            
+            .content-body {
+                padding: 1rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 네비게이션 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>MLOps Vision</h2>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
+                </a></li>
+                <li><a href="/ui/projects" class="nav-link active">
+                    <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트</span>
+                </a></li>
+                <li><a href="/ui/datasets" class="nav-link">
+                    <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
+                </a></li>
+                <li><a href="/ui/training" class="nav-link">
+                    <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
+                </a></li>
+                <li><a href="/ui/models" class="nav-link">
+                    <i class="fas fa-chart-bar"></i> <span class="nav-text">성능 지표</span>
+                </a></li>
+                <li><a href="/ui/monitoring" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main class="main-content">
+            <!-- 헤더 -->
+            <header class="content-header">
+                <div class="breadcrumb-container">
+                    <nav class="breadcrumb">
+                        <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-item active">프로젝트</span>
+                    </nav>
+                    <div class="header-title-section">
+                        <h1>프로젝트</h1>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 메인 컨텐츠 -->
+            <section class="content-body">
+                <div class="content-grid">
+                    <!-- 프로젝트 목록 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-folder-open"></i>
+                            프로젝트 목록
+                            <span style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary); font-weight: normal;" id="projectCount">총 0개</span>
+                            <button class="btn btn-success" onclick="openProjectModal()" style="margin-left: 1rem;">
+                                <i class="fas fa-plus"></i> 새 프로젝트
+                            </button>
+                        </h2>
+                        
+                        <div class="projects-grid" id="projectsGrid">
+                            <div class="empty-state" id="emptyState">
+                                <div class="empty-icon">
+                                    <i class="fas fa-folder-plus"></i>
+                                </div>
+                                <h3>등록된 프로젝트가 없습니다</h3>
+                                <p>새 프로젝트를 생성하여 시작하세요</p>
+                                <button class="btn btn-primary" onclick="openProjectModal()" style="margin-top: 1rem;">
+                                    <i class="fas fa-plus"></i> 프로젝트 생성
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 프로젝트 생성/편집 모달 -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">새 프로젝트 생성</h3>
+                <button class="close-btn" onclick="closeProjectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">프로젝트 이름</label>
+                    <input type="text" id="projectName" class="form-input" placeholder="프로젝트 이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">설명</label>
+                    <textarea id="projectDescription" class="form-input" rows="3" placeholder="프로젝트 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">상태</label>
+                    <select id="projectStatus" class="form-select">
+                        <option value="active">활성</option>
+                        <option value="paused">일시정지</option>
+                        <option value="completed">완료</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeProjectModal()">취소</button>
+                <button class="btn btn-success" onclick="saveProject()" id="saveBtn">생성</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let projects = [];
+        let selectedProjectId = null;
+        let editingProjectId = null;
+
+        // 프로젝트 관리 함수
+        function loadProjects() {
+            // 로컬 스토리지에서 프로젝트 데이터 로드
+            const savedProjects = localStorage.getItem('mlops_projects');
+            if (savedProjects) {
+                projects = JSON.parse(savedProjects);
+            }
+            renderProjects();
+        }
+
+        function saveProjectsToStorage() {
+            localStorage.setItem('mlops_projects', JSON.stringify(projects));
+        }
+
+        function renderProjects() {
+            const projectsGrid = document.getElementById('projectsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const projectCount = document.getElementById('projectCount');
+            
+            projectCount.textContent = `총 ${projects.length}개`;
+            
+            if (projects.length === 0) {
+                projectsGrid.innerHTML = '';
+                projectsGrid.appendChild(emptyState);
+                return;
+            }
+            
+            const statusLabels = {
+                'active': '활성',
+                'paused': '일시정지',
+                'completed': '완료'
+            };
+            
+            projectsGrid.innerHTML = projects.map(project => `
+                    <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
+                        onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-name">${project.name}</div>
+                        </div>
+                        <div class="project-status-container">
+                            <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
+                            <div class="dataset-count">${project.datasetCount || 0}개 데이터셋</div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-description">${project.description}</div>
+                    
+                    <div class="project-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">${project.datasetCount || 0}</span>
+                            <div class="stat-label">데이터셋</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">${project.modelCount || 0}</span>
+                            <div class="stat-label">모델</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">${project.trainingCount || 0}</span>
+                            <div class="stat-label">학습</div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-meta">
+                        <span>생성일: ${formatDate(project.createdAt)}</span>
+                        <span>최종 수정: ${formatDate(project.updatedAt)}</span>
+                    </div>
+
+                    ${project.datasetList && project.datasetList.length > 0 ? `
+                    <div class="project-datasets">
+                        <div class="datasets-label">데이터셋 목록:</div>
+                        <div class="datasets-table">
+                            ${project.datasetList.slice(0, 5).map(dataset => `
+                                <div class="dataset-row">
+                                    <span class="dataset-name">${dataset.name}</span>
+                                    <span class="dataset-type">${dataset.type}</span>
+                                    <span class="dataset-date">${dataset.date}</span>
+                                </div>
+                            `).join('')}
+                            ${project.datasetList.length > 5 ? `
+                                <div class="dataset-more-row">
+                                    <span>+${project.datasetList.length - 5}개 더 보기</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="project-actions" onclick="event.stopPropagation();">
+                        <button class="btn btn-sm btn-outline" onclick="editProject('${project.id}')">
+                            <i class="fas fa-edit"></i> 편집
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="openProject('${project.id}')">
+                            <i class="fas fa-arrow-right"></i> 열기
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProject('${project.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectProject(projectId) {
+            selectedProjectId = selectedProjectId === projectId ? null : projectId;
+            renderProjects();
+        }
+
+        function handleProjectClick(projectId, event) {
+            if (event.detail === 1) {
+                // 싱글 클릭
+                setTimeout(() => {
+                    if (event.detail === 1) {
+                        selectProject(projectId);
+                    }
+                }, 200);
+            } else if (event.detail === 2) {
+                // 더블 클릭
+                openProject(projectId);
+            }
+        }
+
+        function openProject(projectId) {
+            // 프로젝트를 선택하고 데이터셋 페이지로 이동
+            window.location.href = `/ui/datasets?project=${projectId}`;
+        }
+
+        function openProjectModal() {
+            editingProjectId = null;
+            document.getElementById('modalTitle').textContent = '새 프로젝트 생성';
+            document.getElementById('saveBtn').textContent = '생성';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+            document.getElementById('projectStatus').value = 'active';
+            document.getElementById('projectModal').classList.add('show');
+        }
+
+        function editProject(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            editingProjectId = projectId;
+            document.getElementById('modalTitle').textContent = '프로젝트 편집';
+            document.getElementById('saveBtn').textContent = '저장';
+            document.getElementById('projectName').value = project.name;
+            document.getElementById('projectDescription').value = project.description;
+            document.getElementById('projectStatus').value = project.status;
+            document.getElementById('projectModal').classList.add('show');
+        }
+
+        function closeProjectModal() {
+            document.getElementById('projectModal').classList.remove('show');
+            editingProjectId = null;
+        }
+
+        function saveProject() {
+            const name = document.getElementById('projectName').value.trim();
+            const description = document.getElementById('projectDescription').value.trim();
+            const status = document.getElementById('projectStatus').value;
+
+            if (!name) {
+                alert('프로젝트 이름을 입력하세요.');
+                return;
+            }
+
+            const now = new Date().toISOString();
+
+            if (editingProjectId) {
+                // 편집 모드
+                const projectIndex = projects.findIndex(p => p.id === editingProjectId);
+                if (projectIndex !== -1) {
+                    projects[projectIndex] = {
+                        ...projects[projectIndex],
+                        name: name,
+                        description: description,
+                        datasetCount: 0,
+                        status: status,
+                        updatedAt: now
+                    };
+                }
+            } else {
+                // 생성 모드
+                const newProject = {
+                    id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    name: name,
+                    description: description,
+                    datasetCount: 0,
+                    status: status,
+                    createdAt: now,
+                    updatedAt: now
+                };
+                projects.push(newProject);
+            }
+
+            saveProjectsToStorage();
+            renderProjects();
+            closeProjectModal();
+        }
+
+        function deleteProject(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (project && confirm(`'${project.name}' 프로젝트를 삭제하시겠습니까?\n\n관련된 모든 데이터가 삭제됩니다.`)) {
+                projects = projects.filter(p => p.id !== projectId);
+                if (selectedProjectId === projectId) {
+                    selectedProjectId = null;
+                }
+                saveProjectsToStorage();
+                renderProjects();
+            }
+        }
+
+        // 유틸리티 함수
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+
+        // 키보드 이벤트 처리
+        function handleKeyboardEvents() {
+            document.addEventListener('keydown', (e) => {
+                // ESC 키로 모달 닫기
+                if (e.key === 'Escape') {
+                    closeProjectModal();
+                }
+                
+                // Enter 키로 모달에서 저장
+                if (e.key === 'Enter' && document.getElementById('projectModal').classList.contains('show')) {
+                    saveProject();
+                }
+                
+                // Delete 키로 선택된 프로젝트 삭제
+                if (e.key === 'Delete' && selectedProjectId) {
+                    deleteProject(selectedProjectId);
+                }
+            });
+        }
+
+        // 검색 기능
+        function searchProjects(searchTerm) {
+            const filteredProjects = projects.filter(project => 
+                project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                project.description.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            renderFilteredProjects(filteredProjects);
+        }
+
+        function renderFilteredProjects(filteredProjects) {
+            const projectsGrid = document.getElementById('projectsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const projectCount = document.getElementById('projectCount');
+            
+            projectCount.textContent = `총 ${filteredProjects.length}개`;
+            
+            if (filteredProjects.length === 0) {
+                projectsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>검색 결과가 없습니다</h3>
+                        <p>다른 검색어를 시도해보세요</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const statusLabels = {
+                'active': '활성',
+                'paused': '일시정지',
+                'completed': '완료'
+            };
+            
+            projectsGrid.innerHTML = filteredProjects.map(project => `
+                    <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
+                        onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-name">${project.name}</div>
+                        </div>
+                        <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
+                    </div>
+                    
+                    <div class="project-description">${project.description}</div>
+                    
+                    <div class="project-meta">
+                        <span>생성일: ${formatDate(project.createdAt)}</span>
+                        <span>최종 수정: ${formatDate(project.updatedAt)}</span>
+                    </div>
+                    
+                    <div class="project-actions" onclick="event.stopPropagation();">
+                        <button class="btn btn-sm btn-outline" onclick="editProject('${project.id}')">
+                            <i class="fas fa-edit"></i> 편집
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="openProject('${project.id}')">
+                            <i class="fas fa-arrow-right"></i> 열기
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProject('${project.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 프로젝트 복제
+        function duplicateProject(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+        const duplicatedProject = {
+            ...project,
+            id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            name: project.name + ' (복사본)',
+            datasetCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+            
+            projects.push(duplicatedProject);
+            saveProjectsToStorage();
+            renderProjects();
+        }
+
+        // 프로젝트 내보내기/가져오기
+        function exportProjects() {
+            const dataStr = JSON.stringify(projects, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `mlops_projects_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        function importProjects(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedProjects = JSON.parse(e.target.result);
+                    if (Array.isArray(importedProjects)) {
+                        if (confirm('기존 프로젝트를 모두 삭제하고 가져오시겠습니까?')) {
+                            projects = importedProjects;
+                        } else {
+                            projects = [...projects, ...importedProjects];
+                        }
+                        saveProjectsToStorage();
+                        renderProjects();
+                        alert('프로젝트를 성공적으로 가져왔습니다.');
+                    }
+                } catch (error) {
+                    alert('잘못된 파일 형식입니다.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 페이지 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProjects();
+            handleKeyboardEvents();            
+        });
+            
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('projectModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                // 모달 내부의 input이나 textarea가 포커스되어 있으면 닫지 않음
+                const focusedElement = document.activeElement;
+                const modalContent = this.querySelector('.modal-content');
+                
+                if (!modalContent.contains(focusedElement) || 
+                    (focusedElement.tagName !== 'INPUT' && focusedElement.tagName !== 'TEXTAREA')) {
+                    closeProjectModal();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -6,39 +6,29 @@
     <title>MLOps Vision Platform - 데이터셋</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* 전역 스타일 및 변수 */
         :root {
-            /* 기존 보라색 대신 차분한 청회색 계열 */
-            --primary-color: #475569;      /* 차분한 슬레이트 블루 */
-            --secondary-color: #64748b;    /* 중간 톤 그레이 */
-            --accent-color: #0f172a;       /* 진한 네이비 */
-            
-            --success-color: #059669;      /* 차분한 그린 */
-            --warning-color: #d97706;      /* 따뜻한 오렌지 */
-            --error-color: #dc2626;        /* 차분한 레드 */
-            --info-color: #2563eb;         /* 차분한 블루 */
-            
-            --bg-primary: #f8fafc;         /* 연한 그레이 배경 */
-            --bg-secondary: #ffffff;       /* 순백색 */
-            --bg-tertiary: #f1f5f9;        /* 매우 연한 그레이 */
-            --text-primary: #0f172a;       /* 진한 네이비 텍스트 */
-            --text-secondary: #64748b;     /* 중간 그레이 텍스트 */
-            --text-muted: #94a3b8;         /* 연한 그레이 텍스트 */
-            --border-color: #e2e8f0;       /* 연한 그레이 보더 */
-            
-            --sidebar-width-collapsed: 60px;  /* 축소된 사이드바 폭 */
+            --primary-color: #475569;
+            --secondary-color: #64748b;
+            --accent-color: #0f172a;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --info-color: #2563eb;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --sidebar-width-collapsed: 60px;
             --sidebar-width: 260px;
-            --header-height: 80px;
-            
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-            
             --radius-sm: 6px;
             --radius-md: 8px;
             --radius-lg: 12px;
-            --radius-xl: 16px;
         }
 
         * {
@@ -52,17 +42,17 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
+            user-select: none;
         }
 
-        /* 앱 컨테이너 */
         .app-container {
             display: flex;
             min-height: 100vh;
         }
 
-        /* 사이드바 스타일 - 호버 효과 추가 */
+        /* 사이드바 */
         .sidebar {
-            width: var(--sidebar-width-collapsed); /* 기본: 축소된 상태 */
+            width: var(--sidebar-width-collapsed);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
             color: white;
             position: fixed;
@@ -73,7 +63,6 @@
             border-right: 1px solid var(--border-color);
         }
 
-        /* 호버 시 사이드바 확장 */
         .sidebar:hover {
             width: var(--sidebar-width);
         }
@@ -92,12 +81,9 @@
         .sidebar-header h2 {
             font-size: 1.5rem;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             color: #f8fafc;
             opacity: 0;
-            transition: opacity 0.3s ease 0.3s; /* 사이드바 확장 완료 후 0.3초 지연 */
+            transition: opacity 0.3s ease 0.3s;
             white-space: nowrap;
             position: absolute;
             left: 1.5rem;
@@ -127,11 +113,10 @@
             border-left: 3px solid transparent;
             font-weight: 500;
             white-space: nowrap;
-            height: 50px; /* 고정 높이 */
+            height: 50px;
             position: relative;
         }
 
-        /* 축소 상태에서는 아이콘만 중앙 정렬 */
         .sidebar:not(:hover) .nav-link {
             justify-content: center;
             padding-left: 0;
@@ -163,7 +148,6 @@
             opacity: 0.9;
         }
 
-        /* 네비게이션 텍스트 숨김/표시 */
         .nav-text {
             display: none;
         }
@@ -190,57 +174,62 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .content-header h1 {
+        .breadcrumb-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+        }
+
+        .header-title-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-title-section h1 {
             font-size: 1.875rem;
             font-weight: 600;
             color: var(--text-primary);
         }
 
-        .header-actions {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
+        .project-selector {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            min-width: 200px;
+            font-size: 0.875rem;
         }
 
-        /* 새로고침 버튼 컨테이너 */
-        .refresh-container {
-            position: relative;
-            display: inline-block;
-        }
-
-        /* 새로고침 툴팁 */
-        .refresh-tooltip {
-            position: absolute;
-            right: calc(100% + 10px);
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            z-index: 1001;
-        }
-
-        .refresh-tooltip::after {
-            content: '';
-            position: absolute;
-            left: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            border: 6px solid transparent;
-            border-left-color: rgba(0, 0, 0, 0.8);
-        }
-
-        .refresh-container:hover .refresh-tooltip {
-            opacity: 1;
-            visibility: visible;
-            right: calc(100% + 15px);
+        .project-selector:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.1);
         }
 
         /* 버튼 스타일 */
@@ -261,7 +250,6 @@
         .btn-primary {
             background-color: var(--primary-color);
             color: white;
-            border: 1px solid transparent;
         }
 
         .btn-primary:hover {
@@ -273,7 +261,6 @@
         .btn-success {
             background-color: var(--success-color);
             color: white;
-            border: 1px solid transparent;
         }
 
         .btn-success:hover {
@@ -282,102 +269,102 @@
             box-shadow: var(--shadow-md);
         }
 
-        /* 업로드 영역 */
-        .upload-section {
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: rgba(71, 85, 105, 0.05);
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* 메인 컨텐츠 영역 */
+        .content-body {
             padding: 2rem;
         }
 
-        .upload-area {
-            background: var(--bg-secondary);
-            border: 2px dashed var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 3rem;
-            text-align: center;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .upload-area:hover {
-            border-color: var(--primary-color);
-            background-color: var(--bg-tertiary);
-        }
-
-        .upload-area.dragover {
-            border-color: var(--success-color);
-            background-color: rgba(5, 150, 105, 0.05);
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-        }
-
-        .upload-text {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-hint {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        /* 데이터셋 목록 */
-        .datasets-section {
-            padding: 0 2rem 2rem;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .datasets-grid {
+        .content-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: 1fr;
+            gap: 2rem;
         }
 
-        .dataset-card {
+        /* 섹션 스타일 */
+        .form-section {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
+            padding: 2rem;
             box-shadow: var(--shadow-md);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
             border: 1px solid var(--border-color);
         }
 
-        .dataset-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .dataset-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-        .dataset-name {
-            font-size: 1.125rem;
+        .section-title {
+            font-size: 1.25rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 0.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .dataset-type {
+        /* 데이터셋 테이블 */
+        .datasets-table-container {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .datasets-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+        }
+
+        .datasets-table th {
+            background: var(--bg-tertiary);
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+
+        .datasets-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+
+        .datasets-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .datasets-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .dataset-type-badge {
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
             border-radius: 12px;
@@ -396,72 +383,26 @@
             color: var(--error-color);
         }
 
-        .dataset-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
+        .type-mixed {
+            background-color: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
         }
 
-        .stat-item {
-            text-align: center;
+        .type-segmentation {
+            background-color: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);
         }
 
-        .stat-value {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .dataset-meta {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
+        .type-object_detection {
+            background-color: rgba(71, 85, 105, 0.1);
+            color: var(--primary-color);
         }
 
         .dataset-actions {
             display: flex;
             gap: 0.5rem;
-            flex-wrap: wrap;
         }
 
-        .btn-sm {
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-        }
-
-        .btn-outline:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-            background-color: rgba(71, 85, 105, 0.05);
-        }
-
-        .btn-danger {
-            background-color: var(--error-color);
-            color: white;
-            border: 1px solid transparent;
-        }
-
-        .btn-danger:hover {
-            background-color: #b91c1c;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* 빈 상태 */
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -471,6 +412,323 @@
         .empty-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
+        }
+
+        /* 이미지 관리 섹션 */
+        .image-manager {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            min-height: 600px;
+        }
+
+        /* 왼쪽 이미지 인덱스 */
+        .image-index {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .index-header {
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .index-header h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .image-count {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* 드래그 앤 드롭 영역 */
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background: var(--bg-tertiary);
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--primary-color);
+            background: rgba(71, 85, 105, 0.05);
+            color: var(--primary-color);
+        }
+
+        /* 이미지 목록 테이블 */
+        .image-list-container {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .image-table-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        .image-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+        }
+
+        .image-table th {
+            background: var(--bg-tertiary);
+            padding: 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .image-table th:first-child {
+            width: 40px;
+            text-align: center;
+        }
+
+        .image-table th:nth-child(2) {
+            width: 60px;
+            text-align: center;
+        }
+
+        .image-table td {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.75rem;
+        }
+
+        .image-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+        }
+
+        .image-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .image-table tbody tr.selected {
+            background: rgba(71, 85, 105, 0.1);
+        }
+
+        .image-table tbody tr.multi-selected {
+            background: rgba(5, 150, 105, 0.1);
+        }
+
+        .image-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .image-row-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-color);
+        }
+
+        .image-thumbnail {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            background: var(--bg-tertiary);
+        }
+
+        .image-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .image-row-number {
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .empty-list {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* 오른쪽 미리보기 */
+        .image-preview-panel {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-header h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .image-preview {
+            flex: 1;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .empty-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .preview-image-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: var(--radius-md);
+            background: var(--bg-tertiary);
+        }
+
+        #previewImage {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+            cursor: grab;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+        }
+
+        #previewImage:active {
+            cursor: grabbing;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 0.25rem;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+        }
+
+        .zoom-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .image-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            width: 100%;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
         /* 모달 스타일 */
@@ -494,24 +752,40 @@
         .modal-content {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
-            padding: 2rem;
+            padding: 0;
             max-width: 500px;
             width: 90%;
             max-height: 90%;
-            overflow-y: auto;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
         }
 
         .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
         }
 
         .modal-title {
             font-size: 1.25rem;
             font-weight: 600;
             color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
         }
 
         .close-btn {
@@ -521,13 +795,115 @@
             cursor: pointer;
             color: var(--text-secondary);
             padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .close-btn:hover {
             color: var(--text-primary);
         }
 
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.1);
+        }
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 0.5rem 0;
+            z-index: 9999;
+            display: none;
+            min-width: 150px;
+        }
+
+        .context-menu-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .context-menu-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* 선택 영역 표시 */
+        .selection-area {
+            position: absolute;
+            border: 2px solid var(--primary-color);
+            background: rgba(71, 85, 105, 0.1);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* 스크롤바 스타일 */
+        .image-table-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .image-table-container::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        .image-table-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .image-table-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
         /* 반응형 디자인 */
+        @media (max-width: 1024px) {
+            .image-manager {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .image-index {
+                order: 2;
+                max-height: 400px;
+            }
+            
+            .image-preview-panel {
+                order: 1;
+                min-height: 400px;
+            }
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -537,25 +913,18 @@
                 margin-left: 0;
             }
             
-            .datasets-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .content-header {
                 padding: 1rem;
             }
             
-            .upload-section,
-            .datasets-section {
+            .content-body {
                 padding: 1rem;
             }
-        }
 
-        /* 상태별 색상 */
-        .status-success { color: var(--success-color); }
-        .status-warning { color: var(--warning-color); }
-        .status-error { color: var(--error-color); }
-        .status-info { color: var(--info-color); }
+            .image-manager {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -570,14 +939,17 @@
                 <li><a href="/dashboard" class="nav-link">
                     <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
                 </a></li>
+                <li><a href="/ui/projects" class="nav-link">
+                    <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트</span>
+                </a></li>
                 <li><a href="/ui/datasets" class="nav-link active">
                     <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
                 </a></li>
                 <li><a href="/ui/training" class="nav-link">
-                    <i class="fas fa-brain"></i> <span class="nav-text">학습 관리</span>
+                    <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
                 </a></li>
                 <li><a href="/ui/models" class="nav-link">
-                    <i class="fas fa-cube"></i> <span class="nav-text">모델 관리</span>
+                    <i class="fas fa-chart-bar"></i> <span class="nav-text">성능 지표</span>
                 </a></li>
                 <li><a href="/ui/monitoring" class="nav-link">
                     <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
@@ -589,247 +961,1235 @@
         <main class="main-content">
             <!-- 헤더 -->
             <header class="content-header">
-                <h1>데이터셋 관리</h1>
-                <div class="header-actions">
-                    <button class="btn btn-success" onclick="openUploadModal()">
-                        <i class="fas fa-plus"></i> 새 데이터셋
-                    </button>
-                    <div class="refresh-container">
-                        <button class="btn btn-primary" onclick="refreshDatasets()">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                        <div class="refresh-tooltip">Refresh</div>
+                <div class="breadcrumb-container">
+                    <nav class="breadcrumb" id="breadcrumbNav">
+                        <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <a href="/ui/projects" class="breadcrumb-item">프로젝트</a>
+                        <span class="breadcrumb-separator" id="projectSeparator" style="display: none;">/</span>
+                        <span class="breadcrumb-item" id="selectedProjectBreadcrumb" style="display: none;"></span>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-item active">데이터셋</span>
+                    </nav>
+                    <div class="header-title-section">
+                        <h1>데이터셋</h1>
+                        <select id="projectSelector" class="project-selector">
+                            <option value="">프로젝트를 선택하세요</option>
+                        </select>
                     </div>
                 </div>
             </header>
 
-            <!-- 업로드 영역 -->
-            <section class="upload-section">
-                <div class="upload-area" onclick="triggerFileUpload()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <div class="upload-text">데이터셋 업로드</div>
-                    <div class="upload-hint">
-                        파일을 드래그하여 놓거나 클릭하여 선택하세요<br>
-                        지원 형식: ZIP, TAR, 이미지 폴더
-                    </div>
-                    <input type="file" id="fileInput" style="display: none;" multiple accept=".zip,.tar,.jpg,.jpeg,.png" onchange="handleFileSelect(event)">
-                </div>
-            </section>
-
-            <!-- 데이터셋 목록 -->
-            <section class="datasets-section">
-                <div class="section-header">
-                    <h2 class="section-title">등록된 데이터셋</h2>
-                    <span class="text-secondary" id="datasetCount">총 0개</span>
-                </div>
-                
-                <div class="datasets-grid" id="datasetsGrid">
-                    <!-- 데이터셋이 없을 때 -->
-                    <div class="empty-state" id="emptyState">
-                        <div class="empty-icon">
-                            <i class="fas fa-folder-open"></i>
+            <!-- 메인 컨텐츠 -->
+            <section class="content-body">
+                <div class="content-grid">
+                    <!-- 데이터셋 목록 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-database"></i>
+                            데이터셋 목록
+                            <span style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary); font-weight: normal;" id="datasetCount">총 0개</span>
+                            <button class="btn btn-success" onclick="openDatasetModal()" style="margin-left: 1rem;">
+                                <i class="fas fa-plus"></i> 추가
+                            </button>
+                        </h2>
+                        
+                        <div class="datasets-table-container" id="datasetsTableContainer">
+                            <table class="datasets-table">
+                                <thead>
+                                    <tr>
+                                        <th>데이터셋명</th>
+                                        <th>타입</th>
+                                        <th>이미지 수</th>
+                                        <th>총 용량</th>
+                                        <th>생성일</th>
+                                        <th>설명</th>
+                                        <th>작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="datasetsTableBody">
+                                    <!-- 데이터셋 목록이 여기에 렌더링됩니다 -->
+                                </tbody>
+                            </table>
+                            <div class="empty-state" id="emptyState">
+                                <div class="empty-icon">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                <h3>등록된 데이터셋이 없습니다</h3>
+                                <p>프로젝트를 선택하거나 새 데이터셋을 추가하세요</p>
+                            </div>
                         </div>
-                        <h3>등록된 데이터셋이 없습니다</h3>
-                        <p>새 데이터셋을 업로드하여 시작하세요</p>
+                    </div>
+
+                    <!-- 이미지 관리 섹션 -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-images"></i>
+                            이미지 관리
+                        </h2>
+                        
+                        <div class="upload-controls">
+                            <button class="btn btn-primary" onclick="selectFiles()">
+                                <i class="fas fa-image"></i> 이미지 추가
+                            </button>
+                            <button class="btn btn-primary" onclick="selectFolder()">
+                                <i class="fas fa-folder-open"></i> 폴더 선택
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteSelectedImages()" id="deleteBtn" style="display: none;">
+                                <i class="fas fa-trash"></i> 선택 삭제
+                            </button>
+                        </div>
+
+                        <div class="image-manager">
+                            <!-- 왼쪽: 이미지 인덱스 -->
+                            <div class="image-index">
+                                <div class="index-header">
+                                    <h4><i class="fas fa-list"></i> 이미지 목록</h4>
+                                    <div class="image-count" id="imageCount">0개</div>
+                                </div>
+                                
+                                <div class="image-list-container">
+                                    <div class="image-table-container" id="imageTableContainer">
+                                        <table class="image-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                                    </th>
+                                                    <th>#</th>
+                                                    <th>미리보기</th>
+                                                    <th>파일명</th>
+                                                    <th>형식</th>
+                                                    <th>크기</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="imageTableBody">
+                                                <!-- 이미지 목록이 여기에 렌더링됩니다 -->
+                                            </tbody>
+                                        </table>
+                                        <div class="empty-list" id="emptyImageList">
+                                            <i class="fas fa-image" style="font-size: 2rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+                                            <p>이미지를 추가해주세요</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="padding: 1rem; border-top: 1px solid var(--border-color); background: var(--bg-tertiary); display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn btn-sm btn-outline" onclick="toggleAllSelection()" id="toggleAllBtn" style="flex: 1;">
+                                        <i class="fas fa-check-square" id="toggleAllIcon"></i> <span id="toggleAllText">전체 선택</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 오른쪽: 이미지 미리보기 -->
+                            <div class="image-preview-panel">
+                                <div class="preview-header">
+                                    <h4><i class="fas fa-eye"></i> Image Viewer</h4>
+                                    <div class="preview-controls">
+                                        <button class="btn btn-sm btn-outline" onclick="zoomIn()" title="확대">
+                                            <i class="fas fa-search-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline" onclick="zoomOut()" title="축소">
+                                            <i class="fas fa-search-minus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline" onclick="resetZoom()" title="초기화">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="image-preview" id="imagePreview">
+                                    <div class="empty-preview" id="emptyPreview">
+                                        <i class="fas fa-image" style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+                                        <h3>이미지를 선택하세요</h3>
+                                        <p>왼쪽 목록에서 이미지를 클릭하면<br>큰 미리보기를 볼 수 있습니다</p>
+                                    </div>
+                                    <div class="preview-image-container" id="previewContainer" style="display: none;">
+                                        <img id="previewImage" style="display: none;">
+                                        <div class="zoom-controls">
+                                            <button class="zoom-btn" onclick="zoomIn()" title="확대">
+                                                <i class="fas fa-search-plus"></i>
+                                            </button>
+                                            <button class="zoom-btn" onclick="zoomOut()" title="축소">
+                                                <i class="fas fa-search-minus"></i>
+                                            </button>
+                                            <button class="zoom-btn" onclick="resetZoom()" title="초기화">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="image-info" id="imageInfo" style="display: none;">
+                                        <div class="info-grid">
+                                            <div class="info-item">
+                                                <span class="info-label">파일명:</span>
+                                                <span class="info-value" id="infoFileName">-</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">파일 크기:</span>
+                                                <span class="info-value" id="infoFileSize">-</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">해상도:</span>
+                                                <span class="info-value" id="infoResolution">-</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">순서:</span>
+                                                <span class="info-value" id="infoOrder">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- 업로드 모달 -->
-    <div class="modal" id="uploadModal">
+    <!-- 컨텍스트 메뉴 -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="zoomIn()">
+            <i class="fas fa-search-plus"></i> 확대
+        </div>
+        <div class="context-menu-item" onclick="zoomOut()">
+            <i class="fas fa-search-minus"></i> 축소
+        </div>
+        <div class="context-menu-item" onclick="fitImage()">
+            <i class="fas fa-expand-arrows-alt"></i> Fit Image
+        </div>
+    </div>
+
+    <!-- 데이터셋 추가 모달 -->
+    <div class="modal" id="datasetModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">새 데이터셋 업로드</h3>
-                <button class="close-btn" onclick="closeUploadModal()">&times;</button>
+                <h3 class="modal-title">새 데이터셋 추가</h3>
+                <button class="close-btn" onclick="closeDatasetModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">데이터셋 이름</label>
-                    <input type="text" id="datasetName" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md);" placeholder="데이터셋 이름을 입력하세요">
+                <div class="form-group">
+                    <label class="form-label">이름</label>
+                    <input type="text" id="newDatasetName" class="form-input" placeholder="데이터셋 이름을 입력하세요">
                 </div>
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">데이터셋 타입</label>
-                    <select id="datasetType" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-                        <option value="normal">정상 데이터</option>
-                        <option value="anomaly">이상 데이터</option>
-                        <option value="mixed">혼합 데이터</option>
+                <div class="form-group">
+                    <label class="form-label">타입</label>
+                    <select id="newDatasetType" class="form-select">
+                        <option value="classify">Classify</option>
+                        <option value="obd">OBD</option>
+                        <option value="seg">SEG</option>
+                        <option value="anomal">ANOMAL</option>
                     </select>
                 </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">설명</label>
-                    <textarea id="datasetDescription" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); min-height: 80px;" placeholder="데이터셋에 대한 설명을 입력하세요"></textarea>
+                <div class="form-group">
+                    <label class="form-label">설명</label>
+                    <textarea id="newDatasetDescription" class="form-input" rows="3" placeholder="데이터셋 설명을 입력하세요"></textarea>
                 </div>
-                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button class="btn btn-outline" onclick="closeUploadModal()">취소</button>
-                    <button class="btn btn-success" onclick="uploadDataset()">업로드</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeDatasetModal()">취소</button>
+                <button class="btn btn-success" onclick="createDataset()">생성</button>
             </div>
         </div>
     </div>
 
+    <!-- 숨겨진 파일 입력 -->
+    <input type="file" id="fileInput" style="display: none;" multiple accept="image/*" onchange="handleImageSelect(event)">
+    <input type="file" id="folderInput" style="display: none;" webkitdirectory accept="image/*" onchange="handleImageSelect(event)">
+
     <script>
-        // 데이터셋 배열 (처음에는 비어있음)
+        // 전역 변수
+        let projects = [];
+        let selectedProjectId = null;
         let datasets = [];
+        let selectedDatasetId = null;
+        let uploadedImages = [];
+        let selectedImages = [];
+        let currentPreviewIndex = -1;
+        let currentZoom = 1;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let imageOffsetX = 0;
+        let imageOffsetY = 0;
+        let isSelecting = false;
+        let selectionStart = { x: 0, y: 0 };
+        let allSelected = false;
+
+        // 프로젝트 관리 함수
+        function loadProjects() {
+            // 로컬 스토리지에서 프로젝트 데이터 로드
+            const savedProjects = localStorage.getItem('mlops_projects');
+            if (savedProjects) {
+                projects = JSON.parse(savedProjects);
+            } else {
+                projects = [];
+            }
+            updateProjectSelector();
+        }
+
+        function updateProjectSelector() {
+            const selector = document.getElementById('projectSelector');
+            selector.innerHTML = '<option value="">프로젝트를 선택하세요</option>';
+            
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name;
+                selector.appendChild(option);
+            });
+        }
+
+        function onProjectSelect(projectId) {
+            selectedProjectId = projectId;
+            selectedDatasetId = null;
+            setURLParameter('project', projectId);
+            
+            const selectedProject = projects.find(p => p.id === projectId);
+            if (selectedProject) {
+                updateBreadcrumb(selectedProject.name);
+                loadDatasets(projectId);
+                document.getElementById('datasetSelector').style.display = 'inline-block';
+            } else {
+                updateBreadcrumb(null);
+                datasets = [];
+                renderDatasets();
+                document.getElementById('datasetSelector').style.display = 'none';
+            }
+            updateDatasetSelector();
+        }
+
+        function updateDatasetSelector() {
+            const selector = document.getElementById('datasetSelector');
+            selector.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
+            
+            datasets.forEach(dataset => {
+                const option = document.createElement('option');
+                option.value = dataset.id;
+                option.textContent = dataset.name;
+                selector.appendChild(option);
+            });
+        }
+
+        function onDatasetSelect(datasetId) {
+            selectedDatasetId = datasetId;
+            const selectedDataset = datasets.find(d => d.id === datasetId);
+            if (selectedDataset) {
+                loadDatasetImages(selectedDataset);
+            } else {
+                uploadedImages = [];
+                selectedImages = [];
+                currentPreviewIndex = -1;
+                renderImageTable();
+                showEmptyPreview();
+                updateImageCount();
+            }
+        }
+
+        function loadDatasetImages(dataset) {
+            // 데이터셋의 이미지 데이터를 로드 (실제로는 서버에서 가져올 것)
+            uploadedImages = dataset.images || [];
+            selectedImages = [];
+            currentPreviewIndex = -1;
+            renderImageTable();
+            updateImageCount();
+            if (uploadedImages.length > 0) {
+                showEmptyPreview();
+            }
+        }
+
+        // 데이터셋 관리 함수
+        function loadDatasets(projectId) {
+            datasets = [];
+            renderDatasets();
+        }
+
+        function openDatasetModal() {
+            if (!selectedProjectId) {
+                alert('먼저 프로젝트를 선택하세요.');
+                return;
+            }
+            document.getElementById('datasetModal').classList.add('show');
+        }
+
+        function closeDatasetModal() {
+            document.getElementById('datasetModal').classList.remove('show');
+            document.getElementById('newDatasetName').value = '';
+            document.getElementById('newDatasetType').value = 'classify';
+            document.getElementById('newDatasetDescription').value = '';
+        }
+
+        // 데이터셋을 로컬스토리지에 저장하는 함수
+        function saveDatasets() {
+            if (selectedProjectId) {
+                localStorage.setItem(`datasets_${selectedProjectId}`, JSON.stringify(datasets));
+            }
+        }
+
+        // loadDatasets 함수
+        function loadDatasets(projectId) {
+            const savedDatasets = localStorage.getItem(`datasets_${projectId}`);
+            if (savedDatasets) {
+                datasets = JSON.parse(savedDatasets);
+            } else {
+                datasets = [];
+            }
+            renderDatasets();
+        }
+
+        function createDataset() {
+            const name = document.getElementById('newDatasetName').value.trim();
+            const type = document.getElementById('newDatasetType').value;
+            const description = document.getElementById('newDatasetDescription').value.trim();
+
+            if (!name) {
+                alert('데이터셋 이름을 입력하세요.');
+                return;
+            }
+
+            const newDataset = {
+                id: 'ds_' + Date.now(),
+                name: name,
+                type: type,
+                description: description,
+                imageCount: 0,
+                totalSize: 0,
+                createdAt: new Date().toISOString().split('T')[0],
+                images: []
+            };
+
+            datasets.push(newDataset);
+            saveDatasets(); // 로컬스토리지에 저장
+            updateProjectStats(); // 프로젝트 통계 업데이트
+            renderDatasets();
+            updateDatasetSelector();
+            closeDatasetModal();
+        }
+
+        // 프로젝트 통계 업데이트 함수
+        function updateProjectStats() {
+            if (selectedProjectId) {
+                const savedProjects = localStorage.getItem('mlops_projects');
+                if (savedProjects) {
+                    let projects = JSON.parse(savedProjects);
+                    const project = projects.find(p => p.id === selectedProjectId);
+                    if (project) {
+                        project.datasetCount = datasets.length;
+                        project.datasetList = datasets.map(d => ({
+                            name: d.name,
+                            type: d.type.toUpperCase(),
+                            date: d.createdAt
+                        }));
+                        project.updatedAt = new Date().toISOString();
+                        localStorage.setItem('mlops_projects', JSON.stringify(projects));
+                    }
+                }
+            }
+        }
 
         function renderDatasets() {
-            const grid = document.getElementById('datasetsGrid');
+            const tableBody = document.getElementById('datasetsTableBody');
             const emptyState = document.getElementById('emptyState');
-            const countElement = document.getElementById('datasetCount');
+            const datasetCount = document.getElementById('datasetCount');
             
-            countElement.textContent = `총 ${datasets.length}개`;
+            datasetCount.textContent = `총 ${datasets.length}개`;
             
             if (datasets.length === 0) {
+                tableBody.innerHTML = '';
                 emptyState.style.display = 'block';
-                grid.innerHTML = '';
-                grid.appendChild(emptyState);
                 return;
             }
             
             emptyState.style.display = 'none';
             
-            grid.innerHTML = datasets.map(dataset => `
-                <div class="dataset-card">
-                    <div class="dataset-header">
-                        <div>
-                            <div class="dataset-name">${dataset.name}</div>
-                            <div class="dataset-type type-${dataset.type}">
-                                ${dataset.type === 'normal' ? '정상' : dataset.type === 'anomaly' ? '이상' : '혼합'}
-                            </div>
+            const typeLabels = {
+                'classify': 'Classify',
+                'obd': 'OBD',
+                'seg': 'SEG',
+                'anomal': 'ANOMAL'
+            };
+            
+            tableBody.innerHTML = datasets.map(dataset => `
+                <tr onclick="selectDataset('${dataset.id}')" style="cursor: pointer;" ${selectedDatasetId === dataset.id ? 'class="selected"' : ''}>
+                    <td><strong>${dataset.name}</strong></td>
+                    <td><span class="dataset-type-badge type-${dataset.type}">${typeLabels[dataset.type]}</span></td>
+                    <td>${dataset.imageCount.toLocaleString()}개</td>
+                    <td>${formatFileSize(dataset.totalSize)}</td>
+                    <td>${formatDate(dataset.createdAt)}</td>
+                    <td>${dataset.description}</td>
+                    <td onclick="event.stopPropagation();">
+                        <div class="dataset-actions">
+                            <button class="btn btn-sm btn-outline" onclick="editDataset('${dataset.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteDataset('${dataset.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                    </div>
-                    
-                    <div class="dataset-stats">
-                        <div class="stat-item">
-                            <div class="stat-value">${dataset.imageCount.toLocaleString()}</div>
-                            <div class="stat-label">이미지</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${dataset.size}</div>
-                            <div class="stat-label">크기</div>
-                        </div>
-                    </div>
-                    
-                    <div class="dataset-meta">
-                        <div><i class="fas fa-calendar"></i> ${dataset.uploadDate}</div>
-                        <div style="margin-top: 0.5rem;">${dataset.description}</div>
-                    </div>
-                    
-                    <div class="dataset-actions">
-                        <button class="btn btn-sm btn-primary" onclick="viewDataset(${dataset.id})">
-                            <i class="fas fa-eye"></i> 보기
-                        </button>
-                        <button class="btn btn-sm btn-outline" onclick="downloadDataset(${dataset.id})">
-                            <i class="fas fa-download"></i> 다운로드
-                        </button>
-                        <button class="btn btn-sm btn-outline" onclick="editDataset(${dataset.id})">
-                            <i class="fas fa-edit"></i> 수정
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteDataset(${dataset.id})">
-                            <i class="fas fa-trash"></i> 삭제
-                        </button>
-                    </div>
-                </div>
+                    </td>
+                </tr>
             `).join('');
         }
 
-        function openUploadModal() {
-            document.getElementById('uploadModal').classList.add('show');
+        function selectDataset(datasetId) {
+            selectedDatasetId = datasetId;
+            document.getElementById('datasetSelector').value = datasetId;
+            onDatasetSelect(datasetId);
+            renderDatasets();
         }
 
-        function closeUploadModal() {
-            document.getElementById('uploadModal').classList.remove('show');
-            // 폼 초기화
-            document.getElementById('datasetName').value = '';
-            document.getElementById('datasetType').value = 'normal';
-            document.getElementById('datasetDescription').value = '';
-        }
-
-        function triggerFileUpload() {
-            document.getElementById('fileInput').click();
-        }
-
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.currentTarget.classList.add('dragover');
-        }
-
-        function handleDragLeave(event) {
-            event.currentTarget.classList.remove('dragover');
-        }
-
-        function handleDrop(event) {
-            event.preventDefault();
-            event.currentTarget.classList.remove('dragover');
-            const files = event.dataTransfer.files;
-            console.log('드롭된 파일:', files);
-            // 실제 파일 업로드 로직 구현 필요
-        }
-
-        function handleFileSelect(event) {
-            const files = event.target.files;
-            console.log('선택된 파일:', files);
-            // 실제 파일 선택 로직 구현 필요
-        }
-
-        function uploadDataset() {
-            const name = document.getElementById('datasetName').value;
-            const type = document.getElementById('datasetType').value;
-            const description = document.getElementById('datasetDescription').value;
+        function editDataset(datasetId) {
+            const dataset = datasets.find(d => d.id === datasetId);
+            if (!dataset) return;
             
-            if (!name.trim()) {
+            // 편집 모달 구현
+            document.getElementById('newDatasetName').value = dataset.name;
+            document.getElementById('newDatasetType').value = dataset.type;
+            document.getElementById('newDatasetDescription').value = dataset.description;
+            
+            // 모달 제목 변경
+            const modalTitle = document.querySelector('#datasetModal .modal-title');
+            modalTitle.textContent = '데이터셋 편집';
+            
+            // 저장 버튼을 편집용으로 변경
+            const createBtn = document.querySelector('#datasetModal .btn-success');
+            createBtn.textContent = '저장';
+            createBtn.onclick = () => updateDataset(datasetId);
+            
+            document.getElementById('datasetModal').classList.add('show');
+        }
+
+        function updateDataset(datasetId) {
+            const name = document.getElementById('newDatasetName').value.trim();
+            const type = document.getElementById('newDatasetType').value;
+            const description = document.getElementById('newDatasetDescription').value.trim();
+
+            if (!name) {
                 alert('데이터셋 이름을 입력하세요.');
                 return;
             }
-            
-            // 실제 업로드 로직 구현 필요
-            console.log('데이터셋 업로드:', { name, type, description });
-            closeUploadModal();
-        }
 
-        function refreshDatasets() {
-            console.log('데이터셋 새로고침');
-            // 실제 서버에서 데이터셋 목록 가져오는 로직 구현 필요
-        }
-
-        function viewDataset(id) {
-            console.log('데이터셋 보기:', id);
-            // 데이터셋 상세 보기 로직 구현 필요
-        }
-
-        function downloadDataset(id) {
-            console.log('데이터셋 다운로드:', id);
-            // 다운로드 로직 구현 필요
-        }
-
-        function editDataset(id) {
-            console.log('데이터셋 수정:', id);
-            // 수정 로직 구현 필요
-        }
-
-        function deleteDataset(id) {
-            if (confirm('정말로 이 데이터셋을 삭제하시겠습니까?')) {
-                datasets = datasets.filter(dataset => dataset.id !== id);
+            const datasetIndex = datasets.findIndex(d => d.id === datasetId);
+            if (datasetIndex !== -1) {
+                datasets[datasetIndex] = {
+                    ...datasets[datasetIndex],
+                    name: name,
+                    type: type,
+                    description: description
+                };
+                
+                saveDatasets();
+                updateProjectStats();
                 renderDatasets();
-                console.log('데이터셋 삭제:', id);
-                // 실제 삭제 로직 구현 필요
+                updateDatasetSelector();
+                closeDatasetModal();
+                
+                // 버튼을 원래대로 복원
+                const createBtn = document.querySelector('#datasetModal .btn-success');
+                createBtn.textContent = '생성';
+                createBtn.onclick = createDataset;
+                
+                const modalTitle = document.querySelector('#datasetModal .modal-title');
+                modalTitle.textContent = '새 데이터셋 추가';
             }
         }
 
-        // 모달 외부 클릭 시 닫기
-        window.onclick = function(event) {
-            const modal = document.getElementById('uploadModal');
-            if (event.target === modal) {
-                closeUploadModal();
+        function deleteDataset(datasetId) {
+            const dataset = datasets.find(d => d.id === datasetId);
+            if (dataset && confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) {
+                datasets = datasets.filter(d => d.id !== datasetId);
+                if (selectedDatasetId === datasetId) {
+                    selectedDatasetId = null;
+                    uploadedImages = [];
+                    selectedImages = [];
+                    currentPreviewIndex = -1;
+                    renderImageTable();
+                    showEmptyPreview();
+                    updateImageCount();
+                }
+                renderDatasets();
+                updateDatasetSelector();
             }
         }
 
-        // 페이지 로드 시 데이터셋 렌더링
+        function deleteDataset(datasetId) {
+            const dataset = datasets.find(d => d.id === datasetId);
+            if (dataset && confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) {
+                datasets = datasets.filter(d => d.id !== datasetId);
+                renderDatasets();
+            }
+        }
+
+        // URL 관리 함수
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function setURLParameter(name, value) {
+            const url = new URL(window.location);
+            if (value) {
+                url.searchParams.set(name, value);
+            } else {
+                url.searchParams.delete(name);
+            }
+            window.history.pushState({}, '', url);
+        }
+
+        function initializeFromURL() {
+            const projectId = getURLParameter('project');
+            if (projectId) {
+                selectedProjectId = projectId;
+                
+                const project = projects.find(p => p.id === projectId);
+                if (project) {
+                    document.getElementById('projectSelector').value = projectId;
+                    updateBreadcrumb(project.name);
+                    loadDatasets(projectId);
+                    document.getElementById('datasetSelector').style.display = 'inline-block';
+                }
+            }
+        }
+
+        function updateBreadcrumb(projectName) {
+            const projectSeparator = document.getElementById('projectSeparator');
+            const projectBreadcrumb = document.getElementById('selectedProjectBreadcrumb');
+            
+            if (projectName) {
+                projectSeparator.style.display = 'inline';
+                projectBreadcrumb.style.display = 'inline';
+                projectBreadcrumb.textContent = projectName;
+            } else {
+                projectSeparator.style.display = 'none';
+                projectBreadcrumb.style.display = 'none';
+            }
+        }
+
+        // 파일 업로드 함수
+        function selectFiles() {
+            document.getElementById('fileInput').click();
+        }
+
+        function selectFolder() {
+            document.getElementById('folderInput').click();
+        }
+
+        function handleImageSelect(event) {
+            const files = Array.from(event.target.files);
+            addImagesToList(files);
+            event.target.value = '';
+        }
+
+        function addImagesToList(files) {
+            files.forEach((file) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageData = {
+                            id: Date.now() + Math.random(),
+                            file: file,
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            dataUrl: e.target.result,
+                            order: uploadedImages.length + 1
+                        };
+                        uploadedImages.push(imageData);
+                        renderImageTable();
+                        updateImageCount();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // 이미지 테이블 렌더링
+        function renderImageTable() {
+            const tableBody = document.getElementById('imageTableBody');
+            const emptyList = document.getElementById('emptyImageList');
+            
+            if (uploadedImages.length === 0) {
+                tableBody.innerHTML = '';
+                emptyList.style.display = 'flex';
+                return;
+            }
+            
+            emptyList.style.display = 'none';
+            
+            tableBody.innerHTML = uploadedImages.map((image, index) => `
+                <tr class="${getRowClasses(image.id, index)}" 
+                    data-id="${image.id}" 
+                    data-index="${index}"
+                    onclick="selectImage(${index}, event)">
+                    <td>
+                        <input type="checkbox" class="image-row-checkbox" 
+                               ${selectedImages.includes(image.id) ? 'checked' : ''}
+                               onchange="toggleImageSelection('${image.id}', event)">
+                    </td>
+                    <td class="image-row-number">${index + 1}</td>
+                    <td>
+                        <img src="${image.dataUrl}" alt="${image.name}" class="image-thumbnail">
+                    </td>
+                    <td>
+                        <div class="image-name" title="${image.name}">${image.name}</div>
+                    </td>
+                    <td>${getFileExtension(image.name).toUpperCase()}</td>
+                    <td>${formatFileSize(image.size)}</td>
+                </tr>
+            `).join('');
+            
+            updateSelectAllCheckbox();
+        }
+
+        function getRowClasses(imageId, index) {
+            let classes = '';
+            if (selectedImages.includes(imageId)) classes += 'multi-selected ';
+            if (currentPreviewIndex === index) classes += 'selected ';
+            return classes.trim();
+        }
+
+        function getFileExtension(filename) {
+            return filename.split('.').pop() || '';
+        }
+
+        function selectImage(index, event) {
+            if (event && (event.target.type === 'checkbox' || event.target.classList.contains('image-row-checkbox'))) {
+                return;
+            }
+            
+            currentPreviewIndex = index;
+            if (uploadedImages[index]) {
+                showImagePreview(uploadedImages[index], index);
+            }
+            renderImageTable();
+        }
+
+        function toggleImageSelection(imageId, event) {
+            event.stopPropagation();
+            
+            const index = selectedImages.indexOf(imageId);
+            if (index > -1) {
+                selectedImages.splice(index, 1);
+            } else {
+                selectedImages.push(imageId);
+            }
+            
+            renderImageTable();
+            updateSelectionControls();
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            
+            if (selectAllCheckbox.checked) {
+                selectedImages = uploadedImages.map(img => img.id);
+            } else {
+                selectedImages = [];
+            }
+            
+            renderImageTable();
+            updateSelectionControls();
+        }
+
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            
+            if (uploadedImages.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (selectedImages.length === uploadedImages.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else if (selectedImages.length > 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+        }
+
+        function selectAllImages() {
+            selectedImages = uploadedImages.map(img => img.id);
+            renderImageTable();
+            updateSelectionControls();
+        }
+
+        function clearSelection() {
+            selectedImages = [];
+            renderImageTable();
+            updateSelectionControls();
+        }
+
+        function deleteSelectedImages() {
+            if (selectedImages.length === 0) return;
+            
+            if (confirm(`선택된 ${selectedImages.length}개의 이미지를 삭제하시겠습니까?`)) {
+                uploadedImages = uploadedImages.filter(img => !selectedImages.includes(img.id));
+                selectedImages = [];
+                
+                uploadedImages.forEach((img, index) => {
+                    img.order = index + 1;
+                });
+                
+                renderImageTable();
+                updateImageCount();
+                updateSelectionControls();
+                
+                if (currentPreviewIndex >= uploadedImages.length) {
+                    currentPreviewIndex = -1;
+                    showEmptyPreview();
+                } else if (currentPreviewIndex !== -1 && uploadedImages[currentPreviewIndex]) {
+                    showImagePreview(uploadedImages[currentPreviewIndex], currentPreviewIndex);
+                }
+            }
+        }
+
+        function updateSelectionControls() {
+            const deleteBtn = document.getElementById('deleteBtn');
+            deleteBtn.style.display = selectedImages.length > 0 ? 'inline-flex' : 'none';
+            updateSelectAllCheckbox();
+        }
+
+        function updateImageCount() {
+            document.getElementById('imageCount').textContent = `${uploadedImages.length}개`;
+        }
+
+        // 이미지 미리보기
+        function showImagePreview(imageData, index) {
+            const previewImage = document.getElementById('previewImage');
+            const imageInfo = document.getElementById('imageInfo');
+            const emptyPreview = document.getElementById('emptyPreview');
+            const previewContainer = document.getElementById('previewContainer');
+            
+            emptyPreview.style.display = 'none';
+            previewContainer.style.display = 'flex';
+            previewImage.style.display = 'block';
+            imageInfo.style.display = 'block';
+            
+            previewImage.src = imageData.dataUrl;
+            currentZoom = 1;
+            imageOffsetX = 0;
+            imageOffsetY = 0;
+            updateImageTransform();
+            
+            document.getElementById('infoFileName').textContent = imageData.name;
+            document.getElementById('infoFileSize').textContent = formatFileSize(imageData.size);
+            document.getElementById('infoOrder').textContent = `${index + 1} / ${uploadedImages.length}`;
+            
+            previewImage.onload = function() {
+                document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
+            };
+        }
+
+        function showEmptyPreview() {
+            const previewImage = document.getElementById('previewImage');
+            const imageInfo = document.getElementById('imageInfo');
+            const emptyPreview = document.getElementById('emptyPreview');
+            const previewContainer = document.getElementById('previewContainer');
+            
+            previewContainer.style.display = 'none';
+            previewImage.style.display = 'none';
+            imageInfo.style.display = 'none';
+            emptyPreview.style.display = 'flex';
+        }
+
+        // 줌 및 이미지 조작 기능
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom * 1.2, 5);
+            updateImageTransform();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom / 1.2, 0.1);
+            updateImageTransform();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            imageOffsetX = 0;
+            imageOffsetY = 0;
+            updateImageTransform();
+        }
+
+        function fitImage() {
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
+            
+            if (!previewImage.src) return;
+            
+            const containerRect = previewContainer.getBoundingClientRect();
+            const imageAspectRatio = previewImage.naturalWidth / previewImage.naturalHeight;
+            const containerAspectRatio = containerRect.width / containerRect.height;
+            
+            if (imageAspectRatio > containerAspectRatio) {
+                // 이미지가 더 넓음 - 너비에 맞춤
+                currentZoom = (containerRect.width * 0.9) / previewImage.naturalWidth;
+            } else {
+                // 이미지가 더 높음 - 높이에 맞춤
+                currentZoom = (containerRect.height * 0.9) / previewImage.naturalHeight;
+            }
+            
+            imageOffsetX = 0;
+            imageOffsetY = 0;
+            updateImageTransform();
+        }
+
+        function updateImageTransform() {
+            const previewImage = document.getElementById('previewImage');
+            if (previewImage) {
+                previewImage.style.transform = `scale(${currentZoom}) translate(${imageOffsetX}px, ${imageOffsetY}px)`;
+            }
+        }
+
+        // 유틸리티 함수
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+
+        // 드래그 앤 드롭 기능
+        function initializeDropZone() {
+            const dropZone = document.getElementById('dropZone');
+            
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.target.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                e.target.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.target.classList.remove('drag-over');
+            
+            const files = Array.from(e.dataTransfer.files);
+            addImagesToList(files);
+        }
+
+        // 이미지 뷰어 이벤트 핸들러
+        function initializeImageViewer() {
+            const previewImage = document.getElementById('previewImage');
+            const imagePreview = document.getElementById('imagePreview');
+            
+            // 마우스 휠 줌
+            imagePreview.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            });
+            
+            // 마우스 드래그
+            previewImage.addEventListener('mousedown', (e) => {
+                if (currentZoom > 1) {
+                    isDragging = true;
+                    dragStartX = e.clientX - imageOffsetX;
+                    dragStartY = e.clientY - imageOffsetY;
+                    e.preventDefault();
+                }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && currentZoom > 1) {
+                    imageOffsetX = e.clientX - dragStartX;
+                    imageOffsetY = e.clientY - dragStartY;
+                    updateImageTransform();
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // 우클릭 컨텍스트 메뉴
+            imagePreview.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY);
+            });
+        }
+
+        // 컨텍스트 메뉴
+        function showContextMenu(x, y) {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = x + 'px';
+            contextMenu.style.top = y + 'px';
+        }
+
+        function hideContextMenu() {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'none';
+        }
+
+        // 마우스 드래그 선택 기능
+        function initializeMouseSelection() {
+            const tableContainer = document.getElementById('imageTableContainer');
+            let selectionArea = null;
+            
+            tableContainer.addEventListener('mousedown', (e) => {
+                if (e.target.closest('input[type="checkbox"]') || e.target.closest('tr')) {
+                    return;
+                }
+                
+                isSelecting = true;
+                selectionStart.x = e.clientX;
+                selectionStart.y = e.clientY;
+                
+                selectionArea = document.createElement('div');
+                selectionArea.className = 'selection-area';
+                selectionArea.style.left = e.clientX + 'px';
+                selectionArea.style.top = e.clientY + 'px';
+                selectionArea.style.width = '0px';
+                selectionArea.style.height = '0px';
+                document.body.appendChild(selectionArea);
+                
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isSelecting && selectionArea) {
+                    const width = Math.abs(e.clientX - selectionStart.x);
+                    const height = Math.abs(e.clientY - selectionStart.y);
+                    
+                    selectionArea.style.left = Math.min(e.clientX, selectionStart.x) + 'px';
+                    selectionArea.style.top = Math.min(e.clientY, selectionStart.y) + 'px';
+                    selectionArea.style.width = width + 'px';
+                    selectionArea.style.height = height + 'px';
+                    
+                    // 선택 영역과 겹치는 행들 찾기
+                    selectRowsInArea(selectionArea);
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isSelecting && selectionArea) {
+                    document.body.removeChild(selectionArea);
+                    selectionArea = null;
+                    isSelecting = false;
+                    renderImageTable();
+                    updateSelectionControls();
+                }
+            });
+        }
+
+        // 이미지 선택 관리
+        function toggleAllSelection() {
+            if (allSelected) {
+                // 전체 해제
+                selectedImages = [];
+                allSelected = false;
+                document.getElementById('toggleAllIcon').className = 'fas fa-square';
+                document.getElementById('toggleAllText').textContent = '전체 선택';
+            } else {
+                // 전체 선택
+                selectedImages = uploadedImages.map(img => img.id);
+                allSelected = true;
+                document.getElementById('toggleAllIcon').className = 'fas fa-check-square';
+                document.getElementById('toggleAllText').textContent = '전체 해제';
+            }
+            
+            renderImageTable();
+            updateSelectionControls();
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            
+            if (selectAllCheckbox.checked) {
+                selectedImages = uploadedImages.map(img => img.id);
+                allSelected = true;
+            } else {
+                selectedImages = [];
+                allSelected = false;
+            }
+            
+            updateToggleAllButton();
+            renderImageTable();
+            updateSelectionControls();
+        }
+
+        function updateToggleAllButton() {
+            const toggleAllIcon = document.getElementById('toggleAllIcon');
+            const toggleAllText = document.getElementById('toggleAllText');
+            
+            if (selectedImages.length === uploadedImages.length && uploadedImages.length > 0) {
+                allSelected = true;
+                toggleAllIcon.className = 'fas fa-check-square';
+                toggleAllText.textContent = '전체 해제';
+            } else {
+                allSelected = false;
+                toggleAllIcon.className = 'fas fa-square';
+                toggleAllText.textContent = '전체 선택';
+            }
+        }
+
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            
+            if (uploadedImages.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (selectedImages.length === uploadedImages.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else if (selectedImages.length > 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+            
+            updateToggleAllButton();
+        }
+
+        function addImagesToList(files) {
+            if (!selectedDatasetId) {
+                alert('먼저 데이터셋을 선택하세요.');
+                return;
+            }
+
+            files.forEach((file) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageData = {
+                            id: Date.now() + Math.random(),
+                            file: file,
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            dataUrl: e.target.result,
+                            order: uploadedImages.length + 1
+                        };
+                        uploadedImages.push(imageData);
+                        
+                        // 데이터셋 정보 업데이트
+                        updateDatasetInfo();
+                        
+                        renderImageTable();
+                        updateImageCount();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function updateDatasetInfo() {
+            if (selectedDatasetId) {
+                const dataset = datasets.find(d => d.id === selectedDatasetId);
+                if (dataset) {
+                    dataset.imageCount = uploadedImages.length;
+                    dataset.totalSize = uploadedImages.reduce((sum, img) => sum + img.size, 0);
+                    dataset.images = uploadedImages;
+                    renderDatasets();
+                }
+            }
+        }
+
+        // 드래그 앤 드롭을 이미지 리스트 컨테이너에 적용
+        function initializeDropZone() {
+            const imageTableContainer = document.getElementById('imageTableContainer');
+            
+            imageTableContainer.addEventListener('dragover', handleDragOver);
+            imageTableContainer.addEventListener('dragenter', handleDragEnter);
+            imageTableContainer.addEventListener('dragleave', handleDragLeave);
+            imageTableContainer.addEventListener('drop', handleDrop);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.style.background = 'rgba(71, 85, 105, 0.05)';
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                e.currentTarget.style.background = '';
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.style.background = '';
+            
+            const files = Array.from(e.dataTransfer.files);
+            addImagesToList(files);
+        }
+
+        // 페이지 초기화 시 이벤트 리스너 추가
         document.addEventListener('DOMContentLoaded', function() {
-            renderDatasets();
+            loadProjects();
+            initializeDropZone();
+            initializeImageViewer();
+            initializeMouseSelection();
+            
+            // 컨텍스트 메뉴 숨기기
+            document.addEventListener('click', hideContextMenu);
+            
+            setTimeout(() => {
+                initializeFromURL();
+            }, 300);
+            
+            document.getElementById('projectSelector').addEventListener('change', function() {
+                onProjectSelect(this.value);
+            });
+            
+            document.getElementById('datasetSelector').addEventListener('change', function() {
+                onDatasetSelect(this.value);
+            });
+            document.getElementById('datasetModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    const focusedElement = document.activeElement;
+                    const modalContent = this.querySelector('.modal-content');
+                    
+                    if (!modalContent.contains(focusedElement) || 
+                        (focusedElement.tagName !== 'INPUT' && focusedElement.tagName !== 'TEXTAREA')) {
+                        closeDatasetModal();
+                    }
+                }
+            });
         });
     </script>
 </body>
