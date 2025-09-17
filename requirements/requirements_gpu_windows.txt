@@ -1,0 +1,18 @@
+# MLOps Vision 프로젝트 - Windows GPU 전용
+# Windows CUDA 환경에서 사용할 PyTorch 및 관련 라이브러리
+
+# PyTorch CUDA 버전 (Windows 호환)
+torch==2.7.1+cu118
+torchvision==0.22.1+cu118
+torchaudio==2.7.1+cu118
+
+# Windows에서는 faiss-cpu만 사용 (GPU 버전은 설치 복잡)
+# 주의: faiss-gpu는 별도 스크립트에서 conda로 시도
+faiss-cpu>=1.7.0
+
+# ML 백엔드
+scikit-image>=0.21.0
+scipy>=1.11.0
+
+# Windows 호환 추가 패키지들
+pywin32>=306  # Windows 전용

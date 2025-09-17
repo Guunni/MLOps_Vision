@@ -1,14 +1,21 @@
-# requirements/requirements_dev.txt
-# 개발 과정에서만 필요한 도구들
+# MLOps Vision 프로젝트 - 개발 도구
+# 개발 및 테스트를 위한 추가 라이브러리들
 
-# 코드 품질 도구
-black>=22.0.0          # 코드 포매터
-flake8>=4.0.0          # 코드 스타일 체커
-pytest>=6.2.0         # 테스트 프레임워크
-
-# 주피터 노트북 (실험용)
+# Jupyter 환경
 jupyter>=1.0.0
-notebook>=6.4.0
+jupyterlab>=4.0.0
+ipywidgets>=8.0.0
 
-# 문서화 도구
-sphinx>=4.0.0
+# 코드 품질
+black>=23.0.0
+flake8>=6.0.0
+pytest>=7.0.0
+
+# 문서화
+sphinx>=7.0.0
+
+# 고급 시각화
+plotly>=5.15.0
+
+# 특수 용도 (필요시)
+# -e git+https://github.com/amazon-science/patchcore-inspection.git@fcaa92f124fb1ad74a7acf56726decd4b27cbcad#egg=patchcore

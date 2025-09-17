@@ -1,12 +1,11 @@
-# requirements/requirements_cpu.txt
-# CPU 환경에서 사용할 라이브러리들
-# 기본 라이브러리들을 먼저 설치한 후에 이 파일을 사용하세요
+# MLOps Vision 프로젝트 - CPU 전용 PyTorch
+# CPU 환경에서 사용할 PyTorch 및 관련 라이브러리
 
-# PyTorch 공식 CPU 저장소에서 설치
---find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-torch
-torchvision
-torchaudio
+# PyTorch CPU 버전
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
 
-# CPU 전용 FAISS
-faiss-cpu>=1.7.0
+# ML 백엔드
+scikit-image>=0.21.0
+scipy>=1.11.0

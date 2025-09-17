@@ -1,12 +1,15 @@
-# requirements/requirements_gpu.txt
-# GPU 환경에서 사용할 고성능 라이브러리들
-# 기본 라이브러리들을 먼저 설치한 후에 이 파일을 사용하세요
+# MLOps Vision 프로젝트 - GPU 전용 PyTorch
+# CUDA 환경에서 사용할 PyTorch 및 관련 라이브러리
 
-# GPU 가속 PyTorch (CUDA 11.8 버전)
---index-url https://download.pytorch.org/whl/cu118
-torch>=2.0.0
-torchvision>=0.15.0
-torchaudio>=2.0.0
+# PyTorch CUDA 버전 (현재 설치된 버전 기준)
+torch==2.7.1+cu118
+torchvision==0.22.1+cu118
+torchaudio==2.7.1+cu118
 
-# GPU 가속 FAISS
-faiss-gpu>=1.7.0
+# Windows에서는 faiss-cpu 사용 (GPU 버전은 Linux 전용)
+# 참고: Windows에서 faiss-gpu는 설치가 복잡하므로 CPU 버전 사용
+faiss-cpu>=1.7.0
+
+# ML 백엔드
+scikit-image>=0.21.0
+scipy>=1.11.0
