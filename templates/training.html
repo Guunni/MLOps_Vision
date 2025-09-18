@@ -1099,11 +1099,31 @@
             const selectedProject = projects.find(p => p.id === projectId);
             if (selectedProject) {
                 updateBreadcrumb(selectedProject.name);
+                
+                // 기본 브레드크럼으로 리셋 (데이터셋 선택 전)
+                const breadcrumb = document.getElementById('breadcrumbNav');
+                breadcrumb.innerHTML = `
+                    <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="/ui/projects" class="breadcrumb-item">프로젝트(${selectedProject.name})</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item active">모델 학습</span>
+                `;
             } else {
                 updateBreadcrumb(null);
+                
+                // 기본 브레드크럼으로 리셋
+                const breadcrumb = document.getElementById('breadcrumbNav');
+                breadcrumb.innerHTML = `
+                    <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="/ui/projects" class="breadcrumb-item">프로젝트</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item active">모델 학습</span>
+                `;
             }
             
-            loadProjectDatasets(projectId);
+            loadProjectDatasetsFromStorage(projectId);
         }
 
         function loadProjectDatasets(projectId) {
@@ -1281,6 +1301,32 @@
             document.getElementById('projectSelector').addEventListener('change', function() {
                 onTrainingProjectSelect(this.value);
                 document.getElementById('trainingProjectSelect').value = this.value;
+            });
+
+           // 데이터셋 선택 이벤트 리스너 추가
+            document.getElementById('datasetSelect').addEventListener('change', function() {
+                const selectedDatasetName = this.options[this.selectedIndex].text;
+                const datasetName = selectedDatasetName.split(' (')[0]; // "(N개 이미지)" 부분 제거
+                
+                if (this.value && selectedProjectId) {
+                    const selectedProject = projects.find(p => p.id === selectedProjectId);
+                    if (selectedProject) {
+                        updateDetailedBreadcrumb(selectedProject.name, datasetName);
+                    }
+                } else if (selectedProjectId) {
+                    // 데이터셋 선택 해제 시 프로젝트만 표시
+                    const selectedProject = projects.find(p => p.id === selectedProjectId);
+                    if (selectedProject) {
+                        const breadcrumb = document.getElementById('breadcrumbNav');
+                        breadcrumb.innerHTML = `
+                            <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                            <span class="breadcrumb-separator">/</span>
+                            <a href="/ui/projects" class="breadcrumb-item">프로젝트(${selectedProject.name})</a>
+                            <span class="breadcrumb-separator">/</span>
+                            <span class="breadcrumb-item active">모델 학습</span>
+                        `;
+                    }
+                }
             });
         });      
 
