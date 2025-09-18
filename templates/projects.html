@@ -438,6 +438,8 @@
             border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
             overflow: hidden;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .dataset-row {
@@ -447,6 +449,8 @@
             padding: 0.75rem;
             border-bottom: 1px solid var(--border-color);
             align-items: center;
+            cursor: pointer; /* 커서 변경 */
+            transition: background-color 0.2s ease;
         }
 
         .dataset-row:last-child {
@@ -817,8 +821,8 @@
             };
             
             projectsGrid.innerHTML = projects.map(project => `
-                    <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
-                        onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
+                <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
+                    onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
                     <div class="project-header">
                         <div>
                             <div class="project-name">${project.name}</div>
@@ -831,45 +835,28 @@
                     
                     <div class="project-description">${project.description}</div>
                     
-                    <div class="project-stats">
-                        <div class="stat-item">
-                            <span class="stat-value">${project.datasetCount || 0}</span>
-                            <div class="stat-label">데이터셋</div>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value">${project.modelCount || 0}</span>
-                            <div class="stat-label">모델</div>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value">${project.trainingCount || 0}</span>
-                            <div class="stat-label">학습</div>
-                        </div>
-                    </div>
-                    
                     <div class="project-meta">
                         <span>생성일: ${formatDate(project.createdAt)}</span>
                         <span>최종 수정: ${formatDate(project.updatedAt)}</span>
                     </div>
 
-                    ${project.datasetList && project.datasetList.length > 0 ? `
                     <div class="project-datasets">
                         <div class="datasets-label">데이터셋 목록:</div>
                         <div class="datasets-table">
-                            ${project.datasetList.slice(0, 5).map(dataset => `
-                                <div class="dataset-row">
-                                    <span class="dataset-name">${dataset.name}</span>
-                                    <span class="dataset-type">${dataset.type}</span>
-                                    <span class="dataset-date">${dataset.date}</span>
-                                </div>
-                            `).join('')}
-                            ${project.datasetList.length > 5 ? `
-                                <div class="dataset-more-row">
-                                    <span>+${project.datasetList.length - 5}개 더 보기</span>
-                                </div>
-                            ` : ''}
+                            ${project.datasetList && project.datasetList.length > 0 ? 
+                                project.datasetList.map(dataset => `
+                                    <div class="dataset-row" ondblclick="openDatasetDirectly('${project.id}', '${dataset.name}')">
+                                        <span class="dataset-name">${dataset.name}</span>
+                                        <span class="dataset-type">${dataset.type}</span>
+                                        <span class="dataset-date">${dataset.date}</span>
+                                    </div>
+                                `).join('') : 
+                                `<div class="dataset-row" style="justify-content: center; color: var(--text-muted); font-style: italic;">
+                                    <span>등록된 데이터셋이 없습니다</span>
+                                </div>`
+                            }
                         </div>
                     </div>
-                    ` : ''}
                     
                     <div class="project-actions" onclick="event.stopPropagation();">
                         <button class="btn btn-sm btn-outline" onclick="editProject('${project.id}')">
@@ -884,6 +871,11 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function openDatasetDirectly(projectId, datasetName) {
+            // 데이터셋 이름으로 이동 (ID는 프로젝트 페이지에서 접근 불가)
+            window.location.href = `/ui/datasets?project=${projectId}&datasetName=${encodeURIComponent(datasetName)}`;
         }
 
         function selectProject(projectId) {

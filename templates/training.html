@@ -1061,15 +1061,13 @@
 
         // 프로젝트 목록 로드
         function loadProjects() {
-            fetch('/api/projects')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        projects = data.projects;
-                        updateProjectSelectors();
-                    }
-                })
-                .catch(error => console.error('프로젝트 목록 로드 실패:', error));
+            const savedProjects = localStorage.getItem('mlops_projects');
+            if (savedProjects) {
+                projects = JSON.parse(savedProjects);
+                updateProjectSelectors();
+            } else {
+                projects = [];
+            }
         }
 
         // 프로젝트 선택기 업데이트
@@ -1108,31 +1106,38 @@
             loadProjectDatasets(projectId);
         }
 
-        // 프로젝트별 데이터셋 로드
         function loadProjectDatasets(projectId) {
+            return loadProjectDatasetsFromStorage(projectId);
+        }
+
+        // 로컬스토리지에서 프로젝트 데이터셋 로드
+        function loadProjectDatasetsFromStorage(projectId) {
             const datasetSelect = document.getElementById('datasetSelect');
             datasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
             
             if (!projectId) {
-                projectDatasets = [];
                 return;
             }
             
-            fetch(`/api/projects/${projectId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.project.datasets) {
-                        projectDatasets = data.project.datasets;
-                        
-                        projectDatasets.forEach(dataset => {
-                            const option = document.createElement('option');
-                            option.value = dataset.name;
-                            option.textContent = `${dataset.name} (${dataset.image_count}개 이미지)`;
-                            datasetSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('프로젝트 데이터셋 로드 실패:', error));
+            try {
+                const savedDatasets = localStorage.getItem(`datasets_${projectId}`);
+                if (savedDatasets) {
+                    const datasets = JSON.parse(savedDatasets);
+                    
+                    datasets.forEach(dataset => {
+                        const option = document.createElement('option');
+                        option.value = dataset.name;
+                        option.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
+                        datasetSelect.appendChild(option);
+                    });
+                    
+                    return datasets;
+                }
+            } catch (e) {
+                console.error('데이터셋 로드 실패:', e);
+            }
+            
+            return [];
         }
 
         // 슬라이더와 입력 필드 동기화 함수
@@ -1167,23 +1172,53 @@
             window.history.pushState({}, '', url);
         }
 
-        // 페이지 로드 시 URL에서 프로젝트 ID 확인
         function initializeFromURL() {
+            // 먼저 프로젝트 목록 로드
+            loadProjects();
+            
             const projectId = getURLParameter('project');
+            const datasetName = getURLParameter('datasetName');
+            
             if (projectId) {
                 selectedProjectId = projectId;
+                
+                // 프로젝트 선택박스에 설정
                 document.getElementById('projectSelector').value = projectId;
                 document.getElementById('trainingProjectSelect').value = projectId;
                 
-                // 프로젝트가 로드된 후 URL에서 가져온 프로젝트 선택
-                setTimeout(() => {
-                    const project = projects.find(p => p.id === projectId);
-                    if (project) {
-                        updateBreadcrumb(project.name);
-                        loadProjectDatasets(projectId);
+                const project = projects.find(p => p.id === projectId);
+                if (project) {
+                    updateBreadcrumb(project.name);
+                    loadProjectDatasetsFromStorage(projectId);
+                    
+                    if (datasetName) {
+                        setTimeout(() => {
+                            const datasetSelect = document.getElementById('datasetSelect');
+                            const option = Array.from(datasetSelect.options).find(opt => 
+                                opt.textContent.includes(datasetName)
+                            );
+                            if (option) {
+                                datasetSelect.value = option.value;
+                                updateDetailedBreadcrumb(project.name, datasetName);
+                            }
+                        }, 50);
                     }
-                }, 500);
+                }
             }
+        }
+
+        function updateDetailedBreadcrumb(projectName, datasetName) {
+            const breadcrumb = document.getElementById('breadcrumbNav');
+            
+            breadcrumb.innerHTML = `
+                <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="/ui/projects" class="breadcrumb-item">프로젝트(${projectName})</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="/ui/datasets?project=${selectedProjectId}" class="breadcrumb-item">데이터셋(${datasetName})</a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-item active">모델 학습</span>
+            `;
         }
 
         // 브레드크럼 업데이트 함수
@@ -1222,15 +1257,32 @@
 
         // 이벤트 리스너 추가
         document.addEventListener('DOMContentLoaded', function() {
-            // 슬라이더와 입력 필드 동기화
+            // 슬라이더 동기화
             syncSliderAndInput('learningRateSlider', 'learningRateInput');
             syncSliderAndInput('samplingRatioSlider', 'samplingRatioInput');
             syncSliderAndInput('trainRatioSlider', 'trainRatioInput', updateDataSplitRatios);
             syncSliderAndInput('valRatioSlider', 'valRatioInput', updateDataSplitRatios);
             
-            // 초기 표시 업데이트
             updateDataSplitRatios();
-        });        
+            
+            // 먼저 프로젝트 로드하고 URL 초기화
+            loadProjects();
+            initializeFromURL();
+            
+            // 학습 상태 확인
+            refreshTraining();
+            
+            // 프로젝트 선택 이벤트 리스너
+            document.getElementById('trainingProjectSelect').addEventListener('change', function() {
+                onTrainingProjectSelect(this.value);
+                document.getElementById('projectSelector').value = this.value;
+            });
+            
+            document.getElementById('projectSelector').addEventListener('change', function() {
+                onTrainingProjectSelect(this.value);
+                document.getElementById('trainingProjectSelect').value = this.value;
+            });
+        });      
 
         function refreshTraining() {
             console.log('학습 상태 새로고침');
@@ -1359,19 +1411,24 @@
 
         // 페이지 로드 시 학습 상태 확인
         document.addEventListener('DOMContentLoaded', function() {
-            refreshTraining();
-            // 프로젝트 관련 초기화 추가
-            loadProjects();
+            // 슬라이더 동기화
+            syncSliderAndInput('learningRateSlider', 'learningRateInput');
+            syncSliderAndInput('samplingRatioSlider', 'samplingRatioInput');
+            syncSliderAndInput('trainRatioSlider', 'trainRatioInput', updateDataSplitRatios);
+            syncSliderAndInput('valRatioSlider', 'valRatioInput', updateDataSplitRatios);
             
-            // URL에서 초기화
-            setTimeout(() => {
-                initializeFromURL();
-            }, 1000);
+            updateDataSplitRatios();
+            
+            // 먼저 프로젝트 로드하고 URL 초기화
+            loadProjects();
+            initializeFromURL();
+            
+            // 학습 상태 확인
+            refreshTraining();
             
             // 프로젝트 선택 이벤트 리스너
             document.getElementById('trainingProjectSelect').addEventListener('change', function() {
                 onTrainingProjectSelect(this.value);
-                // 두 선택기 동기화
                 document.getElementById('projectSelector').value = this.value;
             });
             

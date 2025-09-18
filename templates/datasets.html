@@ -217,6 +217,40 @@
             color: var(--text-primary);
         }
 
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .refresh-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .refresh-tooltip {
+            position: absolute;
+            right: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        .refresh-container:hover .refresh-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .project-selector {
             padding: 0.5rem;
             border: 1px solid var(--border-color);
@@ -245,6 +279,17 @@
             cursor: pointer;
             transition: all 0.2s ease;
             text-decoration: none;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #b45309;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-primary {
@@ -356,6 +401,28 @@
             font-size: 0.875rem;
         }
 
+        .datasets-table th:nth-child(5) { /* 생성일 컬럼 */
+            width: 150px;
+            min-width: 100px;
+        }
+
+        .datasets-table th:nth-child(6) { /* 설명 컬럼 */
+            width: auto;
+            min-width: 200px;
+        }
+
+        .datasets-table td:nth-child(5) { /* 생성일 셀 */
+            width: 150px;
+            white-space: nowrap;
+        }
+
+        .datasets-table td:nth-child(6) { /* 설명 셀 */
+            width: auto;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .datasets-table tbody tr:hover {
             background: var(--bg-tertiary);
         }
@@ -412,6 +479,34 @@
         .empty-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
+        }
+
+        .image-thumbnail.loading {
+            background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border-color) 50%, var(--bg-tertiary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .image-thumbnail-placeholder {
+            width: 35px;
+            height: 35px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .more-images-row {
+            background: var(--bg-tertiary);
+            font-style: italic;
         }
 
         /* 이미지 관리 섹션 */
@@ -493,18 +588,78 @@
             overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
+            min-height: 300px;
+            max-height: 500px;
+            position: relative;
         }
 
         .image-table {
             width: 100%;
             border-collapse: collapse;
             background: var(--bg-secondary);
+            table-layout: fixed;
+        }
+
+        .image-table th:first-child,
+        .image-table td:first-child {
+            width: 30px !important;
+            min-width: 30px !important;
+            max-width: 30px !important;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            cursor: pointer;
+        }
+
+        .image-table td:first-child:hover {
+            background-color: rgba(71, 85, 105, 0.1);
+        }
+
+        .image-table th:nth-child(2),
+        .image-table td:nth-child(2) {
+            width: 25px !important;
+            min-width: 25px !important;
+            max-width: 25px !important;
+            text-align: center;
+            padding: 0.5rem 0.2rem;
+        }
+
+        .image-table th:nth-child(3),
+        .image-table td:nth-child(3) {
+            width: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .image-table th:nth-child(4),
+        .image-table td:nth-child(4) {
+            width: auto !important;
+            min-width: 250px !important;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .image-table th:nth-child(5),
+        .image-table td:nth-child(5) {
+            width: 50px !important;
+            min-width: 40px !important;
+            max-width: 40px !important;
+            text-align: center;
+            padding: 0.5rem 0.2rem;
+        }
+
+        .image-table th:nth-child(6),
+        .image-table td:nth-child(6) {
+            width: 60px !important;
+            min-width: 60px !important;
+            max-width: 60px !important;
+            text-align: center;
+            padding: 0.5rem;
         }
 
         .image-table th {
             background: var(--bg-tertiary);
-            padding: 0.5rem;
-            text-align: left;
             font-weight: 600;
             color: var(--text-primary);
             border-bottom: 1px solid var(--border-color);
@@ -512,22 +667,13 @@
             position: sticky;
             top: 0;
             z-index: 10;
-        }
-
-        .image-table th:first-child {
-            width: 40px;
-            text-align: center;
-        }
-
-        .image-table th:nth-child(2) {
-            width: 60px;
-            text-align: center;
+            vertical-align: middle;
         }
 
         .image-table td {
-            padding: 0.5rem;
             border-bottom: 1px solid var(--border-color);
             font-size: 0.75rem;
+            vertical-align: middle;
         }
 
         .image-table tbody tr {
@@ -551,18 +697,22 @@
             border-bottom: none;
         }
 
-        .image-row-checkbox {
-            width: 16px;
-            height: 16px;
+        .image-row-checkbox, #selectAllCheckbox {
+            width: 18px;
+            height: 18px;
             accent-color: var(--primary-color);
+            margin: 0;
+            cursor: pointer;
         }
 
         .image-thumbnail {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             object-fit: cover;
             border-radius: var(--radius-sm);
             background: var(--bg-tertiary);
+            /* CPU 친화적 렌더링 */
+            image-rendering: auto;
         }
 
         .image-name {
@@ -571,7 +721,13 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 150px;
+            font-size: 0.875rem;
+        }
+
+        #selectAllCheckbox {
+            width: 12px;
+            height: 12px;
+            margin: 0;
         }
 
         .image-row-number {
@@ -581,13 +737,17 @@
         }
 
         .empty-list {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 200px;
             color: var(--text-muted);
             text-align: center;
+            z-index: 5;
         }
 
         /* 오른쪽 미리보기 */
@@ -626,13 +786,11 @@
             flex: 1;
             padding: 1rem;
             background: var(--bg-secondary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            overflow: auto;
             position: relative;
             min-height: 400px;
+            max-height: 600px;
+            cursor: grab;
         }
 
         .empty-preview {
@@ -647,24 +805,30 @@
 
         .preview-image-container {
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow: auto;
             border-radius: var(--radius-md);
             background: var(--bg-tertiary);
         }
 
         #previewImage {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            transition: transform 0.2s ease;
+            max-width: none;
+            max-height: none;
+            width: auto;
+            height: auto;
+            object-fit: none;
+            transition: transform 0.1s ease;
             cursor: grab;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
+        }
+        
+        #previewImage,
+        .image-thumbnail {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
         }
 
         #previewImage:active {
@@ -976,6 +1140,20 @@
                         <select id="projectSelector" class="project-selector">
                             <option value="">프로젝트를 선택하세요</option>
                         </select>
+                        <select id="datasetSelector" class="project-selector" style="display: none;">
+                            <option value="">데이터셋을 선택하세요</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-warning" onclick="startTrainingFromDataset()" id="trainingBtn" style="display: none;">
+                        <i class="fas fa-brain"></i> 학습 시작
+                    </button>
+                    <div class="refresh-container">
+                        <button class="btn btn-primary" onclick="refreshDatasets()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <div class="refresh-tooltip">새로고침</div>
                     </div>
                 </div>
             </header>
@@ -988,6 +1166,9 @@
                         <h2 class="section-title">
                             <i class="fas fa-database"></i>
                             데이터셋 목록
+                            <button class="btn btn-sm btn-outline" onclick="toggleDatasetSection()" id="toggleDatasetBtn" style="margin-left: 1rem;">
+                                <i class="fas fa-chevron-up" id="toggleDatasetIcon"></i>
+                            </button>
                             <span style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary); font-weight: normal;" id="datasetCount">총 0개</span>
                             <button class="btn btn-success" onclick="openDatasetModal()" style="margin-left: 1rem;">
                                 <i class="fas fa-plus"></i> 추가
@@ -998,7 +1179,7 @@
                             <table class="datasets-table">
                                 <thead>
                                     <tr>
-                                        <th>데이터셋명</th>
+                                        <th>데이터셋 명</th>
                                         <th>타입</th>
                                         <th>이미지 수</th>
                                         <th>총 용량</th>
@@ -1046,21 +1227,20 @@
                                 <div class="index-header">
                                     <h4><i class="fas fa-list"></i> 이미지 목록</h4>
                                     <div class="image-count" id="imageCount">0개</div>
-                                </div>
-                                
+                                </div>                        
                                 <div class="image-list-container">
                                     <div class="image-table-container" id="imageTableContainer">
                                         <table class="image-table">
                                             <thead>
                                                 <tr>
-                                                    <th>
+                                                    <th style="width: 40px; text-align: center;">
                                                         <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
                                                     </th>
-                                                    <th>#</th>
-                                                    <th>미리보기</th>
-                                                    <th>파일명</th>
-                                                    <th>형식</th>
-                                                    <th>크기</th>
+                                                    <th style="width: 40px; text-align: center;">#</th>
+                                                    <th style="width: 60px; text-align: center;">미리보기</th>
+                                                    <th style="width: auto; min-width: 200px;">파일명</th>
+                                                    <th style="width: 60px; text-align: center;">형식</th>
+                                                    <th style="width: 80px; text-align: right;">크기</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="imageTableBody">
@@ -1072,12 +1252,6 @@
                                             <p>이미지를 추가해주세요</p>
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <div style="padding: 1rem; border-top: 1px solid var(--border-color); background: var(--bg-tertiary); display: flex; align-items: center; gap: 1rem;">
-                                    <button class="btn btn-sm btn-outline" onclick="toggleAllSelection()" id="toggleAllBtn" style="flex: 1;">
-                                        <i class="fas fa-check-square" id="toggleAllIcon"></i> <span id="toggleAllText">전체 선택</span>
-                                    </button>
                                 </div>
                             </div>
 
@@ -1214,6 +1388,7 @@
         let isSelecting = false;
         let selectionStart = { x: 0, y: 0 };
         let allSelected = false;
+        let imageDataCache = {};
 
         // 프로젝트 관리 함수
         function loadProjects() {
@@ -1255,11 +1430,14 @@
                 renderDatasets();
                 document.getElementById('datasetSelector').style.display = 'none';
             }
+            updateTrainingButton();
             updateDatasetSelector();
         }
 
         function updateDatasetSelector() {
             const selector = document.getElementById('datasetSelector');
+            const currentValue = selector.value; // 현재 선택된 값 저장
+            
             selector.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
             
             datasets.forEach(dataset => {
@@ -1268,12 +1446,27 @@
                 option.textContent = dataset.name;
                 selector.appendChild(option);
             });
+            
+            // 삭제된 데이터셋이 아니라면 원래 선택 유지
+            if (currentValue && datasets.find(d => d.id === currentValue)) {
+                selector.value = currentValue;
+            }
         }
 
         function onDatasetSelect(datasetId) {
             selectedDatasetId = datasetId;
+            
+            if (datasetId) {
+                setURLParameter('dataset', datasetId);
+            } else {
+                const url = new URL(window.location);
+                url.searchParams.delete('dataset');
+                window.history.pushState({}, '', url);
+            }
+            
             const selectedDataset = datasets.find(d => d.id === datasetId);
             if (selectedDataset) {
+                // 동기화 처리 - await 제거
                 loadDatasetImages(selectedDataset);
             } else {
                 uploadedImages = [];
@@ -1283,24 +1476,115 @@
                 showEmptyPreview();
                 updateImageCount();
             }
+            
+            renderDatasets();
+            updateTrainingButton();
         }
 
-        function loadDatasetImages(dataset) {
-            // 데이터셋의 이미지 데이터를 로드 (실제로는 서버에서 가져올 것)
-            uploadedImages = dataset.images || [];
-            selectedImages = [];
-            currentPreviewIndex = -1;
+        function startTrainingFromDataset() {
+            if (!selectedProjectId || !selectedDatasetId) {
+                alert('프로젝트와 데이터셋을 선택하세요.');
+                return;
+            }
+            
+            const selectedDataset = datasets.find(d => d.id === selectedDatasetId);
+            if (!selectedDataset) {
+                alert('데이터셋 정보를 찾을 수 없습니다.');
+                return;
+            }
+            
+            // URL 파라미터로 직접 전달 (프로젝트→데이터셋 방식과 동일)
+            window.location.href = `/ui/training?project=${selectedProjectId}&dataset=${selectedDatasetId}&datasetName=${encodeURIComponent(selectedDataset.name)}`;
+        }
+
+        // 데이터셋 선택 시 학습 버튼 표시/숨김
+        function updateTrainingButton() {
+            const trainingBtn = document.getElementById('trainingBtn');
+            if (selectedProjectId && selectedDatasetId) {
+                trainingBtn.style.display = 'inline-flex';
+            } else {
+                trainingBtn.style.display = 'none';
+            }
+        }
+
+        async function loadDatasetImages(dataset) {
+            // 빈 데이터셋 즉시 처리
+            if (!dataset || !dataset.images || !Array.isArray(dataset.images) || dataset.images.length === 0) {
+                uploadedImages = [];
+                selectedImages = [];
+                currentPreviewIndex = -1;
+                renderImageTable();
+                showEmptyPreview();
+                updateImageCount();
+                return;
+            }
+            
+            // 이미지가 있는 경우만 비동기 처리
+            uploadedImages = dataset.images.map(img => ({
+                ...img,
+                dataUrl: null,
+                file: null
+            }));
+            
             renderImageTable();
             updateImageCount();
-            if (uploadedImages.length > 0) {
+            
+            // 백그라운드에서 이미지 로드
+            if (db) {
+                const savedImages = await loadImagesFromDB(selectedProjectId, selectedDatasetId);
+                const imageMap = new Map(savedImages.map(img => [img.id, img.dataUrl]));
+                
+                uploadedImages.forEach(img => {
+                    img.dataUrl = imageMap.get(img.id) || img.dataUrl;
+                });
+                
+                renderImageTable();
+            }
+            
+            selectedImages = [];
+            currentPreviewIndex = -1;
+            
+            if (uploadedImages.length === 0) {
                 showEmptyPreview();
             }
         }
 
         // 데이터셋 관리 함수
         function loadDatasets(projectId) {
-            datasets = [];
+            if (!projectId) {
+                datasets = [];
+                renderDatasets();
+                return;
+            }
+            
+            try {
+                const savedDatasets = localStorage.getItem(`datasets_${projectId}`);
+                if (savedDatasets) {
+                    datasets = JSON.parse(savedDatasets);
+                } else {
+                    datasets = [];
+                }
+            } catch (e) {
+                console.error('데이터셋 로드 실패:', e);
+                datasets = [];
+            }
+            
+            // 즉시 렌더링
             renderDatasets();
+            
+            // URL에 datasetName이 있으면 즉시 처리
+            const datasetName = getURLParameter('datasetName');
+            if (datasetName) {
+                const foundDataset = datasets.find(d => d.name === datasetName);
+                if (foundDataset) {
+                    selectedDatasetId = foundDataset.id;
+                    const datasetSelector = document.getElementById('datasetSelector');
+                    if (datasetSelector) {
+                        datasetSelector.value = foundDataset.id;
+                        onDatasetSelect(foundDataset.id);
+                    }
+                }
+            }
         }
 
         function openDatasetModal() {
@@ -1318,22 +1602,34 @@
             document.getElementById('newDatasetDescription').value = '';
         }
 
-        // 데이터셋을 로컬스토리지에 저장하는 함수
-        function saveDatasets() {
-            if (selectedProjectId) {
-                localStorage.setItem(`datasets_${selectedProjectId}`, JSON.stringify(datasets));
+        async function saveCurrentDatasets() {
+            if (!selectedProjectId) return;
+            
+            // 선택된 데이터셋이 있을 때만 이미지 정보 업데이트
+            if (selectedDatasetId) {
+                const currentDataset = datasets.find(d => d.id === selectedDatasetId);
+                if (currentDataset) {
+                    // 이미지 데이터는 IndexedDB에 저장
+                    for (const img of uploadedImages) {
+                        await saveImageToDB(img);
+                    }
+                    
+                    // 메타데이터만 로컬스토리지에 저장
+                    currentDataset.images = uploadedImages.map(img => ({
+                        id: img.id,
+                        name: img.name,
+                        size: img.size,
+                        type: img.type,
+                        order: img.order
+                    }));
+                    currentDataset.imageCount = uploadedImages.length;
+                    currentDataset.totalSize = uploadedImages.reduce((sum, img) => sum + img.size, 0);
+                }
             }
-        }
-
-        // loadDatasets 함수
-        function loadDatasets(projectId) {
-            const savedDatasets = localStorage.getItem(`datasets_${projectId}`);
-            if (savedDatasets) {
-                datasets = JSON.parse(savedDatasets);
-            } else {
-                datasets = [];
-            }
-            renderDatasets();
+            
+            // 선택된 데이터셋이 없어도 datasets 배열은 항상 저장
+            localStorage.setItem(`datasets_${selectedProjectId}`, JSON.stringify(datasets));
+            updateProjectStats();
         }
 
         function createDataset() {
@@ -1347,19 +1643,18 @@
             }
 
             const newDataset = {
-                id: 'ds_' + Date.now(),
+                id: 'ds_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                 name: name,
                 type: type,
                 description: description,
                 imageCount: 0,
                 totalSize: 0,
-                createdAt: new Date().toISOString().split('T')[0],
+                createdAt: new Date().toISOString(),
                 images: []
             };
 
             datasets.push(newDataset);
-            saveDatasets(); // 로컬스토리지에 저장
-            updateProjectStats(); // 프로젝트 통계 업데이트
+            saveCurrentDatasets(); // 통합 저장 함수 호출
             renderDatasets();
             updateDatasetSelector();
             closeDatasetModal();
@@ -1409,7 +1704,7 @@
             };
             
             tableBody.innerHTML = datasets.map(dataset => `
-                <tr onclick="selectDataset('${dataset.id}')" style="cursor: pointer;" ${selectedDatasetId === dataset.id ? 'class="selected"' : ''}>
+                <tr onclick="selectDataset('${dataset.id}')" style="cursor: pointer; ${selectedDatasetId === dataset.id ? 'background: rgba(71, 85, 105, 0.1); border-left: 3px solid var(--primary-color);' : ''}" data-id="${dataset.id}">
                     <td><strong>${dataset.name}</strong></td>
                     <td><span class="dataset-type-badge type-${dataset.type}">${typeLabels[dataset.type]}</span></td>
                     <td>${dataset.imageCount.toLocaleString()}개</td>
@@ -1432,9 +1727,15 @@
 
         function selectDataset(datasetId) {
             selectedDatasetId = datasetId;
-            document.getElementById('datasetSelector').value = datasetId;
+            
+            // 선택박스만 즉시 동기화
+            const datasetSelector = document.getElementById('datasetSelector');
+            if (datasetSelector) {
+                datasetSelector.value = datasetId;
+            }
+            
+            // 한 번만 호출
             onDatasetSelect(datasetId);
-            renderDatasets();
         }
 
         function editDataset(datasetId) {
@@ -1477,11 +1778,10 @@
                     description: description
                 };
                 
-                saveDatasets();
-                updateProjectStats();
+                saveCurrentDatasets();
                 renderDatasets();
                 updateDatasetSelector();
-                closeDatasetModal();
+                updateProjectStats();                                
                 
                 // 버튼을 원래대로 복원
                 const createBtn = document.querySelector('#datasetModal .btn-success');
@@ -1490,32 +1790,54 @@
                 
                 const modalTitle = document.querySelector('#datasetModal .modal-title');
                 modalTitle.textContent = '새 데이터셋 추가';
+
+                closeDatasetModal();
             }
         }
 
         function deleteDataset(datasetId) {
             const dataset = datasets.find(d => d.id === datasetId);
-            if (dataset && confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) {
-                datasets = datasets.filter(d => d.id !== datasetId);
-                if (selectedDatasetId === datasetId) {
-                    selectedDatasetId = null;
-                    uploadedImages = [];
-                    selectedImages = [];
-                    currentPreviewIndex = -1;
-                    renderImageTable();
-                    showEmptyPreview();
-                    updateImageCount();
-                }
-                renderDatasets();
-                updateDatasetSelector();
+            if (!dataset || !confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) {
+                return;
             }
+            
+            // 배열에서 제거
+            datasets = datasets.filter(d => d.id !== datasetId);
+            
+            // 현재 선택된 데이터셋이 삭제된 경우에만 초기화
+            if (selectedDatasetId === datasetId) {
+                selectedDatasetId = null;
+                
+                const url = new URL(window.location);
+                url.searchParams.delete('dataset');
+                window.history.replaceState({}, '', url);
+                
+                uploadedImages = [];
+                selectedImages = [];
+                currentPreviewIndex = -1;
+                renderImageTable();
+                showEmptyPreview();
+                updateImageCount();
+            }
+            
+            // 직접 저장 (saveCurrentDatasets 대신)
+            localStorage.setItem(`datasets_${selectedProjectId}`, JSON.stringify(datasets));
+            updateProjectStats();
+            
+            renderDatasets();
+            updateDatasetSelector();
         }
 
-        function deleteDataset(datasetId) {
-            const dataset = datasets.find(d => d.id === datasetId);
-            if (dataset && confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) {
-                datasets = datasets.filter(d => d.id !== datasetId);
-                renderDatasets();
+        function toggleDatasetSection() {
+            const container = document.getElementById('datasetsTableContainer');
+            const icon = document.getElementById('toggleDatasetIcon');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                container.style.display = 'none';
+                icon.className = 'fas fa-chevron-down';
             }
         }
 
@@ -1535,8 +1857,85 @@
             window.history.pushState({}, '', url);
         }
 
+        // IndexedDB 초기화 및 이미지 저장
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('MLOpsVisionDB', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    
+                    // 이미지 저장소 생성
+                    if (!db.objectStoreNames.contains('images')) {
+                        const imageStore = db.createObjectStore('images', { keyPath: 'id' });
+                    }
+                    
+                    // 데이터셋 메타데이터 저장소
+                    if (!db.objectStoreNames.contains('datasets')) {
+                        const datasetStore = db.createObjectStore('datasets', { keyPath: 'projectId' });
+                    }
+                };
+            });
+        }
+
+        function saveImageToDB(imageData) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readwrite');
+                const store = transaction.objectStore('images');
+                
+                const request = store.put({
+                    id: imageData.id,
+                    dataUrl: imageData.dataUrl,
+                    projectId: selectedProjectId,
+                    datasetId: selectedDatasetId
+                });
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function loadImagesFromDB(projectId, datasetId) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readonly');
+                const store = transaction.objectStore('images');
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    const allImages = request.result;
+                    const filteredImages = allImages.filter(img => 
+                        img.projectId === projectId && img.datasetId === datasetId
+                    );
+                    resolve(filteredImages);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function deleteImageFromDB(imageId) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['images'], 'readwrite');
+                const store = transaction.objectStore('images');
+                const request = store.delete(imageId);
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
         function initializeFromURL() {
             const projectId = getURLParameter('project');
+            const datasetId = getURLParameter('dataset');
+            const datasetName = getURLParameter('datasetName');
+            
             if (projectId) {
                 selectedProjectId = projectId;
                 
@@ -1545,7 +1944,31 @@
                     document.getElementById('projectSelector').value = projectId;
                     updateBreadcrumb(project.name);
                     loadDatasets(projectId);
-                    document.getElementById('datasetSelector').style.display = 'inline-block';
+                    
+                    const datasetSelector = document.getElementById('datasetSelector');
+                    if (datasetSelector) {
+                        datasetSelector.style.display = 'inline-block';
+                        
+                        setTimeout(() => {
+                            updateDatasetSelector();
+                            
+                            // 데이터셋 이름으로 찾기
+                            if (datasetName) {
+                                const foundDataset = datasets.find(d => d.name === datasetName);
+                                if (foundDataset) {
+                                    datasetSelector.value = foundDataset.id;
+                                    onDatasetSelect(foundDataset.id);
+                                }
+                            } else if (datasetId) {
+                                // 기존 ID 방식도 유지
+                                const datasetExists = datasets.find(d => d.id === datasetId);
+                                if (datasetExists) {
+                                    datasetSelector.value = datasetId;
+                                    onDatasetSelect(datasetId);
+                                }
+                            }
+                        }, 50);
+                    }
                 }
             }
         }
@@ -1558,6 +1981,16 @@
                 projectSeparator.style.display = 'inline';
                 projectBreadcrumb.style.display = 'inline';
                 projectBreadcrumb.textContent = projectName;
+                
+                // 상세 브레드크럼 업데이트
+                const breadcrumb = document.getElementById('breadcrumbNav');
+                breadcrumb.innerHTML = `
+                    <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="/ui/projects" class="breadcrumb-item">프로젝트(${projectName})</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item active">데이터셋</span>
+                `;
             } else {
                 projectSeparator.style.display = 'none';
                 projectBreadcrumb.style.display = 'none';
@@ -1579,26 +2012,53 @@
             event.target.value = '';
         }
 
-        function addImagesToList(files) {
-            files.forEach((file) => {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const imageData = {
-                            id: Date.now() + Math.random(),
-                            file: file,
-                            name: file.name,
-                            size: file.size,
-                            type: file.type,
-                            dataUrl: e.target.result,
-                            order: uploadedImages.length + 1
-                        };
-                        uploadedImages.push(imageData);
+        async function addImagesToList(files) {
+            if (!selectedDatasetId) {
+                alert('먼저 데이터셋을 선택하세요.');
+                return;
+            }
+
+            const fileArray = Array.from(files);
+            const imageFiles = fileArray.filter(f => f.type.startsWith('image/'));
+            let processedCount = 0;
+            const newImages = [];
+
+            imageFiles.forEach((file, originalIndex) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageId = `img_${Date.now()}_${originalIndex}_${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    // 메타데이터만 배열에 저장 (base64 제외)
+                    const imageData = {
+                        id: imageId,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        order: uploadedImages.length + processedCount + 1,
+                        originalIndex: originalIndex
+                    };
+                    
+                    // base64는 별도 객체에 저장
+                    imageDataCache[imageId] = e.target.result;
+                    
+                    newImages.push(imageData);
+                    processedCount++;
+
+                    if (processedCount === imageFiles.length) {
+                        newImages.sort((a, b) => a.originalIndex - b.originalIndex);
+                        newImages.forEach((img, idx) => {
+                            img.order = uploadedImages.length + idx + 1;
+                            delete img.originalIndex;
+                        });
+
+                        uploadedImages.push(...newImages);
                         renderImageTable();
                         updateImageCount();
-                    };
-                    reader.readAsDataURL(file);
-                }
+                        saveCurrentDatasets();
+                        renderDatasets();
+                    }
+                };
+                reader.readAsDataURL(file);
             });
         }
 
@@ -1615,29 +2075,88 @@
             
             emptyList.style.display = 'none';
             
-            tableBody.innerHTML = uploadedImages.map((image, index) => `
+            // 한 번에 최대 50개만 렌더링
+            const maxVisible = 500;
+            const visibleImages = uploadedImages.slice(0, Math.min(maxVisible, uploadedImages.length));
+            
+            tableBody.innerHTML = visibleImages.map((image, index) => `
                 <tr class="${getRowClasses(image.id, index)}" 
                     data-id="${image.id}" 
                     data-index="${index}"
                     onclick="selectImage(${index}, event)">
-                    <td>
+                    <td onclick="handleCheckboxCellClick('${image.id}', event)">
                         <input type="checkbox" class="image-row-checkbox" 
-                               ${selectedImages.includes(image.id) ? 'checked' : ''}
-                               onchange="toggleImageSelection('${image.id}', event)">
+                            ${selectedImages.includes(image.id) ? 'checked' : ''}
+                            onclick="toggleImageSelection('${image.id}', event)">
                     </td>
                     <td class="image-row-number">${index + 1}</td>
                     <td>
-                        <img src="${image.dataUrl}" alt="${image.name}" class="image-thumbnail">
+                        <div class="image-thumbnail-placeholder" data-image-id="${image.id}">
+                            <i class="fas fa-image"></i>
+                        </div>
                     </td>
                     <td>
                         <div class="image-name" title="${image.name}">${image.name}</div>
                     </td>
                     <td>${getFileExtension(image.name).toUpperCase()}</td>
-                    <td>${formatFileSize(image.size)}</td>
+                    <td style="text-align: right;">${formatFileSize(image.size)}</td>
                 </tr>
             `).join('');
             
+            // 남은 이미지 개수 표시
+            if (uploadedImages.length > maxVisible) {
+                tableBody.innerHTML += `
+                    <tr class="more-images-row">
+                        <td colspan="6" style="text-align: center; padding: 1rem; color: var(--text-muted);">
+                            +${uploadedImages.length - maxVisible}개 더 있음 (스크롤하여 더 보기)
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // 지연 로딩으로 썸네일 표시
+            setTimeout(() => loadVisibleThumbnails(), 100);
             updateSelectAllCheckbox();
+        }
+
+        function loadVisibleThumbnails() {
+            const placeholders = document.querySelectorAll('.image-thumbnail-placeholder');
+            
+            placeholders.forEach((placeholder, index) => {
+                // 50ms씩 지연해서 로딩 (버퍼링 방지)
+                setTimeout(() => {
+                    const imageId = placeholder.dataset.imageId;
+                    const imageData = imageDataCache[imageId];
+                    
+                    if (imageData) {
+                        placeholder.innerHTML = `<img src="${imageData}" alt="" class="image-thumbnail">`;
+                        placeholder.classList.remove('image-thumbnail-placeholder');
+                    }
+                }, index * 50);
+            });
+        }
+
+        function initializeVirtualScrolling() {
+            const container = document.getElementById('imageTableContainer');
+            let scrollTimeout;
+            
+            container.addEventListener('scroll', () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    renderImageTable();
+                }, 16); // ~60fps
+            });
+        }
+
+        function handleCheckboxCellClick(imageId, event) {
+            event.stopPropagation();
+            
+            // 체크박스 찾아서 토글
+            const checkbox = event.currentTarget.querySelector('.image-row-checkbox');
+            checkbox.checked = !checkbox.checked;
+            
+            // 체크박스 변경 이벤트 트리거
+            toggleImageSelection(imageId, { target: checkbox, stopPropagation: () => {} });
         }
 
         function getRowClasses(imageId, index) {
@@ -1652,10 +2171,6 @@
         }
 
         function selectImage(index, event) {
-            if (event && (event.target.type === 'checkbox' || event.target.classList.contains('image-row-checkbox'))) {
-                return;
-            }
-            
             currentPreviewIndex = index;
             if (uploadedImages[index]) {
                 showImagePreview(uploadedImages[index], index);
@@ -1666,15 +2181,43 @@
         function toggleImageSelection(imageId, event) {
             event.stopPropagation();
             
+            const checkbox = event.target;
             const index = selectedImages.indexOf(imageId);
-            if (index > -1) {
-                selectedImages.splice(index, 1);
+            
+            // 체크박스의 실제 상태에 따라 배열 업데이트
+            if (checkbox.checked) {
+                // 체크박스가 체크된 상태면 배열에 추가
+                if (index === -1) {
+                    selectedImages.push(imageId);
+                }
             } else {
-                selectedImages.push(imageId);
+                // 체크박스가 해제된 상태면 배열에서 제거
+                if (index > -1) {
+                    selectedImages.splice(index, 1);
+                }
             }
             
-            renderImageTable();
+            // 행 스타일 업데이트
+            const row = checkbox.closest('tr');
+            if (selectedImages.includes(imageId)) {
+                row.classList.add('multi-selected');
+            } else {
+                row.classList.remove('multi-selected');
+            }
+            
+            updateSelectAllCheckbox();
             updateSelectionControls();
+        }
+
+        function updateRowSelection(imageId) {
+            const row = document.querySelector(`tr[data-id="${imageId}"]`);
+            if (row) {
+                if (selectedImages.includes(imageId)) {
+                    row.classList.add('multi-selected');
+                } else {
+                    row.classList.remove('multi-selected');
+                }
+            }
         }
 
         function toggleSelectAll() {
@@ -1686,7 +2229,17 @@
                 selectedImages = [];
             }
             
-            renderImageTable();
+            // 체크박스 상태만 빠르게 업데이트
+            document.querySelectorAll('.image-row-checkbox').forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                const row = checkbox.closest('tr');
+                if (selectAllCheckbox.checked) {
+                    row.classList.add('multi-selected');
+                } else {
+                    row.classList.remove('multi-selected');
+                }
+            });
+            
             updateSelectionControls();
         }
 
@@ -1695,16 +2248,10 @@
             
             if (uploadedImages.length === 0) {
                 selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-            } else if (selectedImages.length === uploadedImages.length) {
-                selectAllCheckbox.checked = true;
-                selectAllCheckbox.indeterminate = false;
-            } else if (selectedImages.length > 0) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true;
+                selectAllCheckbox.disabled = true; // 이미지 없으면 비활성화
             } else {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.disabled = false;
+                selectAllCheckbox.checked = selectedImages.length === uploadedImages.length;
             }
         }
 
@@ -1720,7 +2267,7 @@
             updateSelectionControls();
         }
 
-        function deleteSelectedImages() {
+        async function deleteSelectedImages() {
             if (selectedImages.length === 0) return;
             
             if (confirm(`선택된 ${selectedImages.length}개의 이미지를 삭제하시겠습니까?`)) {
@@ -1731,9 +2278,12 @@
                     img.order = index + 1;
                 });
                 
+                await saveCurrentDatasets(); // 이제 오류 없음
                 renderImageTable();
                 updateImageCount();
+                renderDatasets();
                 updateSelectionControls();
+                updateSelectAllCheckbox();
                 
                 if (currentPreviewIndex >= uploadedImages.length) {
                     currentPreviewIndex = -1;
@@ -1747,7 +2297,6 @@
         function updateSelectionControls() {
             const deleteBtn = document.getElementById('deleteBtn');
             deleteBtn.style.display = selectedImages.length > 0 ? 'inline-flex' : 'none';
-            updateSelectAllCheckbox();
         }
 
         function updateImageCount() {
@@ -1770,15 +2319,19 @@
             currentZoom = 1;
             imageOffsetX = 0;
             imageOffsetY = 0;
+
+            previewImage.onload = function() {
+                this.style.width = this.naturalWidth + 'px';
+                this.style.height = this.naturalHeight + 'px';
+                updateImageTransform();
+                document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
+            };
+            
             updateImageTransform();
             
             document.getElementById('infoFileName').textContent = imageData.name;
             document.getElementById('infoFileSize').textContent = formatFileSize(imageData.size);
             document.getElementById('infoOrder').textContent = `${index + 1} / ${uploadedImages.length}`;
-            
-            previewImage.onload = function() {
-                document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
-            };
         }
 
         function showEmptyPreview() {
@@ -1795,13 +2348,19 @@
 
         // 줌 및 이미지 조작 기능
         function zoomIn() {
-            currentZoom = Math.min(currentZoom * 1.2, 5);
-            updateImageTransform();
+            const previewContainer = document.getElementById('previewContainer');
+            const rect = previewContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            zoomAtPoint(centerX, centerY, 1.2);
         }
 
         function zoomOut() {
-            currentZoom = Math.max(currentZoom / 1.2, 0.1);
-            updateImageTransform();
+            const previewContainer = document.getElementById('previewContainer');
+            const rect = previewContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            zoomAtPoint(centerX, centerY, 0.8);
         }
 
         function resetZoom() {
@@ -1812,23 +2371,7 @@
         }
 
         function fitImage() {
-            const previewContainer = document.getElementById('previewContainer');
-            const previewImage = document.getElementById('previewImage');
-            
-            if (!previewImage.src) return;
-            
-            const containerRect = previewContainer.getBoundingClientRect();
-            const imageAspectRatio = previewImage.naturalWidth / previewImage.naturalHeight;
-            const containerAspectRatio = containerRect.width / containerRect.height;
-            
-            if (imageAspectRatio > containerAspectRatio) {
-                // 이미지가 더 넓음 - 너비에 맞춤
-                currentZoom = (containerRect.width * 0.9) / previewImage.naturalWidth;
-            } else {
-                // 이미지가 더 높음 - 높이에 맞춤
-                currentZoom = (containerRect.height * 0.9) / previewImage.naturalHeight;
-            }
-            
+            currentZoom = 1;
             imageOffsetX = 0;
             imageOffsetY = 0;
             updateImageTransform();
@@ -1852,21 +2395,14 @@
 
         function formatDate(dateString) {
             const date = new Date(dateString);
-            return date.toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            });
-        }
-
-        // 드래그 앤 드롭 기능
-        function initializeDropZone() {
-            const dropZone = document.getElementById('dropZone');
+            const year = date.getFullYear().toString().slice(-2);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
             
-            dropZone.addEventListener('dragover', handleDragOver);
-            dropZone.addEventListener('dragenter', handleDragEnter);
-            dropZone.addEventListener('dragleave', handleDragLeave);
-            dropZone.addEventListener('drop', handleDrop);
+            return `${year}.${month}.${day}_${hours}:${minutes}:${seconds}`;
         }
 
         function handleDragOver(e) {
@@ -1897,41 +2433,59 @@
             addImagesToList(files);
         }
 
-        // 이미지 뷰어 이벤트 핸들러
         function initializeImageViewer() {
             const previewImage = document.getElementById('previewImage');
             const imagePreview = document.getElementById('imagePreview');
             
             // 마우스 휠 줌
             imagePreview.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                if (e.deltaY < 0) {
-                    zoomIn();
-                } else {
-                    zoomOut();
-                }
-            });
-            
-            // 마우스 드래그
-            previewImage.addEventListener('mousedown', (e) => {
-                if (currentZoom > 1) {
+                const previewImage = document.getElementById('previewImage');
+                const emptyPreview = document.getElementById('emptyPreview');
+                
+                // 이미지가 표시되고 있을 때만 줌 기능 사용
+            if (previewImage.style.display === 'block' && emptyPreview.style.display === 'none') {
                     isDragging = true;
-                    dragStartX = e.clientX - imageOffsetX;
-                    dragStartY = e.clientY - imageOffsetY;
+                    
+                    // 마우스 커서 위치로 정확히 설정
+                    const rect = imagePreview.getBoundingClientRect();
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startOffsetX = imageOffsetX;
+                    startOffsetY = imageOffsetY;
+                    
+                    imagePreview.style.cursor = 'grabbing';
                     e.preventDefault();
                 }
             });
             
+            // 마우스 드래그
+            let startX, startY, startOffsetX, startOffsetY;
+
+            imagePreview.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startOffsetX = imageOffsetX;
+                startOffsetY = imageOffsetY;
+                imagePreview.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+
             document.addEventListener('mousemove', (e) => {
-                if (isDragging && currentZoom > 1) {
-                    imageOffsetX = e.clientX - dragStartX;
-                    imageOffsetY = e.clientY - dragStartY;
+                if (isDragging) {
+                    // 드래그 거리 계산 (줌 레벨 고려)
+                    const deltaX = (e.clientX - startX) / currentZoom;
+                    const deltaY = (e.clientY - startY) / currentZoom;
+                    
+                    imageOffsetX = startOffsetX + deltaX;
+                    imageOffsetY = startOffsetY + deltaY;
                     updateImageTransform();
                 }
             });
-            
+
             document.addEventListener('mouseup', () => {
                 isDragging = false;
+                imagePreview.style.cursor = 'grab';
             });
             
             // 우클릭 컨텍스트 메뉴
@@ -1954,89 +2508,18 @@
             contextMenu.style.display = 'none';
         }
 
-        // 마우스 드래그 선택 기능
-        function initializeMouseSelection() {
-            const tableContainer = document.getElementById('imageTableContainer');
-            let selectionArea = null;
-            
-            tableContainer.addEventListener('mousedown', (e) => {
-                if (e.target.closest('input[type="checkbox"]') || e.target.closest('tr')) {
-                    return;
-                }
-                
-                isSelecting = true;
-                selectionStart.x = e.clientX;
-                selectionStart.y = e.clientY;
-                
-                selectionArea = document.createElement('div');
-                selectionArea.className = 'selection-area';
-                selectionArea.style.left = e.clientX + 'px';
-                selectionArea.style.top = e.clientY + 'px';
-                selectionArea.style.width = '0px';
-                selectionArea.style.height = '0px';
-                document.body.appendChild(selectionArea);
-                
-                e.preventDefault();
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                if (isSelecting && selectionArea) {
-                    const width = Math.abs(e.clientX - selectionStart.x);
-                    const height = Math.abs(e.clientY - selectionStart.y);
-                    
-                    selectionArea.style.left = Math.min(e.clientX, selectionStart.x) + 'px';
-                    selectionArea.style.top = Math.min(e.clientY, selectionStart.y) + 'px';
-                    selectionArea.style.width = width + 'px';
-                    selectionArea.style.height = height + 'px';
-                    
-                    // 선택 영역과 겹치는 행들 찾기
-                    selectRowsInArea(selectionArea);
-                }
-            });
-            
-            document.addEventListener('mouseup', () => {
-                if (isSelecting && selectionArea) {
-                    document.body.removeChild(selectionArea);
-                    selectionArea = null;
-                    isSelecting = false;
-                    renderImageTable();
-                    updateSelectionControls();
-                }
-            });
-        }
-
         // 이미지 선택 관리
         function toggleAllSelection() {
-            if (allSelected) {
+            if (selectedImages.length === uploadedImages.length && uploadedImages.length > 0) {
                 // 전체 해제
                 selectedImages = [];
-                allSelected = false;
                 document.getElementById('toggleAllIcon').className = 'fas fa-square';
-                document.getElementById('toggleAllText').textContent = '전체 선택';
             } else {
                 // 전체 선택
                 selectedImages = uploadedImages.map(img => img.id);
-                allSelected = true;
                 document.getElementById('toggleAllIcon').className = 'fas fa-check-square';
-                document.getElementById('toggleAllText').textContent = '전체 해제';
             }
             
-            renderImageTable();
-            updateSelectionControls();
-        }
-
-        function toggleSelectAll() {
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            
-            if (selectAllCheckbox.checked) {
-                selectedImages = uploadedImages.map(img => img.id);
-                allSelected = true;
-            } else {
-                selectedImages = [];
-                allSelected = false;
-            }
-            
-            updateToggleAllButton();
             renderImageTable();
             updateSelectionControls();
         }
@@ -2061,62 +2544,39 @@
             
             if (uploadedImages.length === 0) {
                 selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
             } else if (selectedImages.length === uploadedImages.length) {
                 selectAllCheckbox.checked = true;
-                selectAllCheckbox.indeterminate = false;
-            } else if (selectedImages.length > 0) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true;
             } else {
                 selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
             }
+        }
+
+        function zoomAtPoint(mouseX, mouseY, factor) {
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
             
-            updateToggleAllButton();
-        }
-
-        function addImagesToList(files) {
-            if (!selectedDatasetId) {
-                alert('먼저 데이터셋을 선택하세요.');
-                return;
-            }
-
-            files.forEach((file) => {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const imageData = {
-                            id: Date.now() + Math.random(),
-                            file: file,
-                            name: file.name,
-                            size: file.size,
-                            type: file.type,
-                            dataUrl: e.target.result,
-                            order: uploadedImages.length + 1
-                        };
-                        uploadedImages.push(imageData);
-                        
-                        // 데이터셋 정보 업데이트
-                        updateDatasetInfo();
-                        
-                        renderImageTable();
-                        updateImageCount();
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-
-        function updateDatasetInfo() {
-            if (selectedDatasetId) {
-                const dataset = datasets.find(d => d.id === selectedDatasetId);
-                if (dataset) {
-                    dataset.imageCount = uploadedImages.length;
-                    dataset.totalSize = uploadedImages.reduce((sum, img) => sum + img.size, 0);
-                    dataset.images = uploadedImages;
-                    renderDatasets();
-                }
+            if (!previewImage || !previewImage.src) return;
+            
+            const containerRect = previewContainer.getBoundingClientRect();
+            
+            // 컨테이너 중심에서 마우스까지의 거리
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            const mouseXInContainer = mouseX - containerRect.left;
+            const mouseYInContainer = mouseY - containerRect.top;
+            
+            // 현재 줌 상태에서 마우스 위치의 이미지 좌표
+            const imagePointX = (mouseXInContainer - centerX - imageOffsetX) / currentZoom;
+            const imagePointY = (mouseYInContainer - centerY - imageOffsetY) / currentZoom;
+            
+            const newZoom = Math.min(Math.max(currentZoom * factor, 0.1), 5);
+            
+            if (newZoom !== currentZoom) {
+                // 새로운 줌에서도 같은 이미지 점이 마우스 위치에 오도록 오프셋 조정
+                imageOffsetX = mouseXInContainer - centerX - imagePointX * newZoom;
+                imageOffsetY = mouseYInContainer - centerY - imagePointY * newZoom;
+                currentZoom = newZoom;
+                updateImageTransform();
             }
         }
 
@@ -2158,12 +2618,65 @@
             addImagesToList(files);
         }
 
+        function compressImageForStorage(dataUrl) {
+            // base64 데이터 크기가 500KB 이상일 때만 압축
+            if (dataUrl.length > 500000) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                return new Promise(resolve => {
+                    img.onload = function() {
+                        // 최대 800x800으로 리사이즈
+                        const maxSize = 800;
+                        let { width, height } = img;
+                        
+                        if (width > maxSize || height > maxSize) {
+                            const ratio = Math.min(maxSize / width, maxSize / height);
+                            width *= ratio;
+                            height *= ratio;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    };
+                    img.src = dataUrl;
+                });
+            }
+            
+            return Promise.resolve(dataUrl);
+        }
+
+        // previewImage 대신 imagePreview(전체 영역)에 이벤트
+        imagePreview.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startOffsetX = imageOffsetX;
+            startOffsetY = imageOffsetY;
+            imagePreview.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.style.cursor = 'grab';
+        });
+
         // 페이지 초기화 시 이벤트 리스너 추가
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDB(); // DB 초기화
             loadProjects();
             initializeDropZone();
             initializeImageViewer();
-            initializeMouseSelection();
+
+            loadProjects();
+            initializeDropZone();
+            initializeImageViewer();
             
             // 컨텍스트 메뉴 숨기기
             document.addEventListener('click', hideContextMenu);
@@ -2190,6 +2703,7 @@
                     }
                 }
             });
+            initializeVirtualScrolling();
         });
     </script>
 </body>
