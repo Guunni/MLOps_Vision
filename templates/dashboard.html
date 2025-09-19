@@ -273,7 +273,7 @@
         /* 상태 카드 그리드 */
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: 1fr 1fr 1fr; /* 3개 카드 동일 크기 */
             gap: 1.5rem;
             padding: 2rem;
         }
@@ -281,13 +281,14 @@
         .status-card {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
+            padding: 1.5rem; /* 모든 카드 동일 패딩 */
             box-shadow: var(--shadow-md);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             border: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 1rem;
+            min-height: 120px; /* 모든 카드 동일 높이 */
         }
 
         .status-card:hover {
@@ -295,15 +296,93 @@
             box-shadow: var(--shadow-lg);
         }
 
+        .status-card.system-info {
+            padding: 1.5rem;
+            align-items: flex-start;
+            min-height: 180px;
+        }
+
+        .status-card.system-info .card-content {
+            flex: 1;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .status-card.system-info .card-content h3 {
+            margin-bottom: 1rem;
+        }
+
         .card-icon {
-            width: 60px;
+            width: 60px; /* 모든 아이콘 동일 크기 */
             height: 60px;
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.5rem; /* 모든 아이콘 동일 폰트 크기 */
             color: white;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 1400px) {
+            .workflow-flow {
+                min-width: 1200px;
+                gap: 1rem;
+            }
+            
+            .training-types-grid {
+                max-width: 260px;
+                gap: 1rem;
+            }
+            
+            .workflow-wrapper-title {
+                font-size: 1.2rem;
+                padding: 0.6rem 1.3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .workflow-container {
+                padding: 2rem 1rem 5rem 1rem;
+                min-height: 300px;
+            }
+            
+            .workflow-wrapper {
+                min-height: 150px;
+                padding: 2rem 1.5rem 1.5rem 1.5rem;
+            }
+            
+            .training-types-grid {
+                max-width: 250px;
+                gap: 1rem;
+            }
+            
+            .training-types-grid .workflow-box {
+                min-height: 80px;
+                padding: 1.2rem 0.8rem;
+            }
+            
+            .feedback-lines {
+                display: none; /* 모바일에서는 피드백 라인 숨김 */
+            }
+        }
+
+        .card-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .status-card.system-info .card-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
         }
 
         .card-icon.system-status {
@@ -326,9 +405,74 @@
             font-size: 0.875rem;
             font-weight: 600;
             color: var(--text-secondary);
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.025em;
+        }
+
+        .card-icon.projects {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        }
+
+        .card-icon.datasets {
+            background: linear-gradient(135deg, var(--info-color), #1d4ed8);
+        }
+
+        .card-icon.models {
+            background: linear-gradient(135deg, var(--warning-color), #c2410c);
+        }
+
+        .card-icon.system-status {
+            background: linear-gradient(135deg, var(--success-color), #047857);
+        }
+        .status-card {
+            cursor: pointer;
+        }
+        
+        @media (max-width: 1024px) {
+            .status-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .training-types-grid {
+                max-width: 350px;
+            }
+            
+            .workflow-wrapper.training-wrapper {
+                min-width: 370px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .training-types-grid {
+                max-width: 280px;
+                gap: 1rem;
+            }
+            
+            .training-types-grid .workflow-box {
+                min-width: 100px;
+                min-height: 70px;
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+            
+            .workflow-wrapper.training-wrapper {
+                min-width: 300px;
+            }
+            
+            .feedback-lines {
+                display: none;
+            }
         }
 
         .status-value {
@@ -341,60 +485,6 @@
         .status-detail {
             font-size: 0.875rem;
             color: var(--text-secondary);
-        }
-
-        /* 빠른 액션 섹션 */
-        .quick-actions {
-            padding: 0 2rem 2rem;
-        }
-
-        .quick-actions h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-        }
-
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .action-card {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-
-        .action-card:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            background-color: var(--bg-tertiary);
-        }
-
-        .action-card i {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-
-        .action-card h3 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .action-card p {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
         }
 
         /* 로딩 오버레이 */
@@ -432,37 +522,764 @@
             font-weight: 500;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .system-item {
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            gap: 0.5rem;
+            align-items: start;
+            font-size: 0.875rem;
         }
 
-        /* 반응형 디자인 */
+        .system-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        /* 시스템 힌트 텍스트 */
+        .system-hint {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        /* 시스템 카드 호버 효과 */
+        .status-card.system-info:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        /* 모달 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-body p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .permission-info h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .permission-info ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+
+        .permission-info li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .permission-info li i {
+            width: 16px;
+            color: var(--primary-color);
+        }
+
+        .privacy-note {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            color: var(--success-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .privacy-note i {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* 정보 수집 중 상태 */
+        .system-info.collecting {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .system-info.collecting .card-icon {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .system-value {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+            word-wrap: break-word;
+            overflow-wrap: anywhere; /* 강제 줄바꿈 */
+            white-space: normal; /* 줄바꿈 허용 */
+            line-height: 1.3;
+            min-width: 0;
+            text-overflow: unset;
+            overflow: visible;
+        }
+
+        /* 플로우차트 스타일 */
+        .workflow-section {
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .workflow-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .workflow-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+        }
+
+        .workflow-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 3rem 2rem 7rem 2rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .workflow-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--info-color), var(--warning-color), var(--success-color));
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        .workflow-flow {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1.5rem;
+            min-width: 1400px;
+            padding: 2rem 1rem;
+        }
+
+        .workflow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .workflow-box {
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .workflow-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .workflow-box:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .workflow-box:hover::before {
+            opacity: 0.1;
+        }
+
+        .workflow-box.project {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+        }
+
+        .workflow-box.project::before {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+        }
+
+        .workflow-box.datasets {
+            background: linear-gradient(135deg, var(--info-color) 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .workflow-box.datasets::before {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+        }
+
+        .workflow-box.training {
+            background: linear-gradient(135deg, var(--warning-color) 0%, #c2410c 100%);
+            color: white;
+        }
+
+        .workflow-box.training::before {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+        }
+
+        .workflow-box.metrics {
+            background: linear-gradient(135deg, var(--success-color) 0%, #047857 100%);
+            color: white;
+        }
+
+        .workflow-box.metrics::before {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+        }
+
+        .workflow-title-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            z-index: 1;
+            position: relative;
+        }
+
+        .workflow-items {
+            list-style: none;
+            font-size: 0.875rem;
+        }
+
+        .workflow-items li {
+            margin: 0.25rem 0;
+            opacity: 0.9;
+        }
+
+        .workflow-arrow {
+            font-size: 2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .workflow-arrow:hover {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        /* 데이터셋 그룹 개선 */
+        .datasets-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        /* 메트릭스 그룹 개선 */
+        .metrics-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            width: 100%;
+        }
+
+        .metrics-group .workflow-box {
+            width: 100%;
+            max-width: 180px;
+            padding: 1.2rem;
+        }
+
+        /* 반응형 개선 */
+        @media (max-width: 1200px) {
+            .workflow-flow {
+                min-width: 800px;
+                gap: 1.5rem;
+            }
+            
+            .workflow-box {
+                padding: 1.2rem;
+                min-height: 70px;
+            }
+            
+            .workflow-title-text {
+                font-size: 1rem;
+            }
+        }
+
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
+            .workflow-section {
+                padding: 2rem 1rem;
             }
             
-            .main-content {
-                margin-left: 0;
+            .workflow-container {
+                padding: 2rem 1rem;
             }
             
-            .status-grid {
-                grid-template-columns: 1fr;
-                padding: 1rem;
+            .workflow-flow {
+                flex-direction: column;
+                min-width: auto;
+                gap: 2rem;
             }
             
-            .actions-grid {
-                grid-template-columns: 1fr;
+            .workflow-arrow {
+                transform: rotate(90deg);
+                font-size: 1.5rem;
             }
             
-            .content-header {
-                padding: 1rem;
+            .datasets-group {
+                grid-template-columns: 1fr 1fr;
+                max-width: 300px;
+                gap: 0.8rem;
             }
             
-            .quick-actions {
-                padding: 0 1rem 1rem;
+            .metrics-group {
+                max-width: 300px;
             }
+            
+            .workflow-step {
+                width: 100%;
+            }
+        }
+
+        /* 감싸는 박스 스타일 */
+        .workflow-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2.5rem 2rem 2rem 2rem;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            background: rgba(248, 250, 252, 0.3);
+            backdrop-filter: blur(10px);
+            position: relative;
+            min-height: 180px;
+        }
+
+        .workflow-wrapper-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            padding: 0.7rem 1.5rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .datasets-title {
+            color: var(--info-color);
+            border-color: var(--info-color);
+        }
+
+        .training-title {
+            color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+
+        /* 학습 타입들 그리드 */
+        .training-types-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .training-types-grid .workflow-box {
+            min-height: 80px;
+            min-width: 120px; 
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .workflow-wrapper.training-wrapper {
+            min-width: 400px; /* 래퍼 자체 너비 증가 */
+        }
+
+        .training-types-grid .workflow-title-text {
+            font-size: 1rem;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .feedback-lines {
+            position: absolute;
+            bottom: 1rem;
+            left: 0;
+            right: 0;
+            height: 6rem;
+            pointer-events: none;
+        }
+
+        .feedback-arrow-svg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: -4rem;
+            overflow: visible;
+        }
+
+        /* 세로선 (모니터링에서 아래로) */
+        .feedback-vertical {
+            position: absolute;
+            right: 7.2%;
+            top: -18rem;
+            width: 2px;
+            height: 17rem;
+            background: var(--primary-color);
+            opacity: 0.6;
+        }
+
+        /* 가로선 (왼쪽으로) */
+        .feedback-horizontal {
+            position: absolute;
+            left: 22.5%;
+            right: 7.2%;
+            top: -1rem;
+            height: 2px;
+            background: var(--primary-color);
+            opacity: 0.6;
+        }
+
+        /* 세로선 (데이터 수집으로 올라가기) */
+        .feedback-vertical-up {
+            position: absolute;
+            left: 22.5%;
+            top: -7rem;
+            width: 2px;
+            height: 6rem;
+            background: var(--primary-color);
+            opacity: 0.6;
+        }
+
+        /* 화살표 */
+        .feedback-arrow-up {
+            position: absolute;
+            left: 22.58%; /* 데이터셋 위치에 맞춰 조정 */
+            top: -9.4rem;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            color: var(--primary-color);
+            opacity: 0.8;
+            /* bounce 애니메이션 제거 */
+        }
+
+        @keyframes bounce-arrow {
+            0%, 100% { 
+                transform: translateX(-50%) translateY(0);
+            }
+            50% { 
+                transform: translateX(-50%) translateY(-3px);
+            }
+        }
+
+        .feedback-path {
+            position: absolute;
+            top: -2rem;
+            left: 15%; /* 데이터셋 위치 */
+            right: 8%; /* 모니터링 위치 */
+            height: 3rem;
+        }
+
+        .feedback-svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .feedback-label {
+            position: absolute;
+            left: 55%;
+            top: 2rem;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95));
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            border: 1.5px solid var(--primary-color);
+            box-shadow: 0 2px 8px rgba(71, 85, 105, 0.15);
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            letter-spacing: 0.025em;
+        }
+
+        .feedback-label:hover {
+            box-shadow: 0 4px 12px rgba(71, 85, 105, 0.25);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 1; }
+        }
+
+        .feedback-label {
+            animation: subtle-pulse 3s ease-in-out infinite;
+        }
+
+        /* SVG 애니메이션 */
+        .feedback-svg path {
+            stroke-dasharray: 8, 4;
+            animation: dash-flow 3s linear infinite;
+        }
+
+        @keyframes dash-flow {
+            0% {
+                stroke-dashoffset: 0;
+            }
+            100% {
+                stroke-dashoffset: 24;
+            }
+        }
+
+        /* 데이터셋 단일 박스 */
+        .datasets-wrapper .workflow-box.single {
+            width: 160px;
+            height: 80px;
+        }
+
+        /* 데이터셋 단일 박스 */
+        .datasets-wrapper .workflow-box.single {
+            width: 140px;
+            height: 80px;
+        }
+
+        /* 새로운 색상 스타일 */
+        .workflow-box.deploy {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .workflow-box.monitoring {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        /* 피드백 화살표 */
+        .feedback-flow {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .feedback-arrow {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .curved-arrow {
+            font-size: 2rem;
+            color: var(--primary-color);
+            opacity: 0.7;
+            animation: pulse-feedback 2s infinite;
+        }
+
+        @keyframes pulse-feedback {
+            0%, 100% { 
+                opacity: 0.7; 
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.1);
+            }
+        }
+
+        /* 피드백 라인 */
+        .feedback-flow::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            opacity: 0.5;
+            z-index: -1;
+        }
+
+
+        /* 추가적인 시각적 효과 */
+        .workflow-container {
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(71, 85, 105, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+                var(--bg-secondary);
+        }
+
+        /* 데이터셋 타입별 색상 차별화 */
+        .workflow-box.datasets:nth-child(1) {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .workflow-box.datasets:nth-child(2) {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+
+        .workflow-box.datasets:nth-child(3) {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .workflow-box.datasets:nth-child(4) {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
         /* 상태별 색상 */
@@ -505,7 +1322,7 @@
         <main class="main-content">
             <!-- 헤더 -->
             <header class="content-header">
-                <h1>Dashboard</h1>
+                <h1>대시보드</h1>
                 <div class="header-actions">
                     <div class="refresh-container">
                         <button class="btn btn-primary" onclick="refreshStatus()">
@@ -516,82 +1333,143 @@
                 </div>
             </header>
 
-            <!-- 상태 카드들 -->
-            <section class="status-grid">
-                <div class="status-card">
-                    <div class="card-icon system-status">
-                        <i class="fas fa-server"></i>
+        <!-- 상태 카드들 -->
+        <section class="status-grid">
+            <!-- 프로젝트 바로가기 -->
+            <div class="status-card" onclick="window.location.href='/ui/projects'">
+                <div class="card-icon projects">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="card-content">
+                    <h3>프로젝트</h3>
+                    <span class="status-detail">프로젝트 관리</span>
+                </div>
+            </div>
+
+            <!-- 데이터셋 바로가기 -->
+            <div class="status-card" onclick="window.location.href='/ui/datasets'">
+                <div class="card-icon datasets">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="card-content">
+                    <h3>데이터셋</h3>
+                    <span class="status-detail">데이터 관리</span>
+                </div>
+            </div>
+
+            <!-- 모델 바로가기 -->
+            <div class="status-card" onclick="window.location.href='/ui/training'">
+                <div class="card-icon models">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="card-content">
+                    <h3>모델 학습</h3>
+                    <span class="status-detail">학습 관리</span>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- MLOps 워크플로우 차트 -->
+        <section class="workflow-section">
+            <h2 class="workflow-title">MLOps 워크플로우</h2>
+            <div class="workflow-container">
+                <div class="workflow-flow">
+                    <!-- 프로젝트 -->
+                    <div class="workflow-step">
+                        <div class="workflow-box project">
+                            <div class="workflow-title-text">프로젝트</div>
+                        </div>
                     </div>
-                    <div class="card-content">
-                        <h3>시스템 상태</h3>
-                        <p class="status-value" id="system-status">확인 중...</p>
-                        <span class="status-detail" id="system-detail">PatchCore 설치 상태 확인 중</span>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <!-- 데이터셋 (데이터 수집) -->
+                    <div class="workflow-step">
+                        <div class="workflow-wrapper-title datasets-title">데이터셋</div>
+                        <div class="workflow-wrapper datasets-wrapper">
+                            <div class="workflow-box datasets single">
+                                <div class="workflow-title-text">데이터 수집</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <!-- 학습 (4개 타입을 감싼 형태) -->
+                    <div class="workflow-step">
+                        <div class="workflow-wrapper-title training-title">학습</div>
+                        <div class="workflow-wrapper training-wrapper">
+                            <div class="training-types-grid">
+                                <div class="workflow-box training">
+                                    <div class="workflow-title-text">CLASSIFY</div>
+                                </div>
+                                <div class="workflow-box training">
+                                    <div class="workflow-title-text">SEG</div>
+                                </div>
+                                <div class="workflow-box training">
+                                    <div class="workflow-title-text">OBD</div>
+                                </div>
+                                <div class="workflow-box training">
+                                    <div class="workflow-title-text">ANOMALY</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <!-- 성능 지표 -->
+                    <div class="workflow-step">
+                        <div class="metrics-group">
+                            <div class="workflow-box metrics">
+                                <div class="workflow-title-text">개별 성능 분석</div>
+                            </div>
+                            <div class="workflow-box metrics">
+                                <div class="workflow-title-text">모델별 성능 비교</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <!-- 배포 -->
+                    <div class="workflow-step">
+                        <div class="workflow-box deploy">
+                            <div class="workflow-title-text">모델 배포</div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <!-- 모니터링 -->
+                    <div class="workflow-step">
+                        <div class="workflow-box monitoring">
+                            <div class="workflow-title-text">모니터링</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="status-card">
-                    <div class="card-icon datasets">
-                        <i class="fas fa-folder-open"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>데이터셋</h3>
-                        <p class="status-value" id="datasets-count">0</p>
-                        <span class="status-detail">사용 가능한 데이터셋</span>
-                    </div>
+                <!-- 피드백 화살표 -->
+                <div class="feedback-lines">
+                    <svg class="feedback-arrow-svg" viewBox="0 0 1200 60" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 연결된 경로: 모니터링(오른쪽) → 아래 → 왼쪽 → 데이터셋 -->
+                        <path d="M 1115 -130 L 1115 40 L 275 40 L 275 -10" 
+                            fill="none" 
+                            stroke="#475569" 
+                            stroke-width="1.5" 
+                            opacity="0.6"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"/>
+                        <!-- 화살표 머리 (12시 방향 ↑) -->
+                        <polygon points="275,-20 270,-10 280,-10" 
+                                fill="#475569" 
+                                opacity="0.6"/>
+                    </svg>
+                    <div class="feedback-label">피드백</div>
                 </div>
-
-                <div class="status-card">
-                    <div class="card-icon models">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>학습된 모델</h3>
-                        <p class="status-value" id="models-count">0</p>
-                        <span class="status-detail">완료된 모델</span>
-                    </div>
-                </div>
-
-                <div class="status-card">
-                    <div class="card-icon training">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>학습 상태</h3>
-                        <p class="status-value" id="training-status">대기 중</p>
-                        <span class="status-detail" id="training-detail">현재 진행 중인 학습 없음</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 빠른 액션 버튼들 -->
-            <section class="quick-actions">
-                <h2>빠른 시작</h2>
-                <div class="actions-grid">
-                    <button class="action-card" onclick="setupSystem()">
-                        <i class="fas fa-play-circle"></i>
-                        <h3>시스템 설정</h3>
-                        <p>PatchCore 환경을 자동으로 설정합니다</p>
-                    </button>
-
-                    <button class="action-card" onclick="uploadDataset()">
-                        <i class="fas fa-upload"></i>
-                        <h3>데이터셋 업로드</h3>
-                        <p>새로운 이미지 데이터셋을 업로드합니다</p>
-                    </button>
-
-                    <button class="action-card" onclick="startTraining()">
-                        <i class="fas fa-rocket"></i>
-                        <h3>학습 시작</h3>
-                        <p>새로운 모델 학습을 시작합니다</p>
-                    </button>
-
-                    <button class="action-card" onclick="viewModels()">
-                        <i class="fas fa-eye"></i>
-                        <h3>모델 보기</h3>
-                        <p>학습된 모델들을 확인하고 관리합니다</p>
-                    </button>
-                </div>
-            </section>
+            </div>
+        </section>
         </main>
     </div>
 
@@ -602,24 +1480,27 @@
     </div>
 
     <script>
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDashboardCounts();
+        });
+
+        function updateDashboardCounts() {
+            // 프로젝트 수
+            const projects = JSON.parse(localStorage.getItem('mlops_projects') || '[]');
+            
+            // 활성 프로젝트의 데이터셋만 카운트
+            let activeDatasets = 0;
+            projects.forEach(project => {
+                if (project.status === '활성') {
+                    const datasets = JSON.parse(localStorage.getItem(`datasets_${project.id}`) || '[]');
+                    activeDatasets += datasets.length;
+                }
+            });
+        }
+
         function refreshStatus() {
-            // 새로고침 기능
-        }
-
-        function setupSystem() {
-            // 시스템 설정 기능
-        }
-
-        function uploadDataset() {
-            // 데이터셋 업로드 기능
-        }
-
-        function startTraining() {
-            // 학습 시작 기능
-        }
-
-        function viewModels() {
-            // 모델 보기 기능
+            updateDashboardCounts();
         }
     </script>
 </body>

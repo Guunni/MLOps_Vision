@@ -820,7 +820,11 @@
                 'completed': '완료'
             };
             
-            projectsGrid.innerHTML = projects.map(project => `
+            projectsGrid.innerHTML = projects.map(project => {
+                // 실시간으로 데이터셋 개수 계산
+                const actualDatasetCount = project.datasetList ? project.datasetList.length : 0;
+                
+                return `
                 <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
                     onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
                     <div class="project-header">
@@ -829,7 +833,7 @@
                         </div>
                         <div class="project-status-container">
                             <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
-                            <div class="dataset-count">${project.datasetCount || 0}개 데이터셋</div>
+                            <div class="dataset-count">${actualDatasetCount}개 데이터셋</div>
                         </div>
                     </div>
                     
@@ -870,7 +874,7 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function openDatasetDirectly(projectId, datasetName) {
@@ -943,28 +947,25 @@
             const now = new Date().toISOString();
 
             if (editingProjectId) {
-                // 편집 모드
                 const projectIndex = projects.findIndex(p => p.id === editingProjectId);
                 if (projectIndex !== -1) {
                     projects[projectIndex] = {
                         ...projects[projectIndex],
                         name: name,
                         description: description,
-                        datasetCount: 0,
                         status: status,
                         updatedAt: now
                     };
                 }
             } else {
-                // 생성 모드
                 const newProject = {
                     id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     name: name,
                     description: description,
-                    datasetCount: 0,
                     status: status,
                     createdAt: now,
-                    updatedAt: now
+                    updatedAt: now,
+                    datasetList: [] // 빈 배열로 초기화
                 };
                 projects.push(newProject);
             }
@@ -986,13 +987,14 @@
             }
         }
 
-        // 유틸리티 함수
         function formatDate(dateString) {
             const date = new Date(dateString);
-            return date.toLocaleDateString('ko-KR', {
+            return date.toLocaleString('ko-KR', {
                 year: 'numeric',
                 month: '2-digit',
-                day: '2-digit'
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         }
 
