@@ -1415,23 +1415,72 @@
         }
 
         function onProjectSelect(projectId) {
+            console.log('프로젝트 선택:', projectId);
+            
             selectedProjectId = projectId;
             selectedDatasetId = null;
-            setURLParameter('project', projectId);
+            datasets = [];
+            uploadedImages = [];
+            selectedImages = [];
+            currentPreviewIndex = -1;
             
+            // URL 업데이트
+            const url = new URL(window.location);
+            if (projectId) {
+                url.searchParams.set('project', projectId);
+            } else {
+                url.searchParams.delete('project');
+            }
+            url.searchParams.delete('dataset');
+            window.history.pushState({}, '', url);
+            
+            // 데이터셋 셀렉터 초기화
+            const datasetSelector = document.getElementById('datasetSelector');
+            if (datasetSelector) {
+                datasetSelector.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
+                datasetSelector.value = '';
+            }
+            
+            // 프로젝트별 처리
             const selectedProject = projects.find(p => p.id === projectId);
-            if (selectedProject) {
+            
+            if (selectedProject && projectId) {
+                // 데이터셋 로드
+                const savedData = localStorage.getItem(`datasets_${projectId}`);
+                if (savedData) {
+                    try {
+                        datasets = JSON.parse(savedData);
+                    } catch (e) {
+                        datasets = [];
+                    }
+                }
+                
+                // UI 업데이트
                 updateBreadcrumb(selectedProject.name);
-                loadDatasets(projectId);
-                document.getElementById('datasetSelector').style.display = 'inline-block';
+                if (datasetSelector) {
+                    datasetSelector.style.display = 'inline-block';
+                    
+                    // 데이터셋 옵션 추가
+                    datasets.forEach(dataset => {
+                        const option = document.createElement('option');
+                        option.value = dataset.id;
+                        option.textContent = dataset.name;
+                        datasetSelector.appendChild(option);
+                    });
+                }
             } else {
                 updateBreadcrumb(null);
-                datasets = [];
-                renderDatasets();
-                document.getElementById('datasetSelector').style.display = 'none';
+                if (datasetSelector) {
+                    datasetSelector.style.display = 'none';
+                }
             }
+            
+            // 테이블 렌더링
+            renderDatasets();
+            renderImageTable();
+            showEmptyPreview();
+            updateImageCount();
             updateTrainingButton();
-            updateDatasetSelector();
         }
 
         function updateDatasetSelector() {
@@ -1493,8 +1542,18 @@
                 return;
             }
             
-            // URL 파라미터로 직접 전달 (프로젝트→데이터셋 방식과 동일)
-            window.location.href = `/ui/training?project=${selectedProjectId}&dataset=${selectedDatasetId}&datasetName=${encodeURIComponent(selectedDataset.name)}`;
+            // 데이터셋 타입을 모델 타입으로 매핑
+            const typeMapping = {
+                'classify': 'classification',
+                'obd': 'detection', 
+                'seg': 'segmentation',
+                'anomal': 'anomaly'
+            };
+            
+            const modelType = typeMapping[selectedDataset.type] || 'anomaly';
+            
+            // type 파라미터 추가
+            window.location.href = `/ui/training?project=${selectedProjectId}&dataset=${selectedDatasetId}&datasetName=${encodeURIComponent(selectedDataset.name)}&type=${modelType}`;
         }
 
         // 데이터셋 선택 시 학습 버튼 표시/숨김
@@ -1554,6 +1613,7 @@
             if (!projectId) {
                 datasets = [];
                 renderDatasets();
+                updateDatasetSelector();
                 return;
             }
             
@@ -1569,8 +1629,8 @@
                 datasets = [];
             }
             
-            // 즉시 렌더링
             renderDatasets();
+            updateDatasetSelector();
             
             // URL에 datasetName이 있으면 즉시 처리
             const datasetName = getURLParameter('datasetName');
@@ -1976,6 +2036,7 @@
         function updateBreadcrumb(projectName) {
             const projectSeparator = document.getElementById('projectSeparator');
             const projectBreadcrumb = document.getElementById('selectedProjectBreadcrumb');
+            const breadcrumb = document.getElementById('breadcrumbNav');
             
             if (projectName) {
                 projectSeparator.style.display = 'inline';
@@ -1983,7 +2044,6 @@
                 projectBreadcrumb.textContent = projectName;
                 
                 // 상세 브레드크럼 업데이트
-                const breadcrumb = document.getElementById('breadcrumbNav');
                 breadcrumb.innerHTML = `
                     <a href="/dashboard" class="breadcrumb-item">대시보드</a>
                     <span class="breadcrumb-separator">/</span>

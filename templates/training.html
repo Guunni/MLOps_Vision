@@ -739,6 +739,9 @@
                         <select id="projectSelector" class="project-selector">
                             <option value="">프로젝트를 선택하세요</option>
                         </select>
+                        <select id="datasetSelectorHeader" class="project-selector" style="display: none;">
+                            <option value="">데이터셋을 선택하세요</option>
+                        </select>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -1109,6 +1112,9 @@
                     <span class="breadcrumb-separator">/</span>
                     <span class="breadcrumb-item active">모델 학습</span>
                 `;
+                
+                // 헤더 데이터셋 셀렉터 표시
+                document.getElementById('datasetSelectorHeader').style.display = 'inline-block';
             } else {
                 updateBreadcrumb(null);
                 
@@ -1121,9 +1127,21 @@
                     <span class="breadcrumb-separator">/</span>
                     <span class="breadcrumb-item active">모델 학습</span>
                 `;
+                
+                document.getElementById('datasetSelectorHeader').style.display = 'none';
             }
             
+            // 데이터셋 로드
             loadProjectDatasetsFromStorage(projectId);
+        }
+
+        function updateHeaderDatasetSelector() {
+            const headerSelector = document.getElementById('datasetSelectorHeader');
+            const datasetSelect = document.getElementById('datasetSelect');
+            
+            // 기본 설정의 데이터셋 셀렉트와 동기화
+            headerSelector.innerHTML = datasetSelect.innerHTML;
+            headerSelector.value = datasetSelect.value;
         }
 
         function loadProjectDatasets(projectId) {
@@ -1133,7 +1151,10 @@
         // 로컬스토리지에서 프로젝트 데이터셋 로드
         function loadProjectDatasetsFromStorage(projectId) {
             const datasetSelect = document.getElementById('datasetSelect');
+            const headerDatasetSelect = document.getElementById('datasetSelectorHeader');
+            
             datasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
+            headerDatasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
             
             if (!projectId) {
                 return;
@@ -1145,10 +1166,17 @@
                     const datasets = JSON.parse(savedDatasets);
                     
                     datasets.forEach(dataset => {
-                        const option = document.createElement('option');
-                        option.value = dataset.name;
-                        option.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
-                        datasetSelect.appendChild(option);
+                        // 기본 설정 데이터셋 셀렉터
+                        const option1 = document.createElement('option');
+                        option1.value = dataset.name;
+                        option1.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
+                        datasetSelect.appendChild(option1);
+                        
+                        // 헤더 데이터셋 셀렉터
+                        const option2 = document.createElement('option');
+                        option2.value = dataset.name;
+                        option2.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
+                        headerDatasetSelect.appendChild(option2);
                     });
                     
                     return datasets;
@@ -1198,17 +1226,17 @@
             
             const projectId = getURLParameter('project');
             const datasetName = getURLParameter('datasetName');
+            const modelType = getURLParameter('type'); // 타입 파라미터 추가
             
             if (projectId) {
                 selectedProjectId = projectId;
                 
-                // 프로젝트 선택박스에 설정
                 document.getElementById('projectSelector').value = projectId;
                 document.getElementById('trainingProjectSelect').value = projectId;
                 
                 const project = projects.find(p => p.id === projectId);
                 if (project) {
-                    updateBreadcrumb(project.name);
+                    updateBreadcrumb(project.name, modelType); // 타입 전달
                     loadProjectDatasetsFromStorage(projectId);
                     
                     if (datasetName) {
@@ -1219,16 +1247,37 @@
                             );
                             if (option) {
                                 datasetSelect.value = option.value;
-                                updateDetailedBreadcrumb(project.name, datasetName);
+                                updateDetailedBreadcrumb(project.name, datasetName, modelType);
                             }
                         }, 50);
+                    }
+                    
+                    // 타입에 따른 백본 설정
+                    if (modelType) {
+                        updateBackboneOptions(modelType);
                     }
                 }
             }
         }
 
-        function updateDetailedBreadcrumb(projectName, datasetName) {
+        function updateBreadcrumb(projectName, modelType) {
             const breadcrumb = document.getElementById('breadcrumbNav');
+            
+            const typeText = modelType ? `(${getTypeLabel(modelType)})` : '';
+            
+            breadcrumb.innerHTML = `
+                <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="/ui/projects" class="breadcrumb-item">프로젝트(${projectName})</a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-item active">모델 학습${typeText}</span>
+            `;
+        }
+
+        function updateDetailedBreadcrumb(projectName, datasetName, modelType) {
+            const breadcrumb = document.getElementById('breadcrumbNav');
+            
+            const typeText = modelType ? `(${getTypeLabel(modelType)})` : '';
             
             breadcrumb.innerHTML = `
                 <a href="/dashboard" class="breadcrumb-item">대시보드</a>
@@ -1237,8 +1286,67 @@
                 <span class="breadcrumb-separator">/</span>
                 <a href="/ui/datasets?project=${selectedProjectId}" class="breadcrumb-item">데이터셋(${datasetName})</a>
                 <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item active">모델 학습</span>
+                <span class="breadcrumb-item active">모델 학습${typeText}</span>
             `;
+        }
+
+        function getTypeLabel(type) {
+            const typeLabels = {
+                'anomaly': 'Anomaly Detection',
+                'classification': 'Classification',
+                'segmentation': 'Segmentation',
+                'detection': 'Object Detection'
+            };
+            return typeLabels[type] || type;
+        }
+
+        function updateBackboneOptions(modelType) {
+            const backboneSelect = document.getElementById('backboneSelect');
+            const helpIcon = backboneSelect.parentElement.querySelector('.help-icon .tooltip');
+            
+            if (modelType === 'anomaly') {
+                backboneSelect.innerHTML = `
+                    <option value="wideresnet50">Wide ResNet-50</option>
+                    <option value="resnet18">ResNet-18</option>
+                    <option value="resnet50">ResNet-50</option>
+                    <option value="efficientnet_b0">EfficientNet-B0</option>
+                `;
+                
+                helpIcon.innerHTML = `
+                    이미지에서 특징을 추출하는 사전 훈련된 모델입니다.<br>
+                    • Wide ResNet-50: 가장 좋은 성능 (권장)<br>
+                    • ResNet-18: 빠른 속도, 가벼운 모델<br>
+                    • ResNet-50: 높은 정확도, 더 무거운 모델<br>
+                    • EfficientNet-B0: 메모리 효율적
+                `;
+            } else if (modelType === 'classification') {
+                backboneSelect.innerHTML = `
+                    <option value="resnet50">ResNet-50 (추가 예정)</option>
+                `;
+                
+                helpIcon.innerHTML = `
+                    분류 모델의 백본은 곧 추가됩니다.<br>
+                    다양한 분류 모델을 지원할 예정입니다.
+                `;
+            } else if (modelType === 'segmentation') {
+                backboneSelect.innerHTML = `
+                    <option value="unet">U-Net (추가 예정)</option>
+                `;
+                
+                helpIcon.innerHTML = `
+                    세그멘테이션 모델의 백본은 곧 추가됩니다.<br>
+                    다양한 세그멘테이션 모델을 지원할 예정입니다.
+                `;
+            } else if (modelType === 'detection') {
+                backboneSelect.innerHTML = `
+                    <option value="yolo">YOLO (추가 예정)</option>
+                `;
+                
+                helpIcon.innerHTML = `
+                    객체 검출 모델의 백본은 곧 추가됩니다.<br>
+                    다양한 검출 모델을 지원할 예정입니다.
+                `;
+            }
         }
 
         // 브레드크럼 업데이트 함수
@@ -1328,6 +1436,27 @@
                     }
                 }
             });
+
+            document.getElementById('datasetSelectorHeader').addEventListener('change', function() {
+                    const datasetSelect = document.getElementById('datasetSelect');
+                    datasetSelect.value = this.value;
+                    
+                    // 데이터셋 변경 이벤트 발생
+                    if (this.value && selectedProjectId) {
+                        const selectedDatasetName = this.options[this.selectedIndex].text;
+                        const datasetName = selectedDatasetName.split(' (')[0];
+                        const selectedProject = projects.find(p => p.id === selectedProjectId);
+                        if (selectedProject) {
+                            updateDetailedBreadcrumb(selectedProject.name, datasetName);
+                        }
+                    }
+                });
+                
+                // 기본 설정 데이터셋 셀렉터도 헤더와 동기화
+                const existingDatasetListener = document.getElementById('datasetSelect').onchange;
+                document.getElementById('datasetSelect').addEventListener('change', function() {
+                    document.getElementById('datasetSelectorHeader').value = this.value;
+                });
         });      
 
         function refreshTraining() {
@@ -1366,7 +1495,10 @@
         }
 
         function startTraining() {
+            const modelType = getURLParameter('type') || 'anomaly'; // 기본값 anomaly
+            
             const config = {
+                model_type: modelType, // 모델 타입 추가
                 dataset_name: document.getElementById('datasetSelect').value,
                 backbone: document.getElementById('backboneSelect').value,
                 training_type: document.getElementById('trainingType').value,
@@ -1386,6 +1518,12 @@
             
             console.log('학습 시작:', config);
             
+            // Anomaly Detection만 실제 학습 가능
+            if (modelType !== 'anomaly') {
+                alert(`${getTypeLabel(modelType)} 모델은 아직 지원하지 않습니다.\n곧 추가될 예정입니다.`);
+                return;
+            }
+            
             // 서버로 학습 시작 요청
             fetch('/training/start', {
                 method: 'POST',
@@ -1397,7 +1535,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // UI 업데이트
                     document.getElementById('startBtn').style.display = 'none';
                     document.getElementById('stopBtn').style.display = 'inline-flex';
                     document.getElementById('statusBadge').textContent = '학습중';
@@ -1405,7 +1542,6 @@
                     document.getElementById('trainingInfo').style.display = 'block';
                     document.getElementById('idleState').style.display = 'none';
                     
-                    // 학습 정보 업데이트
                     document.getElementById('currentModel').textContent = config.backbone;
                     document.getElementById('currentDataset').textContent = config.dataset_name;
                     document.getElementById('startTime').textContent = new Date().toLocaleString();
