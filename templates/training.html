@@ -324,13 +324,19 @@
             margin-bottom: 0.5rem;
             font-weight: 500;
             color: var(--text-primary);
-            cursor: help;
         }
 
         .help-icon {
             color: var(--text-muted);
             font-size: 0.875rem;
             position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            cursor: help;
+            flex-shrink: 0;  /* 크기 고정 */
         }
 
         /* 툴팁 스타일 개선 */
@@ -341,22 +347,17 @@
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.5;
-            white-space: normal;
-            width: auto;
-            min-width: 200px;
-            max-width: 320px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: nowrap;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             pointer-events: none;
             z-index: 1001;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            word-break: keep-all;
-            word-wrap: break-word;
+            max-width: 280px;
         }
 
         .tooltip::after {
@@ -365,14 +366,14 @@
             top: 100%;
             left: 50%;
             transform: translateX(-50%);
-            border: 6px solid transparent;
+            border: 5px solid transparent;
             border-top-color: rgba(0, 0, 0, 0.9);
         }
 
         .help-icon:hover .tooltip {
             opacity: 1;
             visibility: visible;
-            bottom: calc(100% + 12px);
+            bottom: calc(100% + 10px);
         }
 
         .form-input,
@@ -1062,6 +1063,116 @@
         let selectedProjectId = null;
         let projectDatasets = [];
 
+        class TrainingManager {
+        constructor() {
+            this.progressInterval = null;
+            this.isTraining = false;
+        }
+        
+        async startTraining(config) {
+            try {
+                const response = await fetch('/training/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.updateUIForTrainingStart(config, data.dataset_type);
+                    this.startProgressMonitoring();
+                    return {success: true, message: data.message};
+                } else {
+                    throw new Error(data.error || '학습 시작 실패');
+                }
+            } catch (error) {
+                return {success: false, error: error.message};
+            }
+        }
+        
+        async stopTraining() {
+            try {
+                const response = await fetch('/training/stop', {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.stopProgressMonitoring();
+                    this.updateUIForTrainingStop();
+                    return {success: true, message: '학습이 중단되었습니다'};
+                } else {
+                    throw new Error(data.error || '학습 중단 실패');
+                }
+            } catch (error) {
+                return {success: false, error: error.message};
+            }
+        }
+        
+        startProgressMonitoring() {
+            this.progressInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/training/progress');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.updateProgress(data.progress || 0);
+                        
+                        if (!data.is_active && this.isTraining) {
+                            this.stopProgressMonitoring();
+                            this.updateUIForTrainingComplete();
+                            this.isTraining = false;
+                        }
+                    }
+                } catch (error) {
+                    console.error('진행률 조회 실패:', error);
+                }
+            }, 3000);
+        }
+        
+        stopProgressMonitoring() {
+            if (this.progressInterval) {
+                clearInterval(this.progressInterval);
+                this.progressInterval = null;
+            }
+        }
+        
+        updateUIForTrainingStart(config, datasetType) {
+            this.isTraining = true;
+            
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-flex';
+            document.getElementById('statusBadge').textContent = '학습중';
+            document.getElementById('statusBadge').className = 'status-badge status-training';
+            document.getElementById('trainingInfo').style.display = 'block';
+            document.getElementById('idleState').style.display = 'none';
+            
+            document.getElementById('currentModel').textContent = `${config.backbone} (${datasetType})`;
+            document.getElementById('currentDataset').textContent = config.dataset_name;
+            document.getElementById('startTime').textContent = new Date().toLocaleString();
+        }
+        
+        updateProgress(progress) {
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = progress + '%';
+        }
+        
+        updateUIForTrainingStop() {
+            this.isTraining = false;
+            
+            document.getElementById('startBtn').style.display = 'inline-flex';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('statusBadge').textContent = '대기중';
+            document.getElementById('statusBadge').className = 'status-badge status-idle';
+            document.getElementById('trainingInfo').style.display = 'none';
+            document.getElementById('idleState').style.display = 'block';
+        }
+        
+        updateUIForTrainingComplete() {
+            this.updateUIForTrainingStop();
+            alert('학습이 완료되었습니다!');
+        }
+    }
+
         // 프로젝트 목록 로드
         function loadProjects() {
             const savedProjects = localStorage.getItem('mlops_projects');
@@ -1093,17 +1204,33 @@
         }
 
         function onTrainingProjectSelect(projectId) {
+            console.log('프로젝트 변경:', projectId);
+            
             selectedProjectId = projectId;
             
-            // URL 파라미터 업데이트
-            setURLParameter('project', projectId);
+            // *** URL에서 type 파라미터 제거 ***
+            const url = new URL(window.location);
+            if (projectId) {
+                url.searchParams.set('project', projectId);
+            } else {
+                url.searchParams.delete('project');
+            }
+            url.searchParams.delete('type'); // 타입 파라미터 삭제
+            url.searchParams.delete('dataset');
+            url.searchParams.delete('datasetName');
+            window.history.pushState({}, '', url);
             
-            // 브레드크럼 업데이트
+            // 데이터셋 셀렉터들 초기화
+            const datasetSelect = document.getElementById('datasetSelect');
+            const headerDatasetSelect = document.getElementById('datasetSelectorHeader');
+            
+            datasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
+            headerDatasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
+            
             const selectedProject = projects.find(p => p.id === projectId);
-            if (selectedProject) {
-                updateBreadcrumb(selectedProject.name);
-                
-                // 기본 브레드크럼으로 리셋 (데이터셋 선택 전)
+            
+            if (selectedProject && projectId) {
+                // 브레드크럼 업데이트 (타입 없이)
                 const breadcrumb = document.getElementById('breadcrumbNav');
                 breadcrumb.innerHTML = `
                     <a href="/dashboard" class="breadcrumb-item">대시보드</a>
@@ -1114,11 +1241,29 @@
                 `;
                 
                 // 헤더 데이터셋 셀렉터 표시
-                document.getElementById('datasetSelectorHeader').style.display = 'inline-block';
-            } else {
-                updateBreadcrumb(null);
+                headerDatasetSelect.style.display = 'inline-block';
                 
-                // 기본 브레드크럼으로 리셋
+                // 데이터셋 로드
+                const savedData = localStorage.getItem(`datasets_${projectId}`);
+                if (savedData) {
+                    try {
+                        const datasets = JSON.parse(savedData);
+                        datasets.forEach(dataset => {
+                            const option1 = document.createElement('option');
+                            option1.value = dataset.name;
+                            option1.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
+                            datasetSelect.appendChild(option1);
+                            
+                            const option2 = document.createElement('option');
+                            option2.value = dataset.name;
+                            option2.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
+                            headerDatasetSelect.appendChild(option2);
+                        });
+                    } catch (e) {
+                        console.error('데이터셋 파싱 오류:', e);
+                    }
+                }
+            } else {
                 const breadcrumb = document.getElementById('breadcrumbNav');
                 breadcrumb.innerHTML = `
                     <a href="/dashboard" class="breadcrumb-item">대시보드</a>
@@ -1127,12 +1272,8 @@
                     <span class="breadcrumb-separator">/</span>
                     <span class="breadcrumb-item active">모델 학습</span>
                 `;
-                
-                document.getElementById('datasetSelectorHeader').style.display = 'none';
+                headerDatasetSelect.style.display = 'none';
             }
-            
-            // 데이터셋 로드
-            loadProjectDatasetsFromStorage(projectId);
         }
 
         function updateHeaderDatasetSelector() {
@@ -1221,12 +1362,11 @@
         }
 
         function initializeFromURL() {
-            // 먼저 프로젝트 목록 로드
             loadProjects();
             
             const projectId = getURLParameter('project');
             const datasetName = getURLParameter('datasetName');
-            const modelType = getURLParameter('type'); // 타입 파라미터 추가
+            const modelType = getURLParameter('type');
             
             if (projectId) {
                 selectedProjectId = projectId;
@@ -1236,23 +1376,33 @@
                 
                 const project = projects.find(p => p.id === projectId);
                 if (project) {
-                    updateBreadcrumb(project.name, modelType); // 타입 전달
+                    // 데이터셋 로드
                     loadProjectDatasetsFromStorage(projectId);
+                    
+                    // *** 헤더 데이터셋 셀렉터 표시 ***
+                    const headerDatasetSelect = document.getElementById('datasetSelectorHeader');
+                    headerDatasetSelect.style.display = 'inline-block';
                     
                     if (datasetName) {
                         setTimeout(() => {
                             const datasetSelect = document.getElementById('datasetSelect');
+                            const headerSelect = document.getElementById('datasetSelectorHeader');
+                            
                             const option = Array.from(datasetSelect.options).find(opt => 
                                 opt.textContent.includes(datasetName)
                             );
+                            
                             if (option) {
                                 datasetSelect.value = option.value;
+                                headerSelect.value = option.value; // 헤더도 동기화
                                 updateDetailedBreadcrumb(project.name, datasetName, modelType);
                             }
-                        }, 50);
+                        }, 100);
+                    } else {
+                        // 데이터셋 없을 때 기본 브레드크럼
+                        updateBreadcrumb(project.name, modelType);
                     }
                     
-                    // 타입에 따른 백본 설정
                     if (modelType) {
                         updateBackboneOptions(modelType);
                     }
@@ -1277,7 +1427,7 @@
         function updateDetailedBreadcrumb(projectName, datasetName, modelType) {
             const breadcrumb = document.getElementById('breadcrumbNav');
             
-            const typeText = modelType ? `(${getTypeLabel(modelType)})` : '';
+            const typeText = modelType ? ` (${getTypeLabel(modelType)})` : '';
             
             breadcrumb.innerHTML = `
                 <a href="/dashboard" class="breadcrumb-item">대시보드</a>
@@ -1411,52 +1561,81 @@
                 document.getElementById('trainingProjectSelect').value = this.value;
             });
 
-           // 데이터셋 선택 이벤트 리스너 추가
-            document.getElementById('datasetSelect').addEventListener('change', function() {
-                const selectedDatasetName = this.options[this.selectedIndex].text;
-                const datasetName = selectedDatasetName.split(' (')[0]; // "(N개 이미지)" 부분 제거
+            document.getElementById('datasetSelectorHeader').addEventListener('change', function() {
+                const datasetSelect = document.getElementById('datasetSelect');
+                datasetSelect.value = this.value;
                 
-                if (this.value && selectedProjectId) {
-                    const selectedProject = projects.find(p => p.id === selectedProjectId);
-                    if (selectedProject) {
-                        updateDetailedBreadcrumb(selectedProject.name, datasetName);
-                    }
-                } else if (selectedProjectId) {
-                    // 데이터셋 선택 해제 시 프로젝트만 표시
-                    const selectedProject = projects.find(p => p.id === selectedProjectId);
-                    if (selectedProject) {
-                        const breadcrumb = document.getElementById('breadcrumbNav');
-                        breadcrumb.innerHTML = `
-                            <a href="/dashboard" class="breadcrumb-item">대시보드</a>
-                            <span class="breadcrumb-separator">/</span>
-                            <a href="/ui/projects" class="breadcrumb-item">프로젝트(${selectedProject.name})</a>
-                            <span class="breadcrumb-separator">/</span>
-                            <span class="breadcrumb-item active">모델 학습</span>
-                        `;
-                    }
-                }
+                // 동일한 이벤트 발생 (위의 로직이 실행됨)
+                const changeEvent = new Event('change');
+                datasetSelect.dispatchEvent(changeEvent);
             });
 
-            document.getElementById('datasetSelectorHeader').addEventListener('change', function() {
-                    const datasetSelect = document.getElementById('datasetSelect');
-                    datasetSelect.value = this.value;
+            document.getElementById('datasetSelect').addEventListener('change', function() {
+                document.getElementById('datasetSelectorHeader').value = this.value;
+                
+                const selectedDatasetName = this.options[this.selectedIndex].text;
+                const datasetName = selectedDatasetName.split(' (')[0];
+                const selectedProject = projects.find(p => p.id === selectedProjectId);
+                
+                if (this.value && selectedProjectId && selectedProject) {
+                    // *** 데이터셋의 실제 타입을 가져오기 ***
+                    let modelType = null;
                     
-                    // 데이터셋 변경 이벤트 발생
-                    if (this.value && selectedProjectId) {
-                        const selectedDatasetName = this.options[this.selectedIndex].text;
-                        const datasetName = selectedDatasetName.split(' (')[0];
-                        const selectedProject = projects.find(p => p.id === selectedProjectId);
-                        if (selectedProject) {
-                            updateDetailedBreadcrumb(selectedProject.name, datasetName);
+                    // localStorage에서 해당 데이터셋 찾기
+                    const savedData = localStorage.getItem(`datasets_${selectedProjectId}`);
+                    if (savedData) {
+                        try {
+                            const datasets = JSON.parse(savedData);
+                            const selectedDataset = datasets.find(d => d.name === datasetName);
+                            if (selectedDataset) {
+                                // 데이터셋 타입을 모델 타입으로 변환
+                                const typeMapping = {
+                                    'classify': 'classification',
+                                    'obd': 'detection',
+                                    'seg': 'segmentation',
+                                    'anomal': 'anomaly'
+                                };
+                                modelType = typeMapping[selectedDataset.type] || 'anomaly';
+                                
+                                // URL 파라미터 업데이트
+                                setURLParameter('type', modelType);
+                                
+                                // 백본 옵션 업데이트
+                                updateBackboneOptions(modelType);
+                            }
+                        } catch (e) {
+                            console.error('데이터셋 타입 가져오기 실패:', e);
                         }
                     }
-                });
+                    
+                    updateDetailedBreadcrumb(selectedProject.name, datasetName, modelType);
+                } else if (selectedProjectId && selectedProject) {
+                    // 데이터셋 선택 해제 시
+                    const url = new URL(window.location);
+                    url.searchParams.delete('type');
+                    window.history.pushState({}, '', url);
+                    
+                    const breadcrumb = document.getElementById('breadcrumbNav');
+                    breadcrumb.innerHTML = `
+                        <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <a href="/ui/projects" class="breadcrumb-item">프로젝트(${selectedProject.name})</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-item active">모델 학습</span>
+                    `;
+                }
+            });
                 
-                // 기본 설정 데이터셋 셀렉터도 헤더와 동기화
-                const existingDatasetListener = document.getElementById('datasetSelect').onchange;
-                document.getElementById('datasetSelect').addEventListener('change', function() {
-                    document.getElementById('datasetSelectorHeader').value = this.value;
-                });
+            // 프로젝트 선택 이벤트
+            document.getElementById('trainingProjectSelect').addEventListener('change', function() {
+                onTrainingProjectSelect(this.value);
+                document.getElementById('projectSelector').value = this.value;
+            });
+            
+            document.getElementById('projectSelector').addEventListener('change', function() {
+                onTrainingProjectSelect(this.value);
+                document.getElementById('trainingProjectSelect').value = this.value;
+            });
         });      
 
         function refreshTraining() {
@@ -1494,100 +1673,44 @@
                 });
         }
 
-        function startTraining() {
-            const modelType = getURLParameter('type') || 'anomaly'; // 기본값 anomaly
-            
-            const config = {
-                model_type: modelType, // 모델 타입 추가
-                dataset_name: document.getElementById('datasetSelect').value,
-                backbone: document.getElementById('backboneSelect').value,
-                training_type: document.getElementById('trainingType').value,
-                epochs: parseInt(document.getElementById('epochs').value),
-                learning_rate: parseFloat(document.getElementById('learningRateInput').value),
-                batch_size: parseInt(document.getElementById('batchSize').value),
-                sampling_ratio: parseFloat(document.getElementById('samplingRatioInput').value),
-                image_size: parseInt(document.getElementById('imageSize').value),
-                train_ratio: parseFloat(document.getElementById('trainRatioInput').value),
-                val_ratio: parseFloat(document.getElementById('valRatioInput').value)
-            };
-            
-            if (!config.dataset_name) {
+        async function startTraining() {
+            const datasetName = document.getElementById('datasetSelect').value;
+            if (!datasetName) {
                 alert('데이터셋을 선택해주세요.');
                 return;
             }
             
+            const config = {
+                dataset_name: datasetName,
+                backbone: document.getElementById('backboneSelect').value,
+                layers: ["layer2", "layer3"],
+                anomaly_scorer_num_nn: 7,
+                sampling_ratio: parseFloat(document.getElementById('samplingRatioInput').value),
+                resize_size: 320,
+                image_size: parseInt(document.getElementById('imageSize').value),
+                gpu_id: 0
+            };
+            
             console.log('학습 시작:', config);
             
-            // Anomaly Detection만 실제 학습 가능
-            if (modelType !== 'anomaly') {
-                alert(`${getTypeLabel(modelType)} 모델은 아직 지원하지 않습니다.\n곧 추가될 예정입니다.`);
-                return;
-            }
+            const result = await trainingManager.startTraining(config);
             
-            // 서버로 학습 시작 요청
-            fetch('/training/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(config)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('startBtn').style.display = 'none';
-                    document.getElementById('stopBtn').style.display = 'inline-flex';
-                    document.getElementById('statusBadge').textContent = '학습중';
-                    document.getElementById('statusBadge').className = 'status-badge status-training';
-                    document.getElementById('trainingInfo').style.display = 'block';
-                    document.getElementById('idleState').style.display = 'none';
-                    
-                    document.getElementById('currentModel').textContent = config.backbone;
-                    document.getElementById('currentDataset').textContent = config.dataset_name;
-                    document.getElementById('startTime').textContent = new Date().toLocaleString();
-                    
-                    alert('학습이 시작되었습니다.');
-                } else {
-                    alert('학습 시작 실패: ' + (data.error || data.message));
-                }
-            })
-            .catch(error => {
-                console.error('학습 시작 실패:', error);
-                alert('학습 시작 중 오류가 발생했습니다.');
-            });
+            if (result.success) {
+                alert(result.message);
+            } else {
+                alert('학습 시작 실패: ' + result.error);
+            }
         }
 
-        function stopTraining() {
+        async function stopTraining() {
             if (confirm('학습을 중단하시겠습니까?')) {
-                console.log('학습 중단');
+                const result = await trainingManager.stopTraining();
                 
-                // 서버로 학습 중단 요청
-                fetch('/training/stop', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // UI 업데이트
-                        document.getElementById('startBtn').style.display = 'inline-flex';
-                        document.getElementById('stopBtn').style.display = 'none';
-                        document.getElementById('statusBadge').textContent = '대기중';
-                        document.getElementById('statusBadge').className = 'status-badge status-idle';
-                        document.getElementById('trainingInfo').style.display = 'none';
-                        document.getElementById('idleState').style.display = 'block';
-                        
-                        alert('학습이 중단되었습니다.');
-                    } else {
-                        alert('학습 중단 실패: ' + (data.error || data.message));
-                    }
-                })
-                .catch(error => {
-                    console.error('학습 중단 실패:', error);
-                    alert('학습 중단 중 오류가 발생했습니다.');
-                });
+                if (result.success) {
+                    alert(result.message);
+                } else {
+                    alert('학습 중단 실패: ' + result.error);
+                }
             }
         }
 

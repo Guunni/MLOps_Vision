@@ -327,6 +327,12 @@ def validate_environment():
     req_dir.mkdir(exist_ok=True)
     return req_dir
 
+def create_requirements_directory():
+    """requirements 디렉토리를 생성합니다."""
+    req_dir = Path('requirements')
+    req_dir.mkdir(exist_ok=True)
+    return req_dir
+
 def main():
     parser = argparse.ArgumentParser(
         description='MLOps Vision 프로젝트 의존성 설치',

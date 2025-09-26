@@ -1419,7 +1419,7 @@
             
             selectedProjectId = projectId;
             selectedDatasetId = null;
-            datasets = [];
+            datasets = []; // 먼저 비우기
             uploadedImages = [];
             selectedImages = [];
             currentPreviewIndex = -1;
@@ -1445,22 +1445,26 @@
             const selectedProject = projects.find(p => p.id === projectId);
             
             if (selectedProject && projectId) {
+                // 브레드크럼 업데이트
+                updateBreadcrumb(selectedProject.name);
+                
                 // 데이터셋 로드
                 const savedData = localStorage.getItem(`datasets_${projectId}`);
                 if (savedData) {
                     try {
                         datasets = JSON.parse(savedData);
+                        console.log('로드된 데이터셋:', datasets);
                     } catch (e) {
+                        console.error('파싱 실패:', e);
                         datasets = [];
                     }
                 }
                 
-                // UI 업데이트
-                updateBreadcrumb(selectedProject.name);
+                // *** 핵심: 데이터셋 셀렉터 옵션 추가 ***
                 if (datasetSelector) {
                     datasetSelector.style.display = 'inline-block';
                     
-                    // 데이터셋 옵션 추가
+                    // 데이터셋 옵션들을 셀렉터에 추가
                     datasets.forEach(dataset => {
                         const option = document.createElement('option');
                         option.value = dataset.id;
@@ -1469,13 +1473,14 @@
                     });
                 }
             } else {
+                // 프로젝트 선택 해제
                 updateBreadcrumb(null);
                 if (datasetSelector) {
                     datasetSelector.style.display = 'none';
                 }
             }
             
-            // 테이블 렌더링
+            // UI 렌더링
             renderDatasets();
             renderImageTable();
             showEmptyPreview();
@@ -1609,41 +1614,62 @@
         }
 
         // 데이터셋 관리 함수
-        function loadDatasets(projectId) {
+        async function loadDatasets(projectId) {
             if (!projectId) {
                 datasets = [];
                 renderDatasets();
                 updateDatasetSelector();
                 return;
             }
-            
+
             try {
-                const savedDatasets = localStorage.getItem(`datasets_${projectId}`);
-                if (savedDatasets) {
-                    datasets = JSON.parse(savedDatasets);
-                } else {
-                    datasets = [];
-                }
-            } catch (e) {
-                console.error('데이터셋 로드 실패:', e);
-                datasets = [];
-            }
-            
-            renderDatasets();
-            updateDatasetSelector();
-            
-            // URL에 datasetName이 있으면 즉시 처리
-            const datasetName = getURLParameter('datasetName');
-            if (datasetName) {
-                const foundDataset = datasets.find(d => d.name === datasetName);
-                if (foundDataset) {
-                    selectedDatasetId = foundDataset.id;
-                    const datasetSelector = document.getElementById('datasetSelector');
-                    if (datasetSelector) {
-                        datasetSelector.value = foundDataset.id;
-                        onDatasetSelect(foundDataset.id);
+                const response = await fetch(`/api/projects/${projectId}/datasets`);
+                if (!response.ok) throw new Error('데이터셋 불러오기 실패');
+                datasets = await response.json();
+
+                renderDatasets();
+                updateDatasetSelector();
+
+                // URL 파라미터에 datasetName 있으면 자동 선택
+                const datasetName = getURLParameter('datasetName');
+                if (datasetName) {
+                    const foundDataset = datasets.find(d => d.name === datasetName);
+                    if (foundDataset) {
+                        selectedDatasetId = foundDataset.id;
+                        const datasetSelector = document.getElementById('datasetSelector');
+                        if (datasetSelector) {
+                            datasetSelector.value = foundDataset.id;
+                            onDatasetSelect(foundDataset.id);
+                        }
                     }
                 }
+            } catch (error) {
+                console.error('데이터셋 로드 오류:', error);
+                datasets = [];
+                renderDatasets();
+            }
+        }
+
+        async function createDataset(projectId) {
+            const name = document.getElementById('newDatasetName').value;
+            const type = document.getElementById('newDatasetType').value;
+            const description = document.getElementById('newDatasetDescription').value;
+
+            try {
+                const response = await fetch(`/api/projects/${projectId}/datasets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, type, description })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    closeDatasetModal();
+                    loadDatasets(projectId);
+                } else {
+                    alert('데이터셋 생성 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('데이터셋 생성 오류:', error);
             }
         }
 
@@ -2038,12 +2064,14 @@
             const projectBreadcrumb = document.getElementById('selectedProjectBreadcrumb');
             const breadcrumb = document.getElementById('breadcrumbNav');
             
+            // 요소 존재 확인
+            if (!breadcrumb) {
+                console.error('breadcrumbNav 요소를 찾을 수 없습니다');
+                return;
+            }
+            
             if (projectName) {
-                projectSeparator.style.display = 'inline';
-                projectBreadcrumb.style.display = 'inline';
-                projectBreadcrumb.textContent = projectName;
-                
-                // 상세 브레드크럼 업데이트
+                // 상세 브레드크럼 업데이트 (요소가 없어도 동작)
                 breadcrumb.innerHTML = `
                     <a href="/dashboard" class="breadcrumb-item">대시보드</a>
                     <span class="breadcrumb-separator">/</span>
@@ -2051,9 +2079,32 @@
                     <span class="breadcrumb-separator">/</span>
                     <span class="breadcrumb-item active">데이터셋</span>
                 `;
+                
+                // 개별 요소도 업데이트 (있는 경우에만)
+                if (projectSeparator) {
+                    projectSeparator.style.display = 'inline';
+                }
+                if (projectBreadcrumb) {
+                    projectBreadcrumb.style.display = 'inline';
+                    projectBreadcrumb.textContent = projectName;
+                }
             } else {
-                projectSeparator.style.display = 'none';
-                projectBreadcrumb.style.display = 'none';
+                // 기본 브레드크럼
+                breadcrumb.innerHTML = `
+                    <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="/ui/projects" class="breadcrumb-item">프로젝트</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item active">데이터셋</span>
+                `;
+                
+                // 개별 요소 숨기기 (있는 경우에만)
+                if (projectSeparator) {
+                    projectSeparator.style.display = 'none';
+                }
+                if (projectBreadcrumb) {
+                    projectBreadcrumb.style.display = 'none';
+                }
             }
         }
 
@@ -2078,51 +2129,63 @@
                 return;
             }
 
+            console.log('이미지 추가 시작:', files.length, '개 파일');
+            
             const fileArray = Array.from(files);
             const imageFiles = fileArray.filter(f => f.type.startsWith('image/'));
-            let processedCount = 0;
-            const newImages = [];
+            
+            console.log('이미지 파일:', imageFiles.length, '개');
+            
+            // 1. 즉시 메타데이터만 추가
+            const newImages = imageFiles.map((file, index) => ({
+                id: `img_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                order: uploadedImages.length + index + 1,
+                uploaded: false
+            }));
 
-            imageFiles.forEach((file, originalIndex) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imageId = `img_${Date.now()}_${originalIndex}_${Math.random().toString(36).substr(2, 9)}`;
-                    
-                    // 메타데이터만 배열에 저장 (base64 제외)
-                    const imageData = {
-                        id: imageId,
-                        name: file.name,
-                        size: file.size,
-                        type: file.type,
-                        order: uploadedImages.length + processedCount + 1,
-                        originalIndex: originalIndex
-                    };
-                    
-                    // base64는 별도 객체에 저장
-                    imageDataCache[imageId] = e.target.result;
-                    
-                    newImages.push(imageData);
-                    processedCount++;
-
-                    if (processedCount === imageFiles.length) {
-                        newImages.sort((a, b) => a.originalIndex - b.originalIndex);
-                        newImages.forEach((img, idx) => {
-                            img.order = uploadedImages.length + idx + 1;
-                            delete img.originalIndex;
-                        });
-
-                        uploadedImages.push(...newImages);
-                        renderImageTable();
-                        updateImageCount();
-                        saveCurrentDatasets();
-                        renderDatasets();
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
+            uploadedImages.push(...newImages);
+            renderImageTable();
+            updateImageCount();
+            
+            // 2. 서버 업로드
+            await uploadToServerInBackground(imageFiles, newImages);
         }
 
-        // 이미지 테이블 렌더링
+        async function uploadToServerInBackground(files, imageMetadata) {
+            console.log('서버 업로드 시작...');
+            
+            const formData = new FormData();
+            
+            files.forEach((img) => {
+                formData.append("files", img);
+            });
+
+            // URL에 project_id와 dataset_id 넣기
+            const url = `/datasets/${selectedProjectId}/${selectedDatasetId}/upload`;
+
+            try {
+                console.log('업로드 요청 전송...');
+                const response = await fetch(url, { 
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`서버 응답 오류: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('업로드 성공:', data);
+                // 이후 처리...
+            } catch (error) {
+                console.error('업로드 오류:', error);
+            }
+        }
+
+        // 이미지 테이블 렌더링 (썸네일 제거)
         function renderImageTable() {
             const tableBody = document.getElementById('imageTableBody');
             const emptyList = document.getElementById('emptyImageList');
@@ -2135,7 +2198,6 @@
             
             emptyList.style.display = 'none';
             
-            // 한 번에 최대 50개만 렌더링
             const maxVisible = 500;
             const visibleImages = uploadedImages.slice(0, Math.min(maxVisible, uploadedImages.length));
             
@@ -2151,33 +2213,109 @@
                     </td>
                     <td class="image-row-number">${index + 1}</td>
                     <td>
-                        <div class="image-thumbnail-placeholder" data-image-id="${image.id}">
-                            <i class="fas fa-image"></i>
+                        <div class="image-icon">
+                            <i class="fas fa-image" style="color: var(--text-muted);"></i>
                         </div>
                     </td>
                     <td>
-                        <div class="image-name" title="${image.name}">${image.name}</div>
+                        <div class="image-name" title="${image.name}">
+                            ${image.name}
+                            ${image.uploaded ? 
+                                '<i class="fas fa-check-circle" style="color: green; margin-left: 5px;" title="업로드 완료"></i>' : 
+                                '<i class="fas fa-upload" style="color: orange; margin-left: 5px;" title="업로드 중..."></i>'
+                            }
+                        </div>
                     </td>
                     <td>${getFileExtension(image.name).toUpperCase()}</td>
                     <td style="text-align: right;">${formatFileSize(image.size)}</td>
                 </tr>
             `).join('');
             
-            // 남은 이미지 개수 표시
             if (uploadedImages.length > maxVisible) {
                 tableBody.innerHTML += `
                     <tr class="more-images-row">
                         <td colspan="6" style="text-align: center; padding: 1rem; color: var(--text-muted);">
-                            +${uploadedImages.length - maxVisible}개 더 있음 (스크롤하여 더 보기)
+                            +${uploadedImages.length - maxVisible}개 더 있음
                         </td>
                     </tr>
                 `;
             }
             
-            // 지연 로딩으로 썸네일 표시
-            setTimeout(() => loadVisibleThumbnails(), 100);
             updateSelectAllCheckbox();
         }
+
+        // 이미지 선택 시 서버에서 로드 (캐시 활용)
+        async function selectImage(index, event) {
+            currentPreviewIndex = index;
+            const image = uploadedImages[index];
+            
+            if (image) {
+                await showImagePreview(image, index);
+            }
+            renderImageTable();
+        }
+
+        // 서버에서 이미지 로드하여 미리보기
+        async function showImagePreview(imageData, index) {
+            const previewImage = document.getElementById('previewImage');
+            const imageInfo = document.getElementById('imageInfo');
+            const emptyPreview = document.getElementById('emptyPreview');
+            const previewContainer = document.getElementById('previewContainer');
+            
+            // 로딩 상태 표시
+            emptyPreview.innerHTML = `
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>이미지 로딩 중...</p>
+            `;
+            emptyPreview.style.display = 'flex';
+            previewContainer.style.display = 'none';
+            
+            try {
+                // 서버에서 이미지 URL 가져오기
+                const response = await fetch(`/api/image/${selectedProjectId}/${selectedDatasetId}/${imageData.name}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    // 이미지 표시
+                    emptyPreview.style.display = 'none';
+                    previewContainer.style.display = 'flex';
+                    previewImage.style.display = 'block';
+                    imageInfo.style.display = 'block';
+                    
+                    previewImage.src = imageUrl;
+                    currentZoom = 1;
+                    imageOffsetX = 0;
+                    imageOffsetY = 0;
+
+                    previewImage.onload = function() {
+                        this.style.width = this.naturalWidth + 'px';
+                        this.style.height = this.naturalHeight + 'px';
+                        updateImageTransform();
+                        document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
+                        
+                        // 메모리 정리
+                        setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+                    };
+                    
+                    // 이미지 정보 업데이트
+                    document.getElementById('infoFileName').textContent = imageData.name;
+                    document.getElementById('infoFileSize').textContent = formatFileSize(imageData.size);
+                    document.getElementById('infoOrder').textContent = `${index + 1} / ${uploadedImages.length}`;
+                    
+                } else {
+                    throw new Error('이미지 로드 실패');
+                }
+                
+            } catch (error) {
+                console.error('이미지 로드 오류:', error);
+                emptyPreview.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; color: var(--error-color);"></i>
+                    <p>이미지를 로드할 수 없습니다</p>
+                `;
+            }
+        }        
 
         function loadVisibleThumbnails() {
             const placeholders = document.querySelectorAll('.image-thumbnail-placeholder');
@@ -2364,34 +2502,78 @@
         }
 
         // 이미지 미리보기
-        function showImagePreview(imageData, index) {
+        async function showImagePreview(imageData, index) {
             const previewImage = document.getElementById('previewImage');
             const imageInfo = document.getElementById('imageInfo');
             const emptyPreview = document.getElementById('emptyPreview');
             const previewContainer = document.getElementById('previewContainer');
             
-            emptyPreview.style.display = 'none';
-            previewContainer.style.display = 'flex';
-            previewImage.style.display = 'block';
-            imageInfo.style.display = 'block';
+            console.log('이미지 미리보기 시작:', imageData.name);
             
-            previewImage.src = imageData.dataUrl;
-            currentZoom = 1;
-            imageOffsetX = 0;
-            imageOffsetY = 0;
+            // 로딩 상태 표시
+            emptyPreview.innerHTML = `
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>이미지 로딩 중...</p>
+            `;
+            emptyPreview.style.display = 'flex';
+            previewContainer.style.display = 'none';
+            
+            try {
+                // 서버에서 이미지 URL 가져오기
+                const imageUrl = `/api/image/${selectedProjectId}/${selectedDatasetId}/${imageData.name}`;
+                console.log('이미지 요청 URL:', imageUrl);
+                
+                const response = await fetch(imageUrl);
+                console.log('이미지 응답 상태:', response.status);
+                
+                if (response.ok) {
+                    // 이미지 표시
+                    emptyPreview.style.display = 'none';
+                    previewContainer.style.display = 'flex';
+                    previewImage.style.display = 'block';
+                    imageInfo.style.display = 'block';
+                    
+                    previewImage.src = imageUrl;
+                    currentZoom = 1;
+                    imageOffsetX = 0;
+                    imageOffsetY = 0;
 
-            previewImage.onload = function() {
-                this.style.width = this.naturalWidth + 'px';
-                this.style.height = this.naturalHeight + 'px';
-                updateImageTransform();
-                document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
-            };
-            
-            updateImageTransform();
-            
-            document.getElementById('infoFileName').textContent = imageData.name;
-            document.getElementById('infoFileSize').textContent = formatFileSize(imageData.size);
-            document.getElementById('infoOrder').textContent = `${index + 1} / ${uploadedImages.length}`;
+                    previewImage.onload = function() {
+                        console.log('이미지 로드 완료:', this.naturalWidth, 'x', this.naturalHeight);
+                        this.style.width = this.naturalWidth + 'px';
+                        this.style.height = this.naturalHeight + 'px';
+                        updateImageTransform();
+                        document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
+                    };
+                    
+                    previewImage.onerror = function() {
+                        console.error('이미지 로드 오류');
+                        emptyPreview.innerHTML = `
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; color: var(--error-color);"></i>
+                            <p>이미지를 로드할 수 없습니다</p>
+                        `;
+                        emptyPreview.style.display = 'flex';
+                        previewContainer.style.display = 'none';
+                    };
+                    
+                    // 이미지 정보 업데이트
+                    document.getElementById('infoFileName').textContent = imageData.name;
+                    document.getElementById('infoFileSize').textContent = formatFileSize(imageData.size);
+                    document.getElementById('infoOrder').textContent = `${index + 1} / ${uploadedImages.length}`;
+                    
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+            } catch (error) {
+                console.error('이미지 로드 오류:', error);
+                emptyPreview.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; color: var(--error-color);"></i>
+                    <p>이미지를 로드할 수 없습니다<br><small>${error.message}</small></p>
+                `;
+                emptyPreview.style.display = 'flex';
+                previewContainer.style.display = 'none';
+            }
         }
 
         function showEmptyPreview() {
@@ -2733,25 +2915,22 @@
             loadProjects();
             initializeDropZone();
             initializeImageViewer();
-
-            loadProjects();
-            initializeDropZone();
-            initializeImageViewer();
             
             // 컨텍스트 메뉴 숨기기
             document.addEventListener('click', hideContextMenu);
             
-            setTimeout(() => {
-                initializeFromURL();
-            }, 300);
-            
+            // *** 프로젝트 셀렉터 이벤트 리스너 추가 ***
             document.getElementById('projectSelector').addEventListener('change', function() {
+                console.log('헤더 프로젝트 변경:', this.value);
                 onProjectSelect(this.value);
             });
             
             document.getElementById('datasetSelector').addEventListener('change', function() {
+                console.log('헤더 데이터셋 변경:', this.value);
                 onDatasetSelect(this.value);
             });
+            
+            // 모달 이벤트
             document.getElementById('datasetModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     const focusedElement = document.activeElement;
@@ -2763,7 +2942,13 @@
                     }
                 }
             });
+            
             initializeVirtualScrolling();
+            
+            // URL 초기화는 마지막에
+            setTimeout(() => {
+                initializeFromURL();
+            }, 100);
         });
     </script>
 </body>

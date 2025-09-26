@@ -526,6 +526,16 @@
             justify-content: flex-end;
         }
 
+        .project-actions .btn {
+        transition: all 0.2s ease;
+        }
+
+        .project-actions .btn:hover,
+        .section-title .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -729,6 +739,10 @@
                             <button class="btn btn-success" onclick="openProjectModal()" style="margin-left: 1rem;">
                                 <i class="fas fa-plus"></i> 새 프로젝트
                             </button>
+                            <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()" style="margin-left: 1rem;">
+                                <i class="fas fa-upload"></i> 가져오기
+                            </button>
+                            <input type="file" id="importFileInput" style="display:none;" accept="application/json" onchange="importProjects(event)">
                         </h2>
                         
                         <div class="projects-grid" id="projectsGrid">
@@ -787,20 +801,21 @@
         let selectedProjectId = null;
         let editingProjectId = null;
 
-        // 프로젝트 관리 함수
-        function loadProjects() {
-            // 로컬 스토리지에서 프로젝트 데이터 로드
-            const savedProjects = localStorage.getItem('mlops_projects');
-            if (savedProjects) {
-                projects = JSON.parse(savedProjects);
+        // 프로젝트 로드 (GET)
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects');
+                if (!response.ok) throw new Error('프로젝트 불러오기 실패');
+                projects = await response.json();
+                renderProjects();
+            } catch (error) {
+                console.error('프로젝트 로드 오류:', error);
+                projects = [];
+                renderProjects();
             }
-            renderProjects();
         }
 
-        function saveProjectsToStorage() {
-            localStorage.setItem('mlops_projects', JSON.stringify(projects));
-        }
-
+        // 프로젝트 렌더링
         function renderProjects() {
             const projectsGrid = document.getElementById('projectsGrid');
             const emptyState = document.getElementById('emptyState');
@@ -809,8 +824,18 @@
             projectCount.textContent = `총 ${projects.length}개`;
             
             if (projects.length === 0) {
-                projectsGrid.innerHTML = '';
-                projectsGrid.appendChild(emptyState);
+                projectsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-folder-plus"></i>
+                        </div>
+                        <h3>등록된 프로젝트가 없습니다</h3>
+                        <p>새 프로젝트를 생성하여 시작하세요</p>
+                        <button class="btn btn-primary" onclick="openProjectModal()" style="margin-top: 1rem;">
+                            <i class="fas fa-plus"></i> 프로젝트 생성
+                        </button>
+                    </div>
+                `;
                 return;
             }
             
@@ -820,11 +845,7 @@
                 'completed': '완료'
             };
             
-            projectsGrid.innerHTML = projects.map(project => {
-                // 실시간으로 데이터셋 개수 계산
-                const actualDatasetCount = project.datasetList ? project.datasetList.length : 0;
-                
-                return `
+            projectsGrid.innerHTML = projects.map(project => `
                 <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
                     onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
                     <div class="project-header">
@@ -833,15 +854,15 @@
                         </div>
                         <div class="project-status-container">
                             <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
-                            <div class="dataset-count">${actualDatasetCount}개 데이터셋</div>
+                            <div class="dataset-count">${project.dataset_count || 0}개 데이터셋</div>
                         </div>
                     </div>
                     
-                    <div class="project-description">${project.description}</div>
+                    <div class="project-description">${project.description || ''}</div>
                     
                     <div class="project-meta">
-                        <span>생성일: ${formatDate(project.createdAt)}</span>
-                        <span>최종 수정: ${formatDate(project.updatedAt)}</span>
+                        <span>생성일: ${formatDate(project.created_at)}</span>
+                        <span>최종 수정: ${formatDate(project.updated_at)}</span>
                     </div>
 
                     <div class="project-datasets">
@@ -854,14 +875,12 @@
                                         <span class="dataset-type">${dataset.type}</span>
                                         <span class="dataset-date">${dataset.date}</span>
                                     </div>
-                                `).join('') : 
-                                `<div class="dataset-row" style="justify-content: center; color: var(--text-muted); font-style: italic;">
-                                    <span>등록된 데이터셋이 없습니다</span>
-                                </div>`
-                            }
+                                `).join('') 
+                                : `<div class="dataset-row" style="justify-content:center; color:var(--text-muted); font-style:italic;">
+                                    등록된 데이터셋이 없습니다
+                                </div>`}
                         </div>
                     </div>
-                    
                     <div class="project-actions" onclick="event.stopPropagation();">
                         <button class="btn btn-sm btn-outline" onclick="editProject('${project.id}')">
                             <i class="fas fa-edit"></i> 편집
@@ -869,43 +888,40 @@
                         <button class="btn btn-sm btn-primary" onclick="openProject('${project.id}')">
                             <i class="fas fa-arrow-right"></i> 열기
                         </button>
+                        <button class="btn btn-sm btn-secondary" onclick="duplicateProject('${project.id}')">
+                            <i class="fas fa-copy"></i> 복제
+                        </button>
+                        <button class="btn btn-sm btn-info" onclick="exportProject('${project.id}')">
+                            <i class="fas fa-download"></i> 내보내기
+                        </button>
                         <button class="btn btn-sm btn-danger" onclick="deleteProject('${project.id}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-            `}).join('');
+            `).join('');
         }
 
-        function openDatasetDirectly(projectId, datasetName) {
-            // 데이터셋 이름으로 이동 (ID는 프로젝트 페이지에서 접근 불가)
-            window.location.href = `/ui/datasets?project=${projectId}&datasetName=${encodeURIComponent(datasetName)}`;
-        }
+        function handleProjectClick(projectId, event) {
+            if (event.detail === 1) {
+                setTimeout(() => {
+                    if (event.detail === 1) selectProject(projectId);
+                }, 200);
+            } else if (event.detail === 2) {
+                openProject(projectId);
+            }
+        }        
 
         function selectProject(projectId) {
             selectedProjectId = selectedProjectId === projectId ? null : projectId;
             renderProjects();
         }
 
-        function handleProjectClick(projectId, event) {
-            if (event.detail === 1) {
-                // 싱글 클릭
-                setTimeout(() => {
-                    if (event.detail === 1) {
-                        selectProject(projectId);
-                    }
-                }, 200);
-            } else if (event.detail === 2) {
-                // 더블 클릭
-                openProject(projectId);
-            }
-        }
-
         function openProject(projectId) {
-            // 프로젝트를 선택하고 데이터셋 페이지로 이동
             window.location.href = `/ui/datasets?project=${projectId}`;
         }
 
+        // 모달 열기/닫기
         function openProjectModal() {
             editingProjectId = null;
             document.getElementById('modalTitle').textContent = '새 프로젝트 생성';
@@ -934,7 +950,8 @@
             editingProjectId = null;
         }
 
-        function saveProject() {
+        // 프로젝트 저장 (생성/수정)
+        async function saveProject() {
             const name = document.getElementById('projectName').value.trim();
             const description = document.getElementById('projectDescription').value.trim();
             const status = document.getElementById('projectStatus').value;
@@ -944,50 +961,54 @@
                 return;
             }
 
-            const now = new Date().toISOString();
-
-            if (editingProjectId) {
-                const projectIndex = projects.findIndex(p => p.id === editingProjectId);
-                if (projectIndex !== -1) {
-                    projects[projectIndex] = {
-                        ...projects[projectIndex],
-                        name: name,
-                        description: description,
-                        status: status,
-                        updatedAt: now
-                    };
+            try {
+                if (editingProjectId) {
+                    // 수정
+                    const response = await fetch(`/api/projects/${editingProjectId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, description, status })
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || '프로젝트 수정 실패');
+                } else {
+                    // 생성
+                    const response = await fetch('/api/projects', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, description, status })
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || '프로젝트 생성 실패');
                 }
-            } else {
-                const newProject = {
-                    id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    name: name,
-                    description: description,
-                    status: status,
-                    createdAt: now,
-                    updatedAt: now,
-                    datasetList: [] // 빈 배열로 초기화
-                };
-                projects.push(newProject);
-            }
 
-            saveProjectsToStorage();
-            renderProjects();
-            closeProjectModal();
+                closeProjectModal();
+                loadProjects();
+            } catch (error) {
+                console.error('프로젝트 저장 오류:', error);
+                alert(error.message);
+            }
         }
 
-        function deleteProject(projectId) {
+        // 프로젝트 삭제
+        async function deleteProject(projectId) {
             const project = projects.find(p => p.id === projectId);
             if (project && confirm(`'${project.name}' 프로젝트를 삭제하시겠습니까?\n\n관련된 모든 데이터가 삭제됩니다.`)) {
-                projects = projects.filter(p => p.id !== projectId);
-                if (selectedProjectId === projectId) {
-                    selectedProjectId = null;
+                try {
+                    const response = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || '삭제 실패');
+                    if (selectedProjectId === projectId) selectedProjectId = null;
+                    loadProjects();
+                } catch (error) {
+                    console.error('프로젝트 삭제 오류:', error);
+                    alert(error.message);
                 }
-                saveProjectsToStorage();
-                renderProjects();
             }
         }
 
         function formatDate(dateString) {
+            if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleString('ko-KR', {
                 year: 'numeric',
@@ -998,33 +1019,21 @@
             });
         }
 
-        // 키보드 이벤트 처리
+        // 키보드 이벤트 (ESC/Enter/Delete)
         function handleKeyboardEvents() {
             document.addEventListener('keydown', (e) => {
-                // ESC 키로 모달 닫기
-                if (e.key === 'Escape') {
-                    closeProjectModal();
-                }
-                
-                // Enter 키로 모달에서 저장
-                if (e.key === 'Enter' && document.getElementById('projectModal').classList.contains('show')) {
-                    saveProject();
-                }
-                
-                // Delete 키로 선택된 프로젝트 삭제
-                if (e.key === 'Delete' && selectedProjectId) {
-                    deleteProject(selectedProjectId);
-                }
+                if (e.key === 'Escape') closeProjectModal();
+                if (e.key === 'Enter' && document.getElementById('projectModal').classList.contains('show')) saveProject();
+                if (e.key === 'Delete' && selectedProjectId) deleteProject(selectedProjectId);
             });
         }
 
-        // 검색 기능
+        // 검색
         function searchProjects(searchTerm) {
             const filteredProjects = projects.filter(project => 
                 project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                project.description.toLowerCase().includes(searchTerm.toLowerCase())
+                (project.description || '').toLowerCase().includes(searchTerm.toLowerCase())
             );
-            
             renderFilteredProjects(filteredProjects);
         }
 
@@ -1087,55 +1096,60 @@
         }
 
         // 프로젝트 복제
-        function duplicateProject(projectId) {
-            const project = projects.find(p => p.id === projectId);
-            if (!project) return;
-            
-        const duplicatedProject = {
-            ...project,
-            id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            name: project.name + ' (복사본)',
-            datasetCount: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-            
-            projects.push(duplicatedProject);
-            saveProjectsToStorage();
-            renderProjects();
+        async function duplicateProject(projectId) {
+            try {
+                const response = await fetch(`/api/projects/${projectId}/duplicate`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    loadProjects();
+                } else {
+                    alert('프로젝트 복제 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('복제 오류:', error);
+            }
         }
 
-        // 프로젝트 내보내기/가져오기
-        function exportProjects() {
-            const dataStr = JSON.stringify(projects, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `mlops_projects_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            URL.revokeObjectURL(url);
+        // 프로젝트 내보내기
+        async function exportProject(projectId) {
+            try {
+                const response = await fetch(`/api/projects/${projectId}/export`);
+                const data = await response.json();
+
+                const dataStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `project_${projectId}_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('프로젝트 내보내기 오류:', error);
+            }
         }
 
+        // 프로젝트 가져오기
         function importProjects(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const importedProjects = JSON.parse(e.target.result);
                     if (Array.isArray(importedProjects)) {
-                        if (confirm('기존 프로젝트를 모두 삭제하고 가져오시겠습니까?')) {
-                            projects = importedProjects;
-                        } else {
-                            projects = [...projects, ...importedProjects];
+                        for (const proj of importedProjects) {
+                            await fetch('/api/projects', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(proj)
+                            });
                         }
-                        saveProjectsToStorage();
-                        renderProjects();
-                        alert('프로젝트를 성공적으로 가져왔습니다.');
+                        alert('프로젝트 가져오기 완료');
+                        loadProjects();
                     }
                 } catch (error) {
                     alert('잘못된 파일 형식입니다.');

@@ -1149,51 +1149,28 @@
         let projects = [];
         let selectedProjectId = null;
 
-        // localStorage를 사용한 데이터 유지
-        const STORAGE_KEY = 'mlops_models_data';
-
-        function saveModelsToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(models));
-            } catch (error) {
-                console.warn('localStorage 저장 실패:', error);
-            }
-        }
-
-        function loadModelsFromStorage() {
-            try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                    models = JSON.parse(stored);
-                    return true;
-                }
-            } catch (error) {
-                console.warn('localStorage 로드 실패:', error);
-            }
-            return false;
-        }
-
         function loadModels() {
-            // localStorage에서 데이터 로드 시도
-            const hasStoredData = loadModelsFromStorage();
+            const projectParam = selectedProjectId ? `?project_id=${selectedProjectId}` : '';
             
-            if (!hasStoredData) {
-                // API에서 학습 완료된 모델 목록을 가져옴
-                fetch('/api/completed-models')
-                    .then(response => response.json())
-                    .then(data => {
-                        models = data.models || [];
-                        saveModelsToStorage();
-                        updateUI();
-                    })
-                    .catch(error => {
-                        console.error('모델 목록 로드 실패:', error);
-                        models = [];
-                        updateUI();
-                    });
-            } else {
-                updateUI();
-            }
+            fetch(`/models${projectParam}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('서버 응답:', data);
+                    
+                    // 서버에서 models 배열을 반환
+                    models = data.models || [];
+                    updateUI();
+                })
+                .catch(error => {
+                    console.error('API 오류:', error);
+                    models = [];
+                    showEmptyState();
+                });
         }
 
         function updateUI() {
@@ -1379,7 +1356,6 @@
 
         function addTrainedModel(newModel) {
             models.push(newModel);
-            saveModelsToStorage();
             populateModelList();
             updateModelCount();
             showAlert('학습 완료', `새로운 모델이 학습 완료되었습니다!\n모델명: ${newModel.model_name}`);
@@ -1387,7 +1363,6 @@
 
         function addUploadedModel(uploadedModel) {
             models.push(uploadedModel);
-            saveModelsToStorage();
             populateModelList();
             updateModelCount();
             showAlert('업로드 완료', `모델이 성공적으로 업로드되었습니다!\n모델명: ${uploadedModel.model_name}`);
@@ -1494,6 +1469,12 @@
         function createRadarChart() {
             const ctx = document.getElementById('radarChart').getContext('2d');
             
+            // 기존 차트가 있으면 먼저 삭제
+            if (radarChart) {
+                radarChart.destroy();
+                radarChart = null;
+            }
+            
             radarChart = new Chart(ctx, {
                 type: 'radar',
                 data: {
@@ -1552,8 +1533,20 @@
             });
         }
 
+        function createEmptyRadarChart() {
+            if (radarChart) {
+                radarChart.destroy();
+            }
+            createRadarChart();
+        }
+
         function createComparisonChart() {
             const ctx = document.getElementById('comparisonBarChart').getContext('2d');
+
+            if (comparisonChart) {
+                comparisonChart.destroy();
+                comparisonChart = null;
+            }
             
             comparisonChart = new Chart(ctx, {
                 type: 'bar',
@@ -1643,6 +1636,11 @@
         }
 
         function updateComparisonChart() {
+            if (!comparisonChart) {
+                console.warn('비교 차트가 초기화되지 않았습니다');
+                return;
+            }
+            
             if (selectedModels.length === 0) {
                 comparisonChart.data.datasets = [];
                 comparisonChart.update();
@@ -1776,6 +1774,11 @@
             selectedUploadFormat = '';
             hideProgress('uploadProgressContainer');
             showButtons('uploadButtons');
+            
+            // 라디오 버튼과 옵션 초기화
+            document.querySelectorAll('input[name="uploadFormat"]').forEach(radio => {
+                radio.checked = false;
+            });
             document.querySelectorAll('#uploadModal .export-option').forEach(option => {
                 option.classList.remove('selected');
             });
@@ -1805,8 +1808,17 @@
                 document.body.removeChild(fileInput);
             };
             
+            // 파일 선택 취소 시에도 모달 닫기
+            fileInput.oncancel = function() {
+                closeUploadModal();
+                document.body.removeChild(fileInput);
+            };
+            
             document.body.appendChild(fileInput);
             fileInput.click();
+            
+            // 파일 선택 다이얼로그가 열리면 모달 닫기
+            closeUploadModal();
         }
 
         function formatFileSize(bytes) {
@@ -1820,9 +1832,12 @@
             return size + ' ' + sizes[i];
         }
 
-        function handleModelUpload(event, expectedFormat) {
+        async function handleModelUpload(event, expectedFormat) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file) {
+                closeUploadModal();
+                return;
+            }
             
             const fileName = file.name;
             const expectedExtension = '.' + expectedFormat;
@@ -1830,7 +1845,6 @@
             
             if (!fileName.toLowerCase().endsWith(expectedExtension)) {
                 const actualExtension = '.' + fileName.split('.').pop().toLowerCase();
-                
                 showAlert('파일 형식 오류', 
                     `선택된 형식과 일치하지 않습니다.\n\n` +
                     `선택한 형식: *${expectedExtension}\n` +
@@ -1838,64 +1852,37 @@
                     `파일 확장자: *${actualExtension}\n\n` +
                     `${expectedFormat} 형식의 파일을 선택해주세요.`
                 );
+                closeUploadModal();
                 return;
             }
             
             showConfirm('모델 업로드', 
-                `모델 업로드를 진행하시겠습니까?\n\n` +
-                `파일명: ${file.name}\n` +
-                `크기: ${formattedSize}\n` +
-                `형식: ${expectedFormat}\n\n` +
-                `업로드 후 성능 분석이 자동으로 시작됩니다.`, 
-                (result) => {
+                `모델 업로드를 진행하시겠습니까?\n\n파일명: ${file.name}`, 
+                async (result) => {
                     if (result) {
-                        hideButtons('uploadButtons');
-                        showProgress('uploadProgressContainer', 'uploadProgressBar', 'uploadProgressText', '업로드 준비 중...');
+                        const formData = new FormData();
+                        formData.append('file', file);
                         
-                        // 업로드 프로그레스 시뮬레이션
-                        let progress = 0;
-                        const uploadInterval = setInterval(() => {
-                            progress += Math.random() * 15;
-                            if (progress > 100) progress = 100;
+                        const modelName = file.name.split('.')[0];
+                        
+                        try {
+                            const response = await fetch('/models/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
                             
-                            let message = '업로드 중...';
-                            if (progress > 30) message = '모델 검증 중...';
-                            if (progress > 60) message = '성능 분석 중...';
-                            if (progress > 90) message = '업로드 완료 중...';
-                            
-                            updateProgress('uploadProgressBar', 'uploadProgressText', progress, message);
-                            
-                            if (progress >= 100) {
-                                clearInterval(uploadInterval);
-                                setTimeout(() => {
-                                    const uploadedModel = {
-                                        id: Date.now(),
-                                        model_name: file.name.split('.')[0],
-                                        config: { 
-                                            backbone: "업로드된 모델", 
-                                            dataset_name: "사용자 데이터셋",
-                                            epochs: 0,
-                                            learning_method: "업로드"
-                                        },
-                                        performance: {
-                                            accuracy: Math.random() * 0.3 + 0.7,
-                                            f1_score: Math.random() * 0.3 + 0.7,
-                                            precision: Math.random() * 0.3 + 0.7,
-                                            recall: Math.random() * 0.3 + 0.7
-                                        },
-                                        training_info: {
-                                            training_time: "업로드됨",
-                                            image_count: Math.floor(Math.random() * 5000) + 1000,
-                                            created_date: new Date().toISOString()
-                                        },
-                                        status: "completed",
-                                        source: "upload"
-                                    };
-                                    addUploadedModel(uploadedModel);
-                                    closeUploadModal();
-                                }, 500);
+                            if (response.ok) {
+                                await loadModels();
+                                showAlert('업로드 완료', `${file.name} 모델이 성공적으로 업로드되었습니다.`);
+                            } else {
+                                showAlert('업로드 실패', '모델 업로드 중 오류가 발생했습니다.');
                             }
-                        }, 200);
+                        } catch (error) {
+                            console.error('업로드 오류:', error);
+                            showAlert('업로드 실패', '서버 통신 중 오류가 발생했습니다.');
+                        }
+                        
+                        closeUploadModal();
                     }
                 }
             );
@@ -2164,23 +2151,35 @@
             const model = models[index];
             showConfirm('모델 삭제',
                 `정말로 "${model.model_name}" 모델을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
-                (result) => {
+                async (result) => {
                     if (result) {
-                        models.splice(index, 1);
-                        selectedModels = selectedModels.filter(i => i !== index).map(i => i > index ? i - 1 : i);
-                        
-                        if (selectedIndividualModel === index) {
-                            selectedIndividualModel = null;
-                        } else if (selectedIndividualModel > index) {
-                            selectedIndividualModel -= 1;
+                        try {
+                            const response = await fetch(`/models/${model.id}`, {
+                                method: 'DELETE'
+                            });
+                            
+                            if (response.ok) {
+                                models.splice(index, 1);
+                                selectedModels = selectedModels.filter(i => i !== index).map(i => i > index ? i - 1 : i);
+                                
+                                if (selectedIndividualModel === index) {
+                                    selectedIndividualModel = null;
+                                } else if (selectedIndividualModel > index) {
+                                    selectedIndividualModel -= 1;
+                                }
+                                
+                                populateModelList();
+                                updateComparisonChart();
+                                updateIndividualChart();
+                                
+                                showAlert('삭제 완료', '모델이 서버에서 삭제되었습니다.');
+                            } else {
+                                showAlert('삭제 실패', '모델 삭제 중 오류가 발생했습니다.');
+                            }
+                        } catch (error) {
+                            console.error('삭제 오류:', error);
+                            showAlert('삭제 실패', '서버 통신 중 오류가 발생했습니다.');
                         }
-                        
-                        saveModelsToStorage();
-                        populateModelList();
-                        updateComparisonChart();
-                        updateIndividualChart();
-                        
-                        showAlert('삭제 완료', '모델이 삭제되었습니다.');
                     }
                 }
             );
