@@ -69,6 +69,26 @@ def to_camel_case(row: dict) -> dict:
     }
     return {mapping.get(k, k): v for k, v in row.items()}
 
+def recalc_dataset_stats(conn, project_id: str, dataset_id: str):
+    """폴더 기준으로 image_count/total_size 재계산 후 DB 반영"""
+    ds_dir = BASE_DATA_PATH / project_id / dataset_id
+    count = 0
+    total = 0
+    if ds_dir.exists():
+        for entry in ds_dir.iterdir():
+            if entry.is_file():
+                st = entry.stat()
+                count += 1
+                total += st.st_size
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE project_datasets
+        SET image_count=?, total_size=?, updated_at=CURRENT_TIMESTAMP
+        WHERE id=? AND project_id=?
+    """, (count, total, dataset_id, project_id))
+    conn.commit()
+    return count, total
+
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -417,50 +437,66 @@ async def force_reinstall_system():
 # 프로젝트 목록 조회
 @app.get("/api/projects")
 async def list_projects():
+    conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = dict_factory
         cur = conn.cursor()
 
-        # 프로젝트 기본
+        # 프로젝트 기본 목록
         cur.execute("SELECT * FROM projects ORDER BY created_at ASC")
-        projects = cur.fetchall()
+        p_rows = cur.fetchall()
 
         result = []
-        for p in projects:
+        for p in p_rows:
             project = to_camel_case(p)
 
-            # 해당 프로젝트의 데이터셋: 컬럼 유무와 상관없이 *로 가져와 안전 처리
+            # 날짜 보정 (– 방지)
+            created_at_raw = p.get("created_at")
+            updated_at_raw = p.get("updated_at")
+            now = now_kst_str()
+            project["createdAt"] = project.get("createdAt") or created_at_raw or now
+            project["updatedAt"] = project.get("updatedAt") or updated_at_raw or project["createdAt"]
+
+            # 데이터셋 목록 (* 로 안전 조회)
             cur.execute("SELECT * FROM project_datasets WHERE project_id=?", (p["id"],))
             ds_rows = cur.fetchall()
 
             dataset_list = []
             for d in ds_rows:
-                # type/description/total_size가 없거나 NULL이어도 안전
-                dataset_list.append({
+                item = {
                     "id": d.get("id"),
                     "name": d.get("name"),
-                    "type": d.get("type") or "classify",        # 기본값
+                    "type": (d.get("type") or "classify"),
                     "createdAt": d.get("created_at"),
                     "imageCount": d.get("image_count", 0),
                     "totalSize": d.get("total_size", 0),
                     "description": d.get("description") or ""
-                })
+                }
+                # 과거 템플릿 호환용 별칭
+                item["date"] = item["createdAt"]
+                dataset_list.append(item)
 
             project["datasetList"] = dataset_list
             project["datasetCount"] = len(dataset_list)
 
-            # 모델 수(있으면), 없으면 0
-            cur.execute("SELECT COUNT(*) AS cnt FROM project_models WHERE project_id=?", (p["id"],))
-            project["modelCount"] = cur.fetchone().get("cnt", 0)
+            # 모델 개수 (테이블 없거나 오류여도 0)
+            try:
+                cur.execute("SELECT COUNT(*) AS cnt FROM project_models WHERE project_id=?", (p["id"],))
+                mc = cur.fetchone()
+                project["modelCount"] = mc.get("cnt", 0) if mc else 0
+            except Exception:
+                project["modelCount"] = 0
 
             result.append(project)
 
-        conn.close()
         return result
     except Exception as e:
         logger.error(f"/api/projects 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if conn:
+            conn.close()
     
 # 프로젝트 생성
 @app.post("/api/projects")
@@ -912,7 +948,11 @@ async def list_project_datasets(project_id: str):
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
 
         # 데이터셋 조회(*로 안전 조회) → camelCase
-        cur.execute("SELECT * FROM project_datasets WHERE project_id=?", (project_id,))
+        cur.execute("""
+            SELECT * FROM project_datasets
+            WHERE project_id=?
+            ORDER BY created_at ASC
+        """, (project_id,))
         rows = cur.fetchall()
         conn.close()
 
@@ -1025,6 +1065,42 @@ async def delete_dataset(project_id: str, dataset_id: str):
     except Exception as e:
         logger.error(f"데이터셋 삭제 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+# 통일된 이미지 삭제 API (권장 엔드포인트)
+@app.delete("/api/projects/{project_id}/datasets/{dataset_id}/images/{filename}")
+async def delete_image_v2(project_id: str, dataset_id: str, filename: str):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = dict_factory
+        cur = conn.cursor()
+
+        # 데이터셋 존재 확인
+        cur.execute("SELECT 1 FROM project_datasets WHERE id=? AND project_id=?", (dataset_id, project_id))
+        if not cur.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다")
+
+        file_path = BASE_DATA_PATH / project_id / dataset_id / filename
+        if not file_path.exists():
+            conn.close()
+            raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다")
+
+        # 파일 삭제
+        try:
+            file_path.unlink()
+        except Exception as fe:
+            conn.close()
+            raise HTTPException(status_code=500, detail=f"파일 삭제 실패: {fe}")
+
+        # 통계 재계산
+        count, total = recalc_dataset_stats(conn, project_id, dataset_id)
+        conn.close()
+        return {"success": True, "imageCount": count, "totalSize": total}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"이미지 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"삭제 실패: {str(e)}")
 
 @app.post("/datasets/upload")
 async def upload_dataset(
@@ -1075,44 +1151,6 @@ async def get_dataset_info(dataset_name: str):
     except Exception as e:
         logger.error(f"데이터셋 정보 조회 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e)) 
-    
-@app.post("/datasets/{project_id}/{dataset_id}/upload")
-async def upload_dataset_images(
-    project_id: str,
-    dataset_id: str,
-    files: List[UploadFile] = File(...)
-):
-    try:
-        # 경로를 BASE_DATA_PATH 기준으로 통일
-        dataset_path = BASE_DATA_PATH / project_id / dataset_id
-        dataset_path.mkdir(parents=True, exist_ok=True)
-
-        saved_filenames = []
-        for file in files:
-            file_path = dataset_path / file.filename
-            with open(file_path, "wb") as f:
-                shutil.copyfileobj(file.file, f)
-            saved_filenames.append(file.filename)
-
-        return {"success": True, "saved_files": saved_filenames}
-
-    except Exception as e:
-        logger.error(f"이미지 업로드 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"업로드 실패: {str(e)}")
-    
-# 이미지 삭제 API
-@app.delete("/datasets/{project_id}/{dataset_id}/images/{filename}")
-async def delete_image(project_id: str, dataset_id: str, filename: str):
-    try:
-        file_path = BASE_DATA_PATH / project_id / dataset_id / filename
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다")
-
-        os.remove(file_path)
-        return {"success": True, "message": f"{filename} 삭제 완료"}
-    except Exception as e:
-        logger.error(f"이미지 삭제 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"삭제 실패: {str(e)}")
 
 # 이미지 조회 API
 @app.get("/api/image/{project_id}/{dataset_id}/{filename}")
@@ -1131,23 +1169,6 @@ async def get_image(project_id: str, dataset_id: str, filename: str):
     except Exception as e:
         logger.error(f"이미지 조회 실패: {e}")
         raise HTTPException(status_code=500, detail=f"이미지 조회 실패: {str(e)}")
-    
-@app.get("/datasets/{project_id}/{dataset_id}/images")
-async def list_uploaded_images(project_id: str, dataset_id: str):
-    try:
-        dataset_path = BASE_DATA_PATH / project_id / dataset_id
-        
-        if not dataset_path.exists():
-            raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다")
-        
-        images = [f.name for f in dataset_path.iterdir() if f.is_file()]
-        return {"images": images}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"이미지 목록 조회 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"조회 실패: {str(e)}")
 
 # =============================================================================
 # 학습 관리 API

@@ -1089,6 +1089,11 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        #dropZone.drag-over {
+            background: rgba(71, 85, 105, 0.05);
+            border-color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -1390,13 +1395,17 @@
         let allSelected = false;
         let imageDataCache = {};
 
-        // 프로젝트 관리 함수
-        function loadProjects() {
-            // 로컬 스토리지에서 프로젝트 데이터 로드
-            const savedProjects = localStorage.getItem('mlops_projects');
-            if (savedProjects) {
-                projects = JSON.parse(savedProjects);
-            } else {
+        // 프로젝트 관리 함수 (서버에서 가져오도록 교체)
+        async function loadProjects() {
+            try {
+                const res = await fetch('/api/projects');
+                if (!res.ok) throw new Error('프로젝트 불러오기 실패');
+                projects = await res.json();
+
+                // ✅ 오래된 순(ASC) 강제
+                projects.sort((a,b) => new Date(a.createdAt || a.created_at) - new Date(b.createdAt || b.created_at));
+            } catch (err) {
+                console.error('프로젝트 로드 오류:', err);
                 projects = [];
             }
             updateProjectSelector();
@@ -1404,8 +1413,16 @@
 
         function updateProjectSelector() {
             const selector = document.getElementById('projectSelector');
-            selector.innerHTML = '<option value="">프로젝트를 선택하세요</option>';
-            
+            selector.innerHTML = '';
+
+            if (!projects || projects.length === 0) {
+                selector.innerHTML = '<option value="">프로젝트가 없습니다</option>';
+                selector.disabled = true;
+                return;
+            }
+
+            selector.disabled = false;
+            selector.insertAdjacentHTML('beforeend', '<option value="">프로젝트를 선택하세요</option>');
             projects.forEach(project => {
                 const option = document.createElement('option');
                 option.value = project.id;
@@ -1414,100 +1431,75 @@
             });
         }
 
-        function onProjectSelect(projectId) {
+        async function onProjectSelect(projectId) {
             console.log('프로젝트 선택:', projectId);
-            
+
             selectedProjectId = projectId;
             selectedDatasetId = null;
-            datasets = []; // 먼저 비우기
+            datasets = [];
             uploadedImages = [];
             selectedImages = [];
             currentPreviewIndex = -1;
-            
-            // URL 업데이트
+
             const url = new URL(window.location);
-            if (projectId) {
-                url.searchParams.set('project', projectId);
-            } else {
-                url.searchParams.delete('project');
-            }
+            if (projectId) url.searchParams.set('project', projectId);
+            else url.searchParams.delete('project');
             url.searchParams.delete('dataset');
+            url.searchParams.delete('datasetName');
             window.history.pushState({}, '', url);
-            
-            // 데이터셋 셀렉터 초기화
+
+            const selectedProject = projects.find(p => p.id === projectId);
+
             const datasetSelector = document.getElementById('datasetSelector');
             if (datasetSelector) {
                 datasetSelector.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
                 datasetSelector.value = '';
+                datasetSelector.style.display = selectedProject ? 'inline-block' : 'none';
             }
-            
-            // 프로젝트별 처리
-            const selectedProject = projects.find(p => p.id === projectId);
-            
+
             if (selectedProject && projectId) {
-                // 브레드크럼 업데이트
                 updateBreadcrumb(selectedProject.name);
-                
-                // 데이터셋 로드
-                const savedData = localStorage.getItem(`datasets_${projectId}`);
-                if (savedData) {
-                    try {
-                        datasets = JSON.parse(savedData);
-                        console.log('로드된 데이터셋:', datasets);
-                    } catch (e) {
-                        console.error('파싱 실패:', e);
-                        datasets = [];
-                    }
-                }
-                
-                // *** 핵심: 데이터셋 셀렉터 옵션 추가 ***
-                if (datasetSelector) {
-                    datasetSelector.style.display = 'inline-block';
-                    
-                    // 데이터셋 옵션들을 셀렉터에 추가
-                    datasets.forEach(dataset => {
-                        const option = document.createElement('option');
-                        option.value = dataset.id;
-                        option.textContent = dataset.name;
-                        datasetSelector.appendChild(option);
-                    });
-                }
+                await loadDatasets(projectId);     // ✅ 서버에서 목록 로드
+                updateDatasetSelector();           // ✅ 여기서만 헤더 옵션 구성 (중복 방지)
             } else {
-                // 프로젝트 선택 해제
                 updateBreadcrumb(null);
-                if (datasetSelector) {
-                    datasetSelector.style.display = 'none';
-                }
             }
-            
-            // UI 렌더링
+
             renderDatasets();
             renderImageTable();
             showEmptyPreview();
             updateImageCount();
             updateTrainingButton();
-        }
+            }
 
         function updateDatasetSelector() {
             const selector = document.getElementById('datasetSelector');
-            const currentValue = selector.value; // 현재 선택된 값 저장
-            
+            if (!selector) return;
+
             selector.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
-            
-            datasets.forEach(dataset => {
-                const option = document.createElement('option');
-                option.value = dataset.id;
-                option.textContent = dataset.name;
-                selector.appendChild(option);
-            });
-            
-            // 삭제된 데이터셋이 아니라면 원래 선택 유지
-            if (currentValue && datasets.find(d => d.id === currentValue)) {
-                selector.value = currentValue;
+
+            // 중복 제거
+            const seen = new Set();
+            const uniq = [];
+            for (const d of (datasets || [])) {
+                if (d && d.id && !seen.has(d.id)) {
+                    seen.add(d.id);
+                    uniq.push(d);
+                }
+            }
+
+            // 오래된 순
+            uniq.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+            for (const d of uniq) {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.name;
+                selector.appendChild(opt);
             }
         }
 
-        function onDatasetSelect(datasetId) {
+        async function onDatasetSelect(datasetId) {
             selectedDatasetId = datasetId;
             
             if (datasetId) {
@@ -1533,6 +1525,7 @@
             
             renderDatasets();
             updateTrainingButton();
+            await refreshImageList(); 
         }
 
         function startTrainingFromDataset() {
@@ -1630,18 +1623,25 @@
                 renderDatasets();
                 updateDatasetSelector();
 
-                // URL 파라미터에 datasetName 있으면 자동 선택
-                const datasetName = getURLParameter('datasetName');
-                if (datasetName) {
-                    const foundDataset = datasets.find(d => d.name === datasetName);
-                    if (foundDataset) {
-                        selectedDatasetId = foundDataset.id;
-                        const datasetSelector = document.getElementById('datasetSelector');
-                        if (datasetSelector) {
-                            datasetSelector.value = foundDataset.id;
-                            onDatasetSelect(foundDataset.id);
-                        }
+                // ✅ URL 파라미터: dataset(=ID) 또는 datasetName(=이름) 모두 지원
+                const datasetIdParam = getURLParameter('dataset');
+                const datasetNameParam = getURLParameter('datasetName');
+
+                let foundDataset = null;
+                if (datasetIdParam) {
+                    foundDataset = datasets.find(d => String(d.id) === String(datasetIdParam));
+                } else if (datasetNameParam) {
+                    foundDataset = datasets.find(d => d.name === datasetNameParam);
+                }
+
+                if (foundDataset) {
+                    selectedDatasetId = foundDataset.id;
+                    const datasetSelector = document.getElementById('datasetSelector');
+                    if (datasetSelector) {
+                        datasetSelector.value = foundDataset.id;
                     }
+                    // 미리보기/테이블/카운트 등 기존 흐름 유지
+                    onDatasetSelect(foundDataset.id);
                 }
             } catch (error) {
                 console.error('데이터셋 로드 오류:', error);
@@ -1650,26 +1650,38 @@
             }
         }
 
-        async function createDataset(projectId) {
-            const name = document.getElementById('newDatasetName').value;
+        async function createDataset() {
+            if (!selectedProjectId) {
+                alert('먼저 프로젝트를 선택하세요.');
+                return;
+            }
+
+            const name = document.getElementById('newDatasetName').value.trim();
             const type = document.getElementById('newDatasetType').value;
-            const description = document.getElementById('newDatasetDescription').value;
+            const description = document.getElementById('newDatasetDescription').value.trim();
+
+            if (!name) {
+                alert('데이터셋 이름을 입력하세요.');
+                return;
+            }
 
             try {
-                const response = await fetch(`/api/projects/${projectId}/datasets`, {
+                const res = await fetch(`/api/projects/${selectedProjectId}/datasets`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, type, description })
                 });
-                const result = await response.json();
-                if (result.success) {
-                    closeDatasetModal();
-                    loadDatasets(projectId);
-                } else {
-                    alert('데이터셋 생성 실패: ' + result.error);
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.detail || '데이터셋 생성 실패');
                 }
-            } catch (error) {
-                console.error('데이터셋 생성 오류:', error);
+                closeDatasetModal();
+                await loadDatasets(selectedProjectId);   // 서버 기준 재로딩
+                updateDatasetSelector();
+                renderDatasets();
+            } catch (e) {
+                console.error('데이터셋 생성 오류:', e);
+                alert(e.message || '데이터셋 생성 중 오류');
             }
         }
 
@@ -1716,34 +1728,6 @@
             // 선택된 데이터셋이 없어도 datasets 배열은 항상 저장
             localStorage.setItem(`datasets_${selectedProjectId}`, JSON.stringify(datasets));
             updateProjectStats();
-        }
-
-        function createDataset() {
-            const name = document.getElementById('newDatasetName').value.trim();
-            const type = document.getElementById('newDatasetType').value;
-            const description = document.getElementById('newDatasetDescription').value.trim();
-
-            if (!name) {
-                alert('데이터셋 이름을 입력하세요.');
-                return;
-            }
-
-            const newDataset = {
-                id: 'ds_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                name: name,
-                type: type,
-                description: description,
-                imageCount: 0,
-                totalSize: 0,
-                createdAt: new Date().toISOString(),
-                images: []
-            };
-
-            datasets.push(newDataset);
-            saveCurrentDatasets(); // 통합 저장 함수 호출
-            renderDatasets();
-            updateDatasetSelector();
-            closeDatasetModal();
         }
 
         // 프로젝트 통계 업데이트 함수
@@ -1881,37 +1865,36 @@
             }
         }
 
-        function deleteDataset(datasetId) {
+        async function deleteDataset(datasetId) {
             const dataset = datasets.find(d => d.id === datasetId);
-            if (!dataset || !confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) {
-                return;
-            }
-            
-            // 배열에서 제거
-            datasets = datasets.filter(d => d.id !== datasetId);
-            
-            // 현재 선택된 데이터셋이 삭제된 경우에만 초기화
-            if (selectedDatasetId === datasetId) {
-                selectedDatasetId = null;
-                
-                const url = new URL(window.location);
-                url.searchParams.delete('dataset');
-                window.history.replaceState({}, '', url);
-                
-                uploadedImages = [];
-                selectedImages = [];
-                currentPreviewIndex = -1;
+            if (!dataset) return;
+            if (!confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) return;
+
+            try {
+                await fetch(`/api/projects/${selectedProjectId}/datasets/${selectedDatasetId}/images/${encodeURIComponent(filename)}`, {
+                    method: 'DELETE'
+                });
+                await refreshImageList();
+                const j = res.ok ? {} : await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
+
+                if (selectedDatasetId === datasetId) {
+                    selectedDatasetId = null;
+                    uploadedImages = [];
+                    selectedImages = [];
+                    currentPreviewIndex = -1;
+                    showEmptyPreview();
+                    updateTrainingButton();
+                }
+
+                await loadDatasets(selectedProjectId);
+                updateDatasetSelector();
                 renderImageTable();
-                showEmptyPreview();
                 updateImageCount();
+            } catch (e) {
+                console.error('데이터셋 삭제 오류:', e);
+                alert('데이터셋 삭제 실패: ' + (e.message || '알 수 없는 오류'));
             }
-            
-            // 직접 저장 (saveCurrentDatasets 대신)
-            localStorage.setItem(`datasets_${selectedProjectId}`, JSON.stringify(datasets));
-            updateProjectStats();
-            
-            renderDatasets();
-            updateDatasetSelector();
         }
 
         function toggleDatasetSection() {
@@ -2017,45 +2000,33 @@
             });
         }
 
-        function initializeFromURL() {
+        async function initializeFromURL() {
             const projectId = getURLParameter('project');
             const datasetId = getURLParameter('dataset');
             const datasetName = getURLParameter('datasetName');
-            
-            if (projectId) {
-                selectedProjectId = projectId;
-                
-                const project = projects.find(p => p.id === projectId);
-                if (project) {
-                    document.getElementById('projectSelector').value = projectId;
-                    updateBreadcrumb(project.name);
-                    loadDatasets(projectId);
-                    
-                    const datasetSelector = document.getElementById('datasetSelector');
-                    if (datasetSelector) {
-                        datasetSelector.style.display = 'inline-block';
-                        
-                        setTimeout(() => {
-                            updateDatasetSelector();
-                            
-                            // 데이터셋 이름으로 찾기
-                            if (datasetName) {
-                                const foundDataset = datasets.find(d => d.name === datasetName);
-                                if (foundDataset) {
-                                    datasetSelector.value = foundDataset.id;
-                                    onDatasetSelect(foundDataset.id);
-                                }
-                            } else if (datasetId) {
-                                // 기존 ID 방식도 유지
-                                const datasetExists = datasets.find(d => d.id === datasetId);
-                                if (datasetExists) {
-                                    datasetSelector.value = datasetId;
-                                    onDatasetSelect(datasetId);
-                                }
-                            }
-                        }, 50);
-                    }
-                }
+
+            if (!projectId) return;
+
+            const p = projects.find(p => p.id === projectId);
+            if (!p) return;
+
+            const pSel = document.getElementById('projectSelector');
+            if (pSel) pSel.value = projectId;
+
+            await onProjectSelect(projectId);     // 여기서 loadDatasets + updateDatasetSelector 완료됨
+
+            let found = null;
+            if (datasetId) {
+                found = datasets.find(d => String(d.id) === String(datasetId));
+            } else if (datasetName) {
+                found = datasets.find(d => d.name === datasetName);
+            }
+
+            if (found) {
+                selectedDatasetId = found.id;
+                const dsSel = document.getElementById('datasetSelector');
+                if (dsSel) dsSel.value = found.id;
+                onDatasetSelect(found.id);
             }
         }
 
@@ -2253,69 +2224,7 @@
                 await showImagePreview(image, index);
             }
             renderImageTable();
-        }
-
-        // 서버에서 이미지 로드하여 미리보기
-        async function showImagePreview(imageData, index) {
-            const previewImage = document.getElementById('previewImage');
-            const imageInfo = document.getElementById('imageInfo');
-            const emptyPreview = document.getElementById('emptyPreview');
-            const previewContainer = document.getElementById('previewContainer');
-            
-            // 로딩 상태 표시
-            emptyPreview.innerHTML = `
-                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                <p>이미지 로딩 중...</p>
-            `;
-            emptyPreview.style.display = 'flex';
-            previewContainer.style.display = 'none';
-            
-            try {
-                // 서버에서 이미지 URL 가져오기
-                const response = await fetch(`/api/image/${selectedProjectId}/${selectedDatasetId}/${imageData.name}`);
-                
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const imageUrl = URL.createObjectURL(blob);
-                    
-                    // 이미지 표시
-                    emptyPreview.style.display = 'none';
-                    previewContainer.style.display = 'flex';
-                    previewImage.style.display = 'block';
-                    imageInfo.style.display = 'block';
-                    
-                    previewImage.src = imageUrl;
-                    currentZoom = 1;
-                    imageOffsetX = 0;
-                    imageOffsetY = 0;
-
-                    previewImage.onload = function() {
-                        this.style.width = this.naturalWidth + 'px';
-                        this.style.height = this.naturalHeight + 'px';
-                        updateImageTransform();
-                        document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
-                        
-                        // 메모리 정리
-                        setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
-                    };
-                    
-                    // 이미지 정보 업데이트
-                    document.getElementById('infoFileName').textContent = imageData.name;
-                    document.getElementById('infoFileSize').textContent = formatFileSize(imageData.size);
-                    document.getElementById('infoOrder').textContent = `${index + 1} / ${uploadedImages.length}`;
-                    
-                } else {
-                    throw new Error('이미지 로드 실패');
-                }
-                
-            } catch (error) {
-                console.error('이미지 로드 오류:', error);
-                emptyPreview.innerHTML = `
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; color: var(--error-color);"></i>
-                    <p>이미지를 로드할 수 없습니다</p>
-                `;
-            }
-        }        
+        } 
 
         function loadVisibleThumbnails() {
             const placeholders = document.querySelectorAll('.image-thumbnail-placeholder');
@@ -2366,14 +2275,6 @@
 
         function getFileExtension(filename) {
             return filename.split('.').pop() || '';
-        }
-
-        function selectImage(index, event) {
-            currentPreviewIndex = index;
-            if (uploadedImages[index]) {
-                showImagePreview(uploadedImages[index], index);
-            }
-            renderImageTable();
         }
 
         function toggleImageSelection(imageId, event) {
@@ -2647,25 +2548,6 @@
             return `${year}.${month}.${day}_${hours}:${minutes}:${seconds}`;
         }
 
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        function handleDragEnter(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.target.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-                e.target.classList.remove('drag-over');
-            }
-        }
-
         function handleDrop(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -2781,18 +2663,6 @@
             }
         }
 
-        function updateSelectAllCheckbox() {
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            
-            if (uploadedImages.length === 0) {
-                selectAllCheckbox.checked = false;
-            } else if (selectedImages.length === uploadedImages.length) {
-                selectAllCheckbox.checked = true;
-            } else {
-                selectAllCheckbox.checked = false;
-            }
-        }
-
         function zoomAtPoint(mouseX, mouseY, factor) {
             const previewContainer = document.getElementById('previewContainer');
             const previewImage = document.getElementById('previewImage');
@@ -2840,24 +2710,25 @@
         function handleDragEnter(e) {
             e.preventDefault();
             e.stopPropagation();
-            e.currentTarget.style.background = 'rgba(71, 85, 105, 0.05)';
+            e.currentTarget.classList.add('drag-over');
         }
 
         function handleDragLeave(e) {
             e.preventDefault();
             e.stopPropagation();
             if (!e.currentTarget.contains(e.relatedTarget)) {
-                e.currentTarget.style.background = '';
+                e.currentTarget.classList.remove('drag-over');
             }
         }
 
-        function handleDrop(e) {
+        async function handleDrop(e) {
             e.preventDefault();
             e.stopPropagation();
-            e.currentTarget.style.background = '';
-            
-            const files = Array.from(e.dataTransfer.files);
-            addImagesToList(files);
+            e.currentTarget.classList.remove('drag-over');
+            const files = e.dataTransfer?.files;
+            if (files && files.length) {
+                await uploadImages(files);   // 서버 업로드 함수
+            }
         }
 
         function compressImageForStorage(dataUrl) {
@@ -2892,63 +2763,126 @@
             return Promise.resolve(dataUrl);
         }
 
-        // previewImage 대신 imagePreview(전체 영역)에 이벤트
-        imagePreview.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            startOffsetX = imageOffsetX;
-            startOffsetY = imageOffsetY;
-            imagePreview.style.cursor = 'grabbing';
-            e.preventDefault();
-        });
+        async function uploadImages(fileList) {
+            if (!selectedProjectId || !selectedDatasetId) {
+                alert('프로젝트/데이터셋을 먼저 선택하세요.');
+                return;
+            }
+            try {
+                const form = new FormData();
+                Array.from(fileList).forEach(f => form.append('files', f)); // 필드명: files
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            const imagePreview = document.getElementById('imagePreview');
-            imagePreview.style.cursor = 'grab';
-        });
+                const res = await fetch(`/api/projects/${selectedProjectId}/datasets/${selectedDatasetId}/images`, {
+                method: 'POST',
+                body: form
+                });
+                const data = await res.json();
+                if (!res.ok || data.success === false) {
+                throw new Error(data.detail || '업로드 실패');
+                }
+
+                // 서버 기준으로 목록 동기화
+                uploadedImages = (data.images || []).map((img, idx) => ({
+                id: `img_${idx}_${img.name}`,
+                name: img.name,
+                size: img.size || 0,
+                type: (img.name.split('.').pop() || '').toLowerCase(),
+                order: idx + 1,
+                uploaded: true
+                }));
+
+                renderImageTable();
+                updateImageCount(); // 기존 카운터 UI 유지 (서버 값 쓰고 싶으면 아래 주석 사용)
+                // updateImageCountUI(data.imageCount, data.totalSize);
+
+                // 미리보기 갱신(첫 이미지 선택)
+                currentPreviewIndex = uploadedImages.length ? 0 : -1;
+                if (currentPreviewIndex >= 0) selectImage(currentPreviewIndex);
+                else showEmptyPreview();
+
+            } catch (err) {
+                console.error('업로드 오류:', err);
+                alert('업로드 실패: ' + (err.message || '알 수 없는 오류'));
+            }
+        }
+
+        async function refreshImageList() {
+            if (!selectedProjectId || !selectedDatasetId) return;
+            try {
+                const res = await fetch(`/api/projects/${selectedProjectId}/datasets/${selectedDatasetId}/images`);
+                if (!res.ok) throw new Error('이미지 목록 불러오기 실패');
+                const data = await res.json();
+                uploadedImages = (data.images || []).map((img, idx) => ({
+                id: `img_${idx}_${img.name}`,
+                name: img.name,
+                size: img.size || 0,
+                type: (img.name.split('.').pop() || '').toLowerCase(),
+                order: idx + 1,
+                uploaded: true
+                }));
+                renderImageTable();
+                updateImageCount();
+            } catch (e) {
+                console.error('이미지 목록 갱신 실패:', e);
+            }
+        }
 
         // 페이지 초기화 시 이벤트 리스너 추가
         document.addEventListener('DOMContentLoaded', async function() {
-            await initDB(); // DB 초기화
-            loadProjects();
+            await initDB();                 // 1) DB
+            await loadProjects();           // 2) 프로젝트(ASC 정렬 포함)
             initializeDropZone();
             initializeImageViewer();
-            
+
+            const fileInputEl = document.getElementById('fileInput');
+            if (fileInputEl) {
+                fileInputEl.addEventListener('change', async (e) => {
+                    const files = e.target.files;
+                    if (files && files.length) {
+                    await uploadImages(files);   // ← 아래 B-1 함수
+                    e.target.value = '';         // 같은 파일 재선택 가능
+                    }
+                });
+            }
+
+            // 드롭존(drag&drop)으로 업로드
+            const dropZoneEl = document.getElementById('dropZone');
+            if (dropZoneEl) {
+                dropZoneEl.addEventListener('dragover', handleDragOver);   // 드롭 허용 (필수)
+                dropZoneEl.addEventListener('dragenter', handleDragEnter); // 하이라이트 on
+                dropZoneEl.addEventListener('dragleave', handleDragLeave); // 하이라이트 off
+                dropZoneEl.addEventListener('drop', handleDrop);           // 업로드 실행
+            }
+
             // 컨텍스트 메뉴 숨기기
             document.addEventListener('click', hideContextMenu);
-            
-            // *** 프로젝트 셀렉터 이벤트 리스너 추가 ***
+
+            // 헤더 셀렉터 이벤트
             document.getElementById('projectSelector').addEventListener('change', function() {
                 console.log('헤더 프로젝트 변경:', this.value);
                 onProjectSelect(this.value);
             });
-            
             document.getElementById('datasetSelector').addEventListener('change', function() {
                 console.log('헤더 데이터셋 변경:', this.value);
                 onDatasetSelect(this.value);
             });
-            
-            // 모달 이벤트
+
+            // 모달 외부 클릭 닫기
             document.getElementById('datasetModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     const focusedElement = document.activeElement;
                     const modalContent = this.querySelector('.modal-content');
-                    
                     if (!modalContent.contains(focusedElement) || 
                         (focusedElement.tagName !== 'INPUT' && focusedElement.tagName !== 'TEXTAREA')) {
                         closeDatasetModal();
                     }
                 }
             });
-            
+
             initializeVirtualScrolling();
-            
-            // URL 초기화는 마지막에
-            setTimeout(() => {
-                initializeFromURL();
-            }, 100);
+
+            // 3) 마지막에 URL 반영 (프로젝트 로드 완료 후)
+            await initializeFromURL();
         });
     </script>
 </body>

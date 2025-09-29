@@ -794,6 +794,39 @@
             </div>
         </div>
     </div>
+    <!-- 프로젝트 내보내기 모달 -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h3 class="modal-title">프로젝트 내보내기</h3>
+            <button class="close-btn" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+            <p id="exportProjectName" style="margin-bottom:1rem;color:var(--text-secondary)"></p>
+
+            <div class="form-group">
+                <label class="form-label">모드 선택</label>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <button class="btn btn-outline" onclick="doExport('meta')">
+                    <i class="fas fa-database"></i> Meta Export
+                </button>
+                <button class="btn btn-primary" onclick="doExport('full')">
+                    <i class="fas fa-archive"></i> Full Export
+                </button>
+                </div>
+            </div>
+
+            <small style="color:var(--text-muted);display:block;margin-top:.75rem">
+                Meta: 메타데이터만 (이미지 제외) · Full: 이미지 포함
+            </small>
+
+            <div id="exportStatus" style="margin-top:1rem;color:var(--text-secondary);display:none"></div>
+            </div>
+            <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeExportModal()">닫기</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // 전역 변수
@@ -807,6 +840,10 @@
                 const response = await fetch('/api/projects');
                 if (!response.ok) throw new Error('프로젝트 불러오기 실패');
                 projects = await response.json();
+
+                // ✅ 오래된 순(ASC) 정렬: createdAt(camel) 우선, 없으면 created_at(snake)
+                projects.sort((a, b) => new Date(a.createdAt || a.created_at) - new Date(b.createdAt || b.created_at));
+
                 renderProjects();
             } catch (error) {
                 console.error('프로젝트 로드 오류:', error);
@@ -854,31 +891,48 @@
                         </div>
                         <div class="project-status-container">
                             <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
-                            <div class="dataset-count">${project.dataset_count || 0}개 데이터셋</div>
+                            ${(() => {
+                                const dsCount =
+                                    (typeof project.datasetCount === 'number')
+                                        ? project.datasetCount
+                                        : (project.datasetList ? project.datasetList.length : (project.dataset_count || 0));
+                                const modelCount =
+                                    (typeof project.modelCount === 'number')
+                                        ? project.modelCount
+                                        : 0;
+                                return `
+                                    <span class="dataset-count">${dsCount.toLocaleString()}개 데이터셋</span>
+                                    <span class="dataset-count">${modelCount.toLocaleString()}개 모델</span>
+                                `;
+                            })()}
                         </div>
-                    </div>
-                    
+                    </div>                    
                     <div class="project-description">${project.description || ''}</div>
-                    
+                    <!-- 프로젝트 메타(생성일/수정일) -->
                     <div class="project-meta">
-                        <span>생성일: ${formatDate(project.created_at)}</span>
-                        <span>최종 수정: ${formatDate(project.updated_at)}</span>
+                        <span>생성일: ${formatDate(project.createdAt || project.created_at)}</span>
+                        <span>최종 수정: ${formatDate(project.updatedAt || project.updated_at || project.createdAt || project.created_at)}</span>
                     </div>
-
+                    <!-- 데이터셋 목록 표/리스트 -->
                     <div class="project-datasets">
                         <div class="datasets-label">데이터셋 목록:</div>
                         <div class="datasets-table">
-                            ${project.datasetList && project.datasetList.length > 0 ? 
-                                project.datasetList.map(dataset => `
-                                    <div class="dataset-row" ondblclick="openDatasetDirectly('${project.id}', '${dataset.name}')">
-                                        <span class="dataset-name">${dataset.name}</span>
-                                        <span class="dataset-type">${dataset.type}</span>
-                                        <span class="dataset-date">${dataset.date}</span>
-                                    </div>
-                                `).join('') 
-                                : `<div class="dataset-row" style="justify-content:center; color:var(--text-muted); font-style:italic;">
-                                    등록된 데이터셋이 없습니다
-                                </div>`}
+                        ${(() => {
+                            const list = (project.datasetList || [])
+                            .slice()
+                            .sort((a,b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date)); // 오래된 순(ASC)
+
+                            return list.length
+                            ? list.map(ds => `
+                                <div class="dataset-row"
+                                    onclick="openDatasetDirectly(event, '${project.id}', '${ds.id}', '${(ds.name||'').replace(/'/g, '\\\'')}')">
+                                    <span class="dataset-name">${ds.name}</span>
+                                    <span class="dataset-type">${(ds.type || 'classify').toUpperCase()}</span>
+                                    <span class="dataset-date">${formatDate(ds.createdAt || ds.date)}</span>
+                                </div>
+                                `).join('')
+                            : `<div class="dataset-row">등록된 데이터셋이 없습니다</div>`;
+                        })()}
                         </div>
                     </div>
                     <div class="project-actions" onclick="event.stopPropagation();">
@@ -891,7 +945,7 @@
                         <button class="btn btn-sm btn-secondary" onclick="duplicateProject('${project.id}')">
                             <i class="fas fa-copy"></i> 복제
                         </button>
-                        <button class="btn btn-sm btn-info" onclick="exportProject('${project.id}')">
+                        <button class="btn btn-sm btn-outline" onclick="openExportModal('${project.id}')">
                             <i class="fas fa-download"></i> 내보내기
                         </button>
                         <button class="btn btn-sm btn-danger" onclick="deleteProject('${project.id}')">
@@ -902,7 +956,102 @@
             `).join('');
         }
 
+        // === 내보내기 상태 ===
+        let exportProjectId = null;
+
+        function openExportModal(projectId) {
+        exportProjectId = projectId;
+        const p = projects.find(pr => pr.id === projectId);
+        const nameEl = document.getElementById('exportProjectName');
+        if (nameEl) nameEl.textContent = p ? `프로젝트: ${p.name}` : `프로젝트 ID: ${projectId}`;
+        const status = document.getElementById('exportStatus');
+        if (status) { status.style.display = 'none'; status.textContent = ''; }
+        document.getElementById('exportModal').classList.add('show');
+        }
+
+        function closeExportModal() {
+        document.getElementById('exportModal').classList.remove('show');
+        exportProjectId = null;
+        }
+
+        function sanitizeFilename(name) {
+        return String(name).replace(/[\\/:*?"<>|]/g, '_').trim() || 'project';
+        }
+
+        async function doExport(mode) {
+        if (!exportProjectId) return;
+        const status = document.getElementById('exportStatus');
+
+        try {
+            if (status) { status.style.display = 'block'; status.textContent = '내보내기 준비 중...'; }
+
+            // 1차: 모드 지원 엔드포인트 시도
+            let res = await fetch(`/api/projects/${exportProjectId}/export?mode=${encodeURIComponent(mode)}`);
+            // 2차: 레거시 엔드포인트 폴백
+            if (!res.ok) {
+            res = await fetch(`/api/projects/${exportProjectId}/export`);
+            if (!res.ok) {
+                let msg = `HTTP ${res.status}`;
+                try { const j = await res.json(); msg = j.detail || j.error || msg; } catch (_) {}
+                throw new Error(msg);
+            }
+            }
+
+            const contentType = (res.headers.get('content-type') || '').toLowerCase();
+            const cd = res.headers.get('content-disposition') || '';
+            const blob = await res.blob();
+
+            const p = projects.find(pr => pr.id === exportProjectId);
+            const baseName = sanitizeFilename(p?.name || exportProjectId);
+            // zip이 기본, json도 지원
+            let ext = contentType.includes('application/json') ? '.json' : '.zip';
+
+            // 서버가 파일명을 내려주면 사용
+            let filename = '';
+            const cdMatch = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
+            if (cdMatch) {
+            filename = decodeURIComponent(cdMatch[1] || cdMatch[2]);
+            } else {
+            filename = `${baseName}_export_${mode}${ext}`;
+            }
+
+            const objUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = objUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(objUrl);
+
+            if (status) { status.textContent = '다운로드가 시작되었습니다.'; }
+        } catch (err) {
+            console.error('내보내기 오류:', err);
+            if (status) { status.style.display = 'block'; status.textContent = `오류: ${err.message}`; }
+            alert('내보내기에 실패했습니다: ' + (err.message || '알 수 없는 오류'));
+        }
+        }
+
+        // (호환) 기존 코드가 exportProject(projectId)를 호출하면 모달을 띄우도록
+        function exportProject(projectId) {
+        openExportModal(projectId);
+        }
+
+        function openDatasetDirectly(e, projectId, datasetId, datasetName) {
+            // 카드 자체의 클릭/더블클릭 핸들러가 동시에 타지 않도록
+            if (e && e.stopPropagation) e.stopPropagation();
+
+            const url = new URL('/ui/datasets', window.location.origin);
+            url.searchParams.set('project', projectId);
+            if (datasetId) url.searchParams.set('dataset', datasetId);
+            else if (datasetName) url.searchParams.set('datasetName', datasetName);
+            window.location.href = url.toString();
+        }
+
         function handleProjectClick(projectId, event) {
+            // 데이터셋 행 클릭이면 카드 선택 토글/열기 동작 무시
+            if (event.target.closest('.dataset-row')) return;
+
             if (event.detail === 1) {
                 setTimeout(() => {
                     if (event.detail === 1) selectProject(projectId);
@@ -910,7 +1059,25 @@
             } else if (event.detail === 2) {
                 openProject(projectId);
             }
-        }        
+        }  
+        
+        function openDatasetDirectly(a, b, c, d) {
+            // 호환: openDatasetDirectly(projectId, datasetName) 과
+            //       openDatasetDirectly(event, projectId, datasetId, datasetName) 모두 지원
+            let e = null, projectId, datasetId = null, datasetName = null;
+            if (typeof a === 'string' && d === undefined) {
+                projectId = a; datasetName = b;
+            } else {
+                e = a; projectId = b; datasetId = c; datasetName = d;
+            }
+            if (e && e.stopPropagation) e.stopPropagation();
+
+            const url = new URL('/ui/datasets', window.location.origin);
+            url.searchParams.set('project', projectId);
+            if (datasetId) url.searchParams.set('dataset', datasetId);
+            else if (datasetName) url.searchParams.set('datasetName', datasetName);
+            window.location.href = url.toString();
+        }
 
         function selectProject(projectId) {
             selectedProjectId = selectedProjectId === projectId ? null : projectId;
