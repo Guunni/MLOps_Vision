@@ -3,38 +3,71 @@ MLOps Vision 통합 웹 API
 모든 PatchCore 관련 기능을 하나의 웹 인터페이스로 통합하는 메인 API
 """
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks
-from fastapi.responses import HTMLResponse, FileResponse
+# FastAPI 관련
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks, Request
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+# 타입 관련
 from typing import Dict, Any, List, Optional
-from fastapi import Request
-from fastapi.responses import RedirectResponse
+
+# 표준 라이브러리
+import os
 import json
 import logging
-from pathlib import Path
-import tempfile
-import shutil
-from datetime import datetime
-import threading
-import threading
 import sqlite3
 import uuid
-import pickle
 import shutil
-from training_manager import PatchCoreTrainer, PatchCoreConfig
-from fastapi import File, UploadFile, Form
-from fastapi.responses import FileResponse
-from typing import List
+import pickle
+import tempfile
+import zipfile
+from datetime import datetime
+from pathlib import Path
+import threading
 
-# 우리가 만든 모듈들 import
+from datetime import datetime, timezone, timedelta
+KST = timezone(timedelta(hours=9))
+
+# 우리가 만든 모듈
 from patchcore_manager import PatchCoreManager
 from dataset_manager import DatasetManager
 from training_manager import PatchCoreTrainer, PatchCoreConfig
 from model_manager import PatchCoreModelManager
 
-#static 파일 지원 추가
+# 템플릿 (정적 HTML 렌더링)
 from fastapi.templating import Jinja2Templates
+
+app = FastAPI()
+
+DB_PATH = "mlops_vision.db"
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+def get_conn():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row  # ← 컬럼명으로 접근
+    return conn
+
+def now_kst_str():
+    from datetime import datetime, timezone, timedelta
+    KST = timezone(timedelta(hours=9))
+    return datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")  # ← DB와 동일 포맷
+
+def to_camel_case(row: dict) -> dict:
+    mapping = {
+        "project_id": "projectId",
+        "dataset_id": "datasetId",
+        "created_at": "createdAt",
+        "updated_at": "updatedAt",
+        "image_count": "imageCount",
+        "total_size": "totalSize",
+    }
+    return {mapping.get(k, k): v for k, v in row.items()}
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -87,6 +120,52 @@ def init_database():
             FOREIGN KEY (project_id) REFERENCES projects (id)
         )
     ''')
+
+     # 누락 컬럼 추가
+    def add_column_if_missing(table, column_def):
+        col_name = column_def.split()[0]
+        cursor.execute(f"PRAGMA table_info({table})")
+        cols = [r[1] for r in cursor.fetchall()]
+        if col_name not in cols:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column_def}")
+
+    # datasets 확장 컬럼
+    add_column_if_missing("project_datasets", "type TEXT")
+    add_column_if_missing("project_datasets", "description TEXT")
+    add_column_if_missing("project_datasets", "total_size INTEGER DEFAULT 0")
+
+    # ❗DEFAULT CURRENT_TIMESTAMP는 허용 안 됨 → 기본값 없이 추가
+    add_column_if_missing("project_datasets", "updated_at TIMESTAMP")
+
+    # ✅ 기존 행 보정(널이면 현재 시각으로)
+    cursor.execute("""
+        UPDATE project_datasets
+        SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)
+    """)
+
+    # ✅ 트리거로 updated_at 자동 갱신
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS trg_project_datasets_set_updated_at_on_update
+        AFTER UPDATE ON project_datasets
+        FOR EACH ROW
+        BEGIN
+            UPDATE project_datasets
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = NEW.id;
+        END;
+    """)
+
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS trg_project_datasets_set_updated_at_on_insert
+        AFTER INSERT ON project_datasets
+        FOR EACH ROW
+        WHEN NEW.updated_at IS NULL
+        BEGIN
+            UPDATE project_datasets
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = NEW.id;
+        END;
+    """)
     
     # 모델 테이블 (프로젝트 연결)
     cursor.execute('''
@@ -335,212 +414,252 @@ async def force_reinstall_system():
 # 프로젝트 관리 API
 # =============================================================================
 
+# 프로젝트 목록 조회
 @app.get("/api/projects")
-async def get_projects():
-    """모든 프로젝트 목록 조회"""
+async def list_projects():
     try:
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT p.id, p.name, p.description, p.status,
-                p.created_at, p.updated_at,
-                COUNT(DISTINCT d.id) as dataset_count,
-                COUNT(DISTINCT m.id) as model_count
-            FROM projects p
-            LEFT JOIN project_datasets d ON p.id = d.project_id
-            LEFT JOIN project_models m ON p.id = m.project_id
-            GROUP BY p.id
-        ''')
-        
-        rows = cursor.fetchall()
-        projects = []
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = dict_factory
+        cur = conn.cursor()
 
-        for row in rows:
-            projects.append({
-            "id": row[0],
-            "name": row[1],
-            "description": row[2],
-            "status": row[3],
-            "created_at": row[4],
-            "updated_at": row[5],
-            "dataset_count": row[6],
-            "model_count": row[7]
-            })
+        # 프로젝트 기본
+        cur.execute("SELECT * FROM projects ORDER BY created_at ASC")
+        projects = cur.fetchall()
+
+        result = []
+        for p in projects:
+            project = to_camel_case(p)
+
+            # 해당 프로젝트의 데이터셋: 컬럼 유무와 상관없이 *로 가져와 안전 처리
+            cur.execute("SELECT * FROM project_datasets WHERE project_id=?", (p["id"],))
+            ds_rows = cur.fetchall()
+
+            dataset_list = []
+            for d in ds_rows:
+                # type/description/total_size가 없거나 NULL이어도 안전
+                dataset_list.append({
+                    "id": d.get("id"),
+                    "name": d.get("name"),
+                    "type": d.get("type") or "classify",        # 기본값
+                    "createdAt": d.get("created_at"),
+                    "imageCount": d.get("image_count", 0),
+                    "totalSize": d.get("total_size", 0),
+                    "description": d.get("description") or ""
+                })
+
+            project["datasetList"] = dataset_list
+            project["datasetCount"] = len(dataset_list)
+
+            # 모델 수(있으면), 없으면 0
+            cur.execute("SELECT COUNT(*) AS cnt FROM project_models WHERE project_id=?", (p["id"],))
+            project["modelCount"] = cur.fetchone().get("cnt", 0)
+
+            result.append(project)
 
         conn.close()
-        return projects # 배열만 return
-        
+        return result
     except Exception as e:
-        logger.error(f"프로젝트 목록 조회 실패: {e}")
+        logger.error(f"/api/projects 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
+    
+# 프로젝트 생성
 @app.post("/api/projects")
 async def create_project(project_data: dict):
-    """새 프로젝트 생성"""
     try:
-        project_name = project_data.get("name")
-        project_description = project_data.get("description", "")
-        project_status = project_data.get('status', 'active')
-        
-        if not project_name:
-            raise HTTPException(status_code=400, detail="프로젝트 이름이 필요합니다")
-        
         project_id = str(uuid.uuid4())
-        
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            INSERT INTO projects (id, name, description, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """, (project_id, project_name, project_description, project_status))
-        
+        name = project_data.get("name")
+        description = project_data.get("description", "")
+        status = project_data.get("status", "active")
+        if not name:
+            raise HTTPException(status_code=400, detail="프로젝트 이름이 필요합니다")
+
+        now = now_kst_str()
+
+        conn = get_conn()
+        cur = conn.cursor()
+        # 컬럼을 명시하고, 우리가 넣을 값과 순서를 1:1로 맞춥니다.
+        cur.execute("""
+            INSERT INTO projects (id, name, description, created_at, updated_at, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (project_id, name, description, now, now, status))
+
         conn.commit()
-        
-        # 생성된 프로젝트 정보 반환
-        cursor.execute('SELECT * FROM projects WHERE id = ?', (project_id,))
-        row = cursor.fetchone()
-        
-        project = {
-            "id": row[0],
-            "name": row[1],
-            "description": row[2],
-            "created_at": row[3],
-            "updated_at": row[4],
-            "dataset_count": 0,
-            "model_count": 0
-        }
-        
+        cur.execute("SELECT * FROM projects WHERE id=?", (project_id,))
+        row = cur.fetchone()
         conn.close()
+
+        project = {
+            "id": row["id"],
+            "name": row["name"],
+            "description": row["description"],
+            "status": row["status"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
         return {"success": True, "project": project}
-        
+
     except sqlite3.IntegrityError:
         raise HTTPException(status_code=400, detail="이미 존재하는 프로젝트 이름입니다")
     except Exception as e:
-        logger.error(f"프로젝트 생성 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# 프로젝트 수정
 @app.put("/api/projects/{project_id}")
 async def update_project(project_id: str, project_data: dict):
-    """프로젝트 정보 수정"""
     try:
-        project_name = project_data.get("name")
-        project_description = project_data.get("description", "")
-        project_status = project_data.get('status', 'active')
-        
-        if not project_name:
+        name = project_data.get("name")
+        description = project_data.get("description", "")
+        status = project_data.get("status", "active")
+        if not name:
             raise HTTPException(status_code=400, detail="프로젝트 이름이 필요합니다")
-        
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
-        
-        cursor.execute('''
+
+        now = now_kst_str()
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("""
             UPDATE projects
-            SET name = ?, description = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ''', (project_name, project_description, project_status, project_id))
-        
+               SET name=?, description=?, status=?, updated_at=?
+             WHERE id=?
+        """, (name, description, status, now, project_id))
+
+        if cur.rowcount == 0:
+            conn.close()
+            raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
+
+        conn.commit()
+        cur.execute("SELECT * FROM projects WHERE id=?", (project_id,))
+        row = cur.fetchone()
+        conn.close()
+
+        project = {
+            "id": row["id"],
+            "name": row["name"],
+            "description": row["description"],
+            "status": row["status"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
+        return {"success": True, "project": project}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# 프로젝트 삭제
+@app.delete("/api/projects/{project_id}")
+async def delete_project(project_id: str):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM projects WHERE id=?", (project_id,))
         if cursor.rowcount == 0:
             conn.close()
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
-        
-        conn.commit()
-        
-        # 수정된 프로젝트 정보 반환
-        cursor.execute('SELECT * FROM projects WHERE id = ?', (project_id,))
-        row = cursor.fetchone()
-        
-        project = {
-            "id": row[0],
-            "name": row[1],
-            "description": row[2],
-            "status": row[3],
-            "created_at": row[4],
-            "updated_at": row[5]
-        }
-        
-        conn.close()
-        return {"success": True, "project": project}
-        
-    except sqlite3.IntegrityError:
-        raise HTTPException(status_code=400, detail="이미 존재하는 프로젝트 이름입니다")
-    except Exception as e:
-        logger.error(f"프로젝트 수정 실패: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.delete("/api/projects/{project_id}")
-async def delete_project(project_id: str):
-    """프로젝트 삭제"""
-    try:
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
-        
-        # 프로젝트 존재 확인
-        cursor.execute('SELECT name FROM projects WHERE id = ?', (project_id,))
-        project = cursor.fetchone()
-        
-        if not project:
-            conn.close()
-            raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
-        
-        # 관련 데이터 삭제 (모델 -> 데이터셋 -> 프로젝트 순)
-        cursor.execute('DELETE FROM project_models WHERE project_id = ?', (project_id,))
-        cursor.execute('DELETE FROM project_datasets WHERE project_id = ?', (project_id,))
-        cursor.execute('DELETE FROM projects WHERE id = ?', (project_id,))
-        
         conn.commit()
         conn.close()
-        
-        return {"success": True, "message": f"프로젝트 '{project[0]}'가 삭제되었습니다"}
-        
+        return {"success": True, "message": "프로젝트가 삭제되었습니다"}
     except Exception as e:
-        logger.error(f"프로젝트 삭제 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
+# 프로젝트 내보내기
 @app.get("/api/projects/{project_id}/export")
-async def export_project(project_id: str):
+async def export_project(project_id: str, mode: str = "meta"):
     """
-    프로젝트 + 데이터셋 + 모델 내보내기
-    (JSON 형식으로 반환)
+    프로젝트 내보내기
+    - mode=meta : project.json + datasets.json + models/zip
+    - mode=full : project.json + datasets/zip + models/zip
     """
     try:
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
+        conn = get_conn()
+        cur = conn.cursor()
 
-        # 프로젝트 가져오기
-        cursor.execute("SELECT * FROM projects WHERE id=?", (project_id,))
-        project_row = cursor.fetchone()
-        if not project_row:
+        # 1. 프로젝트 조회
+        cur.execute("SELECT * FROM projects WHERE id=?", (project_id,))
+        p_row = cur.fetchone()
+        if not p_row:
             conn.close()
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
 
         project = {
-            "id": project_row[0],
-            "name": project_row[1],
-            "description": project_row[2],
-            "status": project_row[3],
-            "created_at": project_row[4],
-            "updated_at": project_row[5],
+            "id": p_row["id"],
+            "name": p_row["name"],
+            "description": p_row["description"],
+            "status": p_row["status"],
+            "created_at": p_row["created_at"],
+            "updated_at": p_row["updated_at"],
+            "models": []
         }
 
-        # 데이터셋 가져오기
-        cursor.execute("SELECT * FROM project_datasets WHERE project_id=?", (project_id,))
-        dataset_rows = cursor.fetchall()
-        datasets = [dict(zip([col[0] for col in cursor.description], row)) for row in dataset_rows]
+        # 2. 데이터셋 조회
+        cur.execute("SELECT * FROM project_datasets WHERE project_id=?", (project_id,))
+        datasets = [{
+            "id": ds["id"],
+            "project_id": ds["project_id"],
+            "name": ds["name"],
+            "path": ds["path"],
+            "image_count": ds["image_count"],
+            "created_at": ds["created_at"],
+        } for ds in cur.fetchall()]
 
-        # 모델 가져오기
-        cursor.execute("SELECT * FROM project_models WHERE project_id=?", (project_id,))
-        model_rows = cursor.fetchall()
-        models = [dict(zip([col[0] for col in cursor.description], row)) for row in model_rows]
+        # 3. 모델 조회
+        cur.execute("SELECT * FROM project_models WHERE project_id=?", (project_id,))
+        for m in cur.fetchall():
+            project["models"].append({
+                "id": m["id"],
+                "project_id": m["project_id"],
+                "dataset_id": m["dataset_id"],
+                "name": m["name"],
+                "backbone": m["backbone"],
+                "performance_data": m["performance_data"],
+                "created_at": m["created_at"]
+            })
 
         conn.close()
 
-        return {
-            "project": project,
-            "datasets": datasets,
-            "models": models
-        }
+        # 4. 임시 zip 생성
+        tmpdir = tempfile.mkdtemp()
+        zip_path = os.path.join(tmpdir, f"{project['name']}_export_{mode}.zip")
+        with zipfile.ZipFile(zip_path, "w") as zipf:
+            # project.json
+            zipf.writestr("project.json", json.dumps(project, indent=2, ensure_ascii=False))
+
+            if mode == "meta":
+                # datasets.json
+                zipf.writestr("datasets.json", json.dumps(datasets, indent=2, ensure_ascii=False))
+
+            elif mode == "full":
+                # dataset별 zip 생성
+                for ds in datasets:
+                    src_path = ds["path"]
+                    if os.path.exists(src_path):
+                        ds_zip_name = f"datasets/{ds['id']}.zip"
+                        with tempfile.TemporaryDirectory() as ds_tmp:
+                            ds_zip = os.path.join(ds_tmp, f"{ds['id']}.zip")
+                            with zipfile.ZipFile(ds_zip, "w") as dsf:
+                                for root, _, files in os.walk(src_path):
+                                    for f in files:
+                                        abs_path = os.path.join(root, f)
+                                        rel_path = os.path.relpath(abs_path, src_path)
+                                        dsf.write(abs_path, rel_path)
+                            zipf.write(ds_zip, ds_zip_name)
+
+            # models
+            for m in project["models"]:
+                src_model_path = os.path.join("saved_models", m["id"])
+                if os.path.exists(src_model_path):
+                    model_zip_name = f"models/{m['id']}.zip"
+                    with tempfile.TemporaryDirectory() as m_tmp:
+                        m_zip = os.path.join(m_tmp, f"{m['id']}.zip")
+                        with zipfile.ZipFile(m_zip, "w") as mf:
+                            for root, _, files in os.walk(src_model_path):
+                                for f in files:
+                                    abs_path = os.path.join(root, f)
+                                    rel_path = os.path.relpath(abs_path, src_model_path)
+                                    mf.write(abs_path, rel_path)
+                        zipf.write(m_zip, model_zip_name)
+
+        return FileResponse(zip_path, filename=os.path.basename(zip_path))
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -548,11 +667,12 @@ async def export_project(project_id: str):
 @app.post("/api/projects/import")
 async def import_project(file: UploadFile = File(...)):
     """
-    프로젝트 + 데이터셋 + 모델 가져오기 (ZIP 파일 업로드)
+    프로젝트 가져오기 (Meta Export 또는 Full Export zip 업로드)
     """
-    import uuid, os, zipfile, shutil, json
+    import uuid, os, zipfile, shutil, json, tempfile
+
     try:
-        # 1. 업로드된 zip 저장
+        # 1. 업로드 zip 저장
         upload_dir = "uploads"
         os.makedirs(upload_dir, exist_ok=True)
         zip_path = os.path.join(upload_dir, file.filename)
@@ -560,80 +680,96 @@ async def import_project(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, buffer)
 
         # 2. 압축 해제
-        extract_dir = os.path.join(upload_dir, str(uuid.uuid4()))
+        extract_dir = tempfile.mkdtemp()
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
 
-        # 3. JSON 로드
-        with open(os.path.join(extract_dir, "project.json"), "r", encoding="utf-8") as f:
-            import_data = json.load(f)
+        # 3. project.json 로드
+        project_json_path = os.path.join(extract_dir, "project.json")
+        if not os.path.exists(project_json_path):
+            raise HTTPException(status_code=400, detail="project.json이 없습니다")
 
-        project = import_data.get("project")
-        datasets = import_data.get("datasets", [])
-        models = import_data.get("models", [])
+        with open(project_json_path, "r", encoding="utf-8") as f:
+            project_data = json.load(f)
 
-        if not project:
-            raise HTTPException(status_code=400, detail="잘못된 프로젝트 데이터")
-
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
-
-        # 4. 새 프로젝트 ID 생성
+        # 새 프로젝트 ID
         new_project_id = str(uuid.uuid4())
-        cursor.execute("""
-            INSERT INTO projects (id, name, description, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        now = now_kst_str()
+
+        conn = get_conn()
+        cur = conn.cursor()
+
+        # 4. 프로젝트 삽입 (created_at은 원본 유지, updated_at은 현재 시각)
+        cur.execute("""
+            INSERT INTO projects (id, name, description, created_at, updated_at, status)
+            VALUES (?, ?, ?, ?, ?, ?)
         """, (
             new_project_id,
-            project.get("name") + " (가져오기)",
-            project.get("description"),
-            project.get("status", "active")
+            project_data.get("name") + " (가져오기)",
+            project_data.get("description", ""),
+            project_data.get("created_at"),  # 원본
+            now,                             # 현재 시각
+            project_data.get("status", "active")
         ))
 
         dataset_id_map = {}
-        # 5. 데이터셋 복사
-        for ds in datasets:
-            new_dataset_id = str(uuid.uuid4())
-            dataset_id_map[ds["id"]] = new_dataset_id
 
-            src_path = os.path.join(extract_dir, "datasets", ds["id"])
-            dst_path = os.path.join("processed", new_project_id, new_dataset_id)
-            os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-            if os.path.exists(src_path):
-                shutil.copytree(src_path, dst_path)
+        # 5. datasets.json 처리 (meta export)
+        datasets_json_path = os.path.join(extract_dir, "datasets.json")
+        if os.path.exists(datasets_json_path):
+            with open(datasets_json_path, "r", encoding="utf-8") as f:
+                datasets_data = json.load(f)
 
-            cursor.execute("""
-                INSERT INTO project_datasets (id, project_id, name, path, image_count, created_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (
-                new_dataset_id,
-                new_project_id,
-                ds.get("name"),
-                dst_path,
-                ds.get("image_count", 0)
-            ))
+            for ds in datasets_data:
+                new_dataset_id = str(uuid.uuid4())
+                dataset_id_map[ds["id"]] = new_dataset_id
 
-        # 6. 모델 복사
-        for m in models:
-            new_model_id = str(uuid.uuid4())
-            new_dataset_id = dataset_id_map.get(m["dataset_id"], None)
+                ds_zip_path = os.path.join(extract_dir, "datasets", f"{ds['id']}.zip")
+                dst_path = os.path.join("processed", new_project_id, new_dataset_id)
+                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
 
-            src_model_path = os.path.join(extract_dir, "models", m["id"])
-            dst_model_path = os.path.join("saved_models", new_model_id)
-            if os.path.exists(src_model_path):
-                shutil.copytree(src_model_path, dst_model_path)
+                if os.path.exists(ds_zip_path):
+                    with zipfile.ZipFile(ds_zip_path, "r") as ds_zip:
+                        ds_zip.extractall(dst_path)
 
-            cursor.execute("""
-                INSERT INTO project_models (id, project_id, dataset_id, name, backbone, performance_data, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (
-                new_model_id,
-                new_project_id,
-                new_dataset_id,
-                m.get("name"),
-                m.get("backbone"),
-                m.get("performance_data")
-            ))
+                cur.execute("""
+                    INSERT INTO project_datasets (id, project_id, name, path, image_count, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    new_dataset_id,
+                    new_project_id,
+                    ds.get("name"),
+                    dst_path if os.path.exists(ds_zip_path) else ds.get("path"),
+                    ds.get("image_count", 0),
+                    ds.get("created_at")  # 원본 생성일 유지
+                ))
+
+        # 6. 모델 복원
+        if "models" in project_data:
+            for m in project_data["models"]:
+                new_model_id = str(uuid.uuid4())
+                new_dataset_id = dataset_id_map.get(m["dataset_id"], None)
+
+                cur.execute("""
+                    INSERT INTO project_models (id, project_id, dataset_id, name, backbone, performance_data, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    new_model_id,
+                    new_project_id,
+                    new_dataset_id,
+                    m.get("name"),
+                    m.get("backbone"),
+                    m.get("performance_data"),
+                    m.get("created_at")  # 원본 생성일 유지
+                ))
+
+                # 모델 파일 복원
+                src_model_zip = os.path.join(extract_dir, "models", f"{m['id']}.zip")
+                dst_model_path = os.path.join("saved_models", new_model_id)
+                if os.path.exists(src_model_zip):
+                    os.makedirs(dst_model_path, exist_ok=True)
+                    with zipfile.ZipFile(src_model_zip, "r") as mzip:
+                        mzip.extractall(dst_model_path)
 
         conn.commit()
         conn.close()
@@ -646,68 +782,72 @@ async def import_project(file: UploadFile = File(...)):
 @app.post("/api/projects/{project_id}/duplicate")
 async def duplicate_project(project_id: str):
     """
-    프로젝트 + 데이터셋 + 모델 완전 복제
+    프로젝트 Deep Copy (프로젝트 + 데이터셋 + 이미지 + 모델 + 모델 파일)
+    - 컬럼명 접근으로 인덱스 꼬임 방지
+    - created_at/updated_at: KST "YYYY-MM-DD HH:MM:SS"
     """
+    import os, shutil, uuid
     try:
-        import uuid, shutil, os
+        conn = get_conn()
+        cur = conn.cursor()
 
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
-
-        # 1. 원본 프로젝트 조회
-        cursor.execute("SELECT * FROM projects WHERE id=?", (project_id,))
-        project_row = cursor.fetchone()
-        if not project_row:
+        # 1) 원본 프로젝트
+        cur.execute("SELECT * FROM projects WHERE id=?", (project_id,))
+        proj = cur.fetchone()
+        if not proj:
+            conn.close()
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
 
         new_project_id = str(uuid.uuid4())
-        new_project_name = project_row[1] + " (복사본)"
+        new_project_name = f'{proj["name"]} (복사본)'
+        status_value = proj["status"] or "active"
+        now = now_kst_str()
 
-        # 2. 프로젝트 복사
-        cursor.execute("""
-            INSERT INTO projects (id, name, description, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """, (new_project_id, new_project_name, project_row[2], project_row[3]))
+        # 2) 새 프로젝트 insert (컬럼 순서 명시)
+        cur.execute("""
+            INSERT INTO projects (id, name, description, created_at, updated_at, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (new_project_id, new_project_name, proj["description"], now, now, status_value))
 
-        # 3. 데이터셋 복사
-        cursor.execute("SELECT * FROM project_datasets WHERE project_id=?", (project_id,))
-        dataset_rows = cursor.fetchall()
-        dataset_id_map = {}
+        # 3) 데이터셋 복제
+        cur.execute("SELECT * FROM project_datasets WHERE project_id=?", (project_id,))
+        ds_rows = cur.fetchall()
+        ds_id_map = {}
+        for ds in ds_rows:
+            new_ds_id = str(uuid.uuid4())
+            ds_id_map[ds["id"]] = new_ds_id
 
-        for ds in dataset_rows:
-            new_dataset_id = str(uuid.uuid4())
-            dataset_id_map[ds[0]] = new_dataset_id
+            src_path = ds["path"]
+            dst_path = src_path.replace(project_id, new_project_id)
 
-            new_path = ds[3].replace(project_id, new_project_id)
-            cursor.execute("""
+            cur.execute("""
                 INSERT INTO project_datasets (id, project_id, name, path, image_count, created_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (new_dataset_id, new_project_id, ds[2], new_path, ds[4]))
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (new_ds_id, new_project_id, ds["name"], dst_path, ds["image_count"], now))
 
-            if os.path.exists(ds[3]):
-                shutil.copytree(ds[3], new_path)
+            if os.path.exists(src_path):
+                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+                shutil.copytree(src_path, dst_path)
 
-        # 4. 모델 복사
-        cursor.execute("SELECT * FROM project_models WHERE project_id=?", (project_id,))
-        model_rows = cursor.fetchall()
-
-        for m in model_rows:
+        # 4) 모델 복제
+        cur.execute("SELECT * FROM project_models WHERE project_id=?", (project_id,))
+        mdl_rows = cur.fetchall()
+        for m in mdl_rows:
             new_model_id = str(uuid.uuid4())
-            new_dataset_id = dataset_id_map.get(m[2], m[2])
+            new_ds_id = ds_id_map.get(m["dataset_id"], m["dataset_id"])
 
-            cursor.execute("""
+            cur.execute("""
                 INSERT INTO project_models (id, project_id, dataset_id, name, backbone, performance_data, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (new_model_id, new_project_id, new_dataset_id, m[3], m[4], m[5]))
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (new_model_id, new_project_id, new_ds_id, m["name"], m["backbone"], m["performance_data"], now))
 
-            src_model_path = os.path.join("saved_models", m[0])
+            src_model_path = os.path.join("saved_models", m["id"])
             dst_model_path = os.path.join("saved_models", new_model_id)
             if os.path.exists(src_model_path):
                 shutil.copytree(src_model_path, dst_model_path)
 
         conn.commit()
         conn.close()
-
         return {"success": True, "new_project_id": new_project_id, "new_name": new_project_name}
 
     except Exception as e:
@@ -715,62 +855,28 @@ async def duplicate_project(project_id: str):
 
 @app.get("/api/projects/{project_id}")
 async def get_project_detail(project_id: str):
-    """프로젝트 상세 정보 조회"""
     try:
-        conn = sqlite3.connect('mlops_vision.db')
-        cursor = conn.cursor()
-        
-        # 프로젝트 기본 정보
-        cursor.execute('SELECT * FROM projects WHERE id = ?', (project_id,))
-        project_row = cursor.fetchone()
-        
-        if not project_row:
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM projects WHERE id=?", (project_id,))
+        p = cur.fetchone()
+        if not p:
             conn.close()
             raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
-        
-        # 데이터셋 목록
-        cursor.execute('SELECT * FROM project_datasets WHERE project_id = ?', (project_id,))
-        dataset_rows = cursor.fetchall()
-        
-        datasets = []
-        for row in dataset_rows:
-            datasets.append({
-                "id": row[0],
-                "name": row[1],
-                "description": row[2],
-                "status": row[3],
-                "created_at": row[4],
-                "updated_at": row[5]
-            })
-        
-        # 모델 목록
-        cursor.execute('SELECT * FROM project_models WHERE project_id = ?', (project_id,))
-        model_rows = cursor.fetchall()
-        
-        models = []
-        for row in model_rows:
-            models.append({
-                "id": row[0],
-                "dataset_id": row[2],
-                "name": row[3],
-                "backbone": row[4],
-                "performance_data": json.loads(row[5]) if row[5] else {},
-                "created_at": row[6]
-            })
-        
-        project = {
-            "id": project_row[0],
-            "name": project_row[1],
-            "description": project_row[2],
-            "created_at": project_row[3],
-            "updated_at": project_row[4],
-            "datasets": datasets,
-            "models": models
-        }
-        
+
+        cur.execute("SELECT * FROM project_datasets WHERE project_id=?", (project_id,))
+        datasets = [to_camel_case(dict(ds)) for ds in cur.fetchall()]
+
+        cur.execute("SELECT * FROM project_models WHERE project_id=?", (project_id,))
+        models = [to_camel_case(dict(m)) for m in cur.fetchall()]
+
+        project = to_camel_case(dict(p))
+        project["datasets"] = datasets
+        project["models"] = models
+
         conn.close()
         return {"success": True, "project": project}
-        
     except Exception as e:
         logger.error(f"프로젝트 상세 조회 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -790,6 +896,134 @@ async def list_datasets():
         }
     except Exception as e:
         logger.error(f"데이터셋 목록 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/projects/{project_id}/datasets")
+async def list_project_datasets(project_id: str):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = dict_factory
+        cur = conn.cursor()
+
+        # 프로젝트 존재 확인
+        cur.execute("SELECT id FROM projects WHERE id=?", (project_id,))
+        if not cur.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다")
+
+        # 데이터셋 조회(*로 안전 조회) → camelCase
+        cur.execute("SELECT * FROM project_datasets WHERE project_id=?", (project_id,))
+        rows = cur.fetchall()
+        conn.close()
+
+        # camelCase + 기본값 보정
+        datasets = []
+        for r in rows:
+            r_c = to_camel_case(r)
+            r_c.setdefault("type", "classify")
+            r_c.setdefault("description", "")
+            r_c.setdefault("totalSize", 0)
+            return_map = {
+                **r_c,
+                "imageCount": r_c.get("imageCount", 0)
+            }
+            datasets.append(return_map)
+
+        return datasets
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"데이터셋 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/api/projects/{project_id}/datasets")
+async def create_dataset(project_id: str, dataset_data: dict):
+    try:
+        name = dataset_data.get("name", "").strip()
+        dtype = dataset_data.get("type", "classify")
+        description = dataset_data.get("description", "").strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="데이터셋 이름이 필요합니다")
+
+        new_id = str(uuid.uuid4())
+        now = now_kst_str()
+        ds_path = BASE_DATA_PATH / project_id / new_id
+        ds_path.mkdir(parents=True, exist_ok=True)
+
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO project_datasets
+            (id, project_id, name, path, image_count, created_at, type, description, total_size, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (new_id, project_id, name, str(ds_path), 0, now, dtype, description, 0, now))
+        conn.commit()
+        conn.close()
+
+        return {
+            "success": True,
+            "dataset": {
+                "id": new_id,
+                "projectId": project_id,
+                "name": name,
+                "type": dtype,
+                "description": description,
+                "imageCount": 0,
+                "totalSize": 0,
+                "createdAt": now,
+                "updatedAt": now
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"데이터셋 생성 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/projects/{project_id}/datasets/{dataset_id}")
+async def delete_dataset(project_id: str, dataset_id: str):
+    """
+    데이터셋 삭제:
+    - 파일시스템: {BASE_DATA_PATH}/{project_id}/{dataset_id} 디렉토리 삭제
+    - DB: project_datasets 행 삭제
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = dict_factory
+        cur = conn.cursor()
+
+        # 존재 확인 + 경로 조회
+        cur.execute(
+            "SELECT path FROM project_datasets WHERE id=? AND project_id=?",
+            (dataset_id, project_id)
+        )
+        row = cur.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다")
+
+        # 폴더 삭제 (경로가 DB에 없으면 기본 규칙으로 추정)
+        ds_path = Path(row.get("path") or (BASE_DATA_PATH / project_id / dataset_id))
+        try:
+            if ds_path.exists():
+                shutil.rmtree(ds_path, ignore_errors=True)
+        except Exception as fe:
+            # 폴더 삭제 실패해도 DB 정리 가능하도록 로그만 남김
+            logger.error(f"데이터셋 폴더 삭제 실패: {fe}")
+
+        # DB 삭제
+        cur.execute(
+            "DELETE FROM project_datasets WHERE id=? AND project_id=?",
+            (dataset_id, project_id)
+        )
+        conn.commit()
+        conn.close()
+
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"데이터셋 삭제 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/datasets/upload")
@@ -865,8 +1099,22 @@ async def upload_dataset_images(
     except Exception as e:
         logger.error(f"이미지 업로드 실패: {e}")
         raise HTTPException(status_code=500, detail=f"업로드 실패: {str(e)}")
+    
+# 이미지 삭제 API
+@app.delete("/datasets/{project_id}/{dataset_id}/images/{filename}")
+async def delete_image(project_id: str, dataset_id: str, filename: str):
+    try:
+        file_path = BASE_DATA_PATH / project_id / dataset_id / filename
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다")
 
-# 이미지 조회 API는 동일하게 추가
+        os.remove(file_path)
+        return {"success": True, "message": f"{filename} 삭제 완료"}
+    except Exception as e:
+        logger.error(f"이미지 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"삭제 실패: {str(e)}")
+
+# 이미지 조회 API
 @app.get("/api/image/{project_id}/{dataset_id}/{filename}")
 async def get_image(project_id: str, dataset_id: str, filename: str):
     try:
@@ -1089,51 +1337,31 @@ def parse_training_log(log_group: str) -> int:
 
 @app.get("/models")
 async def list_models():
-    """학습된 모델 목록을 반환합니다 (기존 학습 + 업로드된 모델 포함)"""
     try:
-        # 기존 학습된 모델
         trained_models = model_manager.discover_trained_models()
-        
-        # 업로드된 모델 추가
         uploaded_models = []
         saved_models_dir = Path("saved_models")
-        
+
         if saved_models_dir.exists():
             for model_dir in saved_models_dir.iterdir():
                 if model_dir.is_dir():
                     model_info_file = model_dir / "model_info.json"
                     if model_info_file.exists():
-                        try:
-                            with open(model_info_file, 'r', encoding='utf-8') as f:
-                                model_info = json.load(f)
-                            uploaded_models.append(model_info)
-                        except Exception as e:
-                            logger.error(f"업로드 모델 정보 로드 실패: {e}")
-        
-        # 모든 모델 합치기
+                        with open(model_info_file, "r", encoding="utf-8") as f:
+                            model_info = json.load(f)
+                        uploaded_models.append(model_info)
+
         all_models = trained_models + uploaded_models
-        
-        # 모델 비교 데이터 생성
-        comparison_data = []
-        if all_models:
-            # 기존 comparison 로직 + 업로드된 모델도 포함
-            for model in uploaded_models:
-                comparison_data.append({
-                    "model_name": model["model_name"],
-                    "backbone": model["config"].get("backbone", "unknown"),
-                    "accuracy": model["performance"].get("accuracy", 0),
-                    "f1_score": model["performance"].get("f1_score", 0),
-                    "precision": model["performance"].get("precision", 0),
-                    "recall": model["performance"].get("recall", 0),
-                    "source": "uploaded"
-                })
-        
+
+        # ✅ camelCase 변환
+        all_models_camel = []
+        for m in all_models:
+            all_models_camel.append(to_camel_case(m))
+
         return {
-            "models": all_models,
-            "total_count": len(all_models),
-            "comparison": comparison_data
+            "models": all_models_camel,
+            "totalCount": len(all_models_camel)
         }
-        
     except Exception as e:
         logger.error(f"모델 목록 조회 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
