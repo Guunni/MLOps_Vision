@@ -515,6 +515,7 @@
             grid-template-columns: 350px 1fr;
             gap: 2rem;
             min-height: 600px;
+              align-items: stretch;
         }
 
         /* 왼쪽 이미지 인덱스 */
@@ -593,69 +594,92 @@
             position: relative;
         }
 
-        .image-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg-secondary);
+        .image-table{ border-collapse: collapse; border-spacing: 0; }
+        .image-table tbody:empty::after{ content: none !important; }   /* 가짜 밑줄 제거 */
+        .image-table tfoot{ display:none; }  
+
+        /* [PATCH] 이미지 테이블 경계선을 반투명 실선으로 (가로/세로) */
+        .image-table, .image-list {
             table-layout: fixed;
+            width: 100%;
+        }
+
+        .image-table th, .image-table td {
+            border-bottom: 1px solid rgba(148, 163, 184, 0.35); /* 가로 실선(반투명) */
+        }
+
+        .image-table td + td, .image-table th + th {
+            border-left: 1px solid rgba(148, 163, 184, 0.25);   /* 세로 실선(반투명) */
+        }
+
+        /* 한 개만 있어도 마지막 줄 보이게 */
+        .image-table tbody tr:last-child td {
+            border-bottom: 1px solid rgba(148, 163, 184, 0.35) !important;
         }
 
         .image-table th:first-child,
-        .image-table td:first-child {
-            width: 30px !important;
-            min-width: 30px !important;
-            max-width: 30px !important;
-            text-align: center;
-            padding: 0.75rem 0.5rem;
-            cursor: pointer;
+        .image-table td:first-child,
+        .image-list  th:first-child,
+        .image-list  td:first-child {
+            width: 36px !important;
+            min-width: 36px !important;
+            max-width: 36px !important;
+            text-align: center !important;
+            vertical-align: middle !important;
+            padding: 0 6px !important;
+        }
+
+        /* 체크박스 자체 크기 줄이기 (셀과 딱 맞춤) */
+        .image-table input[type="checkbox"].image-row-checkbox,
+        .image-list  input[type="checkbox"].image-row-checkbox,
+        #selectAllCheckbox {
+            width: 12px;
+            height: 12px;
+            margin: 0;
+            vertical-align: middle;
         }
 
         .image-table td:first-child:hover {
             background-color: rgba(71, 85, 105, 0.1);
         }
 
-        .image-table th:nth-child(2),
-        .image-table td:nth-child(2) {
-            width: 25px !important;
-            min-width: 25px !important;
-            max-width: 25px !important;
-            text-align: center;
-            padding: 0.5rem 0.2rem;
+        /* 행 번호 칼럼 */
+        .image-table th:nth-child(2), .image-table td:nth-child(2),
+        .image-list  th:nth-child(2), .image-list  td:nth-child(2) {
+            width: 30px !important;
+            min-width: 30px !important;
+            max-width: 30px !important;
+            text-align: center !important;
         }
 
-        .image-table th:nth-child(3),
-        .image-table td:nth-child(3) {
+        /* 파일명 칼럼 */
+        .image-table th:nth-child(3), .image-table td:nth-child(3),
+        .image-list  th:nth-child(3), .image-list  td:nth-child(3) {
+            width: 100px !important;
+            min-width: 100px !important;
+            max-width: 100px !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 형식 칼럼 */
+        .image-table th:nth-child(4), .image-table td:nth-child(4),
+        .image-list  th:nth-child(4), .image-list  td:nth-child(4) {
+            width: 50px !important;
+            min-width: 50px !important;
+            max-width: 50px !important;
+            text-align: center !important;
+        }
+
+        /* 크기 칼럼 */
+        .image-table th:nth-child(5), .image-table td:nth-child(5),
+        .image-list  th:nth-child(5), .image-list  td:nth-child(5) {
             width: 70px !important;
             min-width: 70px !important;
             max-width: 70px !important;
-            text-align: center;
-            padding: 0.5rem;
-        }
-
-        .image-table th:nth-child(4),
-        .image-table td:nth-child(4) {
-            width: auto !important;
-            min-width: 250px !important;
-            text-align: center;
-            padding: 0.5rem;
-        }
-
-        .image-table th:nth-child(5),
-        .image-table td:nth-child(5) {
-            width: 50px !important;
-            min-width: 40px !important;
-            max-width: 40px !important;
-            text-align: center;
-            padding: 0.5rem 0.2rem;
-        }
-
-        .image-table th:nth-child(6),
-        .image-table td:nth-child(6) {
-            width: 60px !important;
-            min-width: 60px !important;
-            max-width: 60px !important;
-            text-align: center;
-            padding: 0.5rem;
+            text-align: right !important;
+            padding-right: 10px;
         }
 
         .image-table th {
@@ -782,17 +806,6 @@
             gap: 0.5rem;
         }
 
-        .image-preview {
-            flex: 1;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            overflow: auto;
-            position: relative;
-            min-height: 400px;
-            max-height: 600px;
-            cursor: grab;
-        }
-
         .empty-preview {
             display: flex;
             flex-direction: column;
@@ -803,32 +816,39 @@
             text-align: center;
         }
 
-        .preview-image-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            border-radius: var(--radius-md);
-            background: var(--bg-tertiary);
+
+
+        :root{
+            --viewer-default-h: 800px;     /* 필요하면 480~560px 등으로 조정 */
+            --viewer-top-offset: -120px;    /* 뷰어 패널을 위로 살짝 올림 */
         }
 
-        #previewImage {
-            max-width: none;
-            max-height: none;
-            width: auto;
-            height: auto;
-            object-fit: none;
-            transition: transform 0.1s ease;
-            cursor: grab;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
+        .image-preview {
+            /* flex로 늘어나지 않도록 height 고정 */
+            height: var(--viewer-default-h) !important;
+            max-height: var(--viewer-default-h) !important;
+            min-height: var(--viewer-default-h) !important;
+            flex: 0 0 var(--viewer-default-h) !important;
+            overflow: hidden !important;
         }
-        
-        #previewImage,
-        .image-thumbnail {
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
+
+        /* 컨테이너는 고정된 .image-preview 높이에 맞춰 100%만 쓰도록 */
+        .preview-image-container {
+            position: relative;
+            width: 100%; height: 100%;
+            overflow: hidden !important;
+        }
+
+        /* 이미지 중앙 정렬 + 오타 수정: max-width: 0 auto; -> margin: 0 auto; */
+        #previewImage {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform-origin: center center;
+            /* 오타 수정: margin: 0 auto; 였던 부분 */
+            margin: 0;
+            max-width: none; max-height: none; /* transform로 크기 제어 */
+            will-change: transform;
+            user-select: none; 
         }
 
         #previewImage:active {
@@ -1032,6 +1052,16 @@
             z-index: 100;
         }
 
+        .viewer-nav{
+            position:absolute; top:50%; transform:translateY(-50%);
+            width:44px; height:72px; border:none;
+            background:rgba(15,23,42,0.35); color:#fff; border-radius:12px; cursor:pointer;
+            display:none; align-items:center; justify-content:center; font-size:20px; backdrop-filter:blur(2px);
+        }
+        .viewer-nav:hover{ background:rgba(15,23,42,0.5); }
+        .viewer-nav.prev{ left:12px; }
+        .viewer-nav.next{ right:12px; }
+
         /* 스크롤바 스타일 */
         .image-table-container::-webkit-scrollbar {
             width: 6px;
@@ -1050,21 +1080,53 @@
             background: var(--text-muted);
         }
 
+        .image-preview-panel{ margin-top: var(--viewer-top-offset) !important; }
+        .image-preview{
+            position: relative;
+            height: var(--viewer-default-h) !important;
+            max-height: var(--viewer-default-h) !important;
+            min-height: var(--viewer-default-h) !important;
+            flex: 0 0 var(--viewer-default-h) !important;  /* 더 커지지 않게 */
+            overflow: hidden !important;
+        }
+        .image-info{ flex:0 0 auto; max-height:none; overflow:visible; }
+
         /* 반응형 디자인 */
         @media (max-width: 1024px) {
-            .image-manager {
-                grid-template-columns: 1fr;
-                gap: 1rem;
+
+            .image-preview-panel {
+                display: flex;
+                flex-direction: column;
             }
+
+            /* [PATCH] 좌/우 네비게이션 버튼 */
+            .viewer-nav {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 44px;
+                height: 72px;
+                border: none;
+                background: rgba(15, 23, 42, 0.35);
+                color: #fff;
+                border-radius: 12px;
+                cursor: pointer;
+                display: none; /* 이미지 있을 때만 JS에서 보이게 */
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                backdrop-filter: blur(2px);
+            }
+
+            .viewer-nav:hover { background: rgba(15, 23, 42, 0.5); }
+            .viewer-nav.prev { left: 12px; }
+            .viewer-nav.next { right: 12px; }
+
+            /* [PATCH] 이미지 컨테이너는 상대위치 */
             
             .image-index {
                 order: 2;
                 max-height: 400px;
-            }
-            
-            .image-preview-panel {
-                order: 1;
-                min-height: 400px;
             }
         }
 
@@ -1083,10 +1145,6 @@
             
             .content-body {
                 padding: 1rem;
-            }
-
-            .image-manager {
-                grid-template-columns: 1fr;
             }
         }
 
@@ -1242,7 +1300,6 @@
                                                         <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
                                                     </th>
                                                     <th style="width: 40px; text-align: center;">#</th>
-                                                    <th style="width: 60px; text-align: center;">미리보기</th>
                                                     <th style="width: auto; min-width: 200px;">파일명</th>
                                                     <th style="width: 60px; text-align: center;">형식</th>
                                                     <th style="width: 80px; text-align: right;">크기</th>
@@ -1283,6 +1340,8 @@
                                         <p>왼쪽 목록에서 이미지를 클릭하면<br>큰 미리보기를 볼 수 있습니다</p>
                                     </div>
                                     <div class="preview-image-container" id="previewContainer" style="display: none;">
+                                        <button class="viewer-nav prev" id="viewerPrev" onclick="prevImage()" title="이전 (←)">&#x2039;</button>
+                                        <button class="viewer-nav next" id="viewerNext" onclick="nextImage()" title="다음 (→)">&#x203A;</button>
                                         <img id="previewImage" style="display: none;">
                                         <div class="zoom-controls">
                                             <button class="zoom-btn" onclick="zoomIn()" title="확대">
@@ -1372,8 +1431,8 @@
     </div>
 
     <!-- 숨겨진 파일 입력 -->
-    <input type="file" id="fileInput" style="display: none;" multiple accept="image/*" onchange="handleImageSelect(event)">
-    <input type="file" id="folderInput" style="display: none;" webkitdirectory accept="image/*" onchange="handleImageSelect(event)">
+    <input type="file" id="fileInput" style="display: none;" multiple accept="image/*">
+    <input type="file" id="folderInput" style="display: none;" webkitdirectory accept="image/*">
 
     <script>
         // 전역 변수
@@ -1394,6 +1453,7 @@
         let selectionStart = { x: 0, y: 0 };
         let allSelected = false;
         let imageDataCache = {};
+        
 
         // 프로젝트 관리 함수 (서버에서 가져오도록 교체)
         async function loadProjects() {
@@ -1607,7 +1667,7 @@
         }
 
         // 데이터셋 관리 함수
-        async function loadDatasets(projectId) {
+        async function loadDatasets(projectId, silent=false) {
             if (!projectId) {
                 datasets = [];
                 renderDatasets();
@@ -1635,13 +1695,16 @@
                 }
 
                 if (foundDataset) {
+                    const already = String(selectedDatasetId) === String(foundDataset.id);
                     selectedDatasetId = foundDataset.id;
                     const datasetSelector = document.getElementById('datasetSelector');
                     if (datasetSelector) {
                         datasetSelector.value = foundDataset.id;
                     }
-                    // 미리보기/테이블/카운트 등 기존 흐름 유지
-                    onDatasetSelect(foundDataset.id);
+                    // 변경: 선택이 바뀐 경우에만 호출
+                    if (!already) {
+                        onDatasetSelect(foundDataset.id);
+                    }
                 }
             } catch (error) {
                 console.error('데이터셋 로드 오류:', error);
@@ -1871,10 +1934,7 @@
             if (!confirm(`'${dataset.name}' 데이터셋을 삭제하시겠습니까?`)) return;
 
             try {
-                await fetch(`/api/projects/${selectedProjectId}/datasets/${selectedDatasetId}/images/${encodeURIComponent(filename)}`, {
-                    method: 'DELETE'
-                });
-                await refreshImageList();
+                const res = await fetch(`/api/projects/${selectedProjectId}/datasets/${datasetId}`, { method: 'DELETE' });
                 const j = res.ok ? {} : await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(j.detail || `HTTP ${res.status}`);
 
@@ -1917,13 +1977,18 @@
         }
 
         function setURLParameter(name, value) {
-            const url = new URL(window.location);
-            if (value) {
-                url.searchParams.set(name, value);
-            } else {
-                url.searchParams.delete(name);
-            }
-            window.history.pushState({}, '', url);
+            const currentUrl = new URL(window.location.href);
+            const before = currentUrl.searchParams.get(name);
+            const next = (value === undefined || value === null || value === '') ? null : String(value);
+
+            // 값이 동일하면 히스토리 조작 생략 (네비게이션 플러딩 방지)
+            if ((before ?? null) === next) return;
+
+            if (next !== null) currentUrl.searchParams.set(name, next);
+            else currentUrl.searchParams.delete(name);
+
+            // pushState 대신 replaceState만 사용하여 히스토리 누적 및 스로틀링 방지
+            window.history.replaceState({}, '', currentUrl);
         }
 
         // IndexedDB 초기화 및 이미지 저장
@@ -2088,74 +2153,6 @@
             document.getElementById('folderInput').click();
         }
 
-        function handleImageSelect(event) {
-            const files = Array.from(event.target.files);
-            addImagesToList(files);
-            event.target.value = '';
-        }
-
-        async function addImagesToList(files) {
-            if (!selectedDatasetId) {
-                alert('먼저 데이터셋을 선택하세요.');
-                return;
-            }
-
-            console.log('이미지 추가 시작:', files.length, '개 파일');
-            
-            const fileArray = Array.from(files);
-            const imageFiles = fileArray.filter(f => f.type.startsWith('image/'));
-            
-            console.log('이미지 파일:', imageFiles.length, '개');
-            
-            // 1. 즉시 메타데이터만 추가
-            const newImages = imageFiles.map((file, index) => ({
-                id: `img_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                order: uploadedImages.length + index + 1,
-                uploaded: false
-            }));
-
-            uploadedImages.push(...newImages);
-            renderImageTable();
-            updateImageCount();
-            
-            // 2. 서버 업로드
-            await uploadToServerInBackground(imageFiles, newImages);
-        }
-
-        async function uploadToServerInBackground(files, imageMetadata) {
-            console.log('서버 업로드 시작...');
-            
-            const formData = new FormData();
-            
-            files.forEach((img) => {
-                formData.append("files", img);
-            });
-
-            // URL에 project_id와 dataset_id 넣기
-            const url = `/datasets/${selectedProjectId}/${selectedDatasetId}/upload`;
-
-            try {
-                console.log('업로드 요청 전송...');
-                const response = await fetch(url, { 
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`서버 응답 오류: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('업로드 성공:', data);
-                // 이후 처리...
-            } catch (error) {
-                console.error('업로드 오류:', error);
-            }
-        }
-
         // 이미지 테이블 렌더링 (썸네일 제거)
         function renderImageTable() {
             const tableBody = document.getElementById('imageTableBody');
@@ -2173,41 +2170,28 @@
             const visibleImages = uploadedImages.slice(0, Math.min(maxVisible, uploadedImages.length));
             
             tableBody.innerHTML = visibleImages.map((image, index) => `
-                <tr class="${getRowClasses(image.id, index)}" 
-                    data-id="${image.id}" 
+                <tr class="${getRowClasses(image.id, index)}"
+                    data-id="${image.id}"
                     data-index="${index}"
                     onclick="selectImage(${index}, event)">
-                    <td onclick="handleCheckboxCellClick('${image.id}', event)">
-                        <input type="checkbox" class="image-row-checkbox" 
-                            ${selectedImages.includes(image.id) ? 'checked' : ''}
-                            onclick="toggleImageSelection('${image.id}', event)">
+                    <td>
+                    <input type="checkbox" class="image-row-checkbox"
+                        ${selectedImages.includes(image.id) ? 'checked' : ''}
+                        onclick="toggleImageSelection('${image.id}', event)">
                     </td>
                     <td class="image-row-number">${index + 1}</td>
-                    <td>
-                        <div class="image-icon">
-                            <i class="fas fa-image" style="color: var(--text-muted);"></i>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="image-name" title="${image.name}">
-                            ${image.name}
-                            ${image.uploaded ? 
-                                '<i class="fas fa-check-circle" style="color: green; margin-left: 5px;" title="업로드 완료"></i>' : 
-                                '<i class="fas fa-upload" style="color: orange; margin-left: 5px;" title="업로드 중..."></i>'
-                            }
-                        </div>
-                    </td>
+                    <td><div class="image-name" title="${image.name}">${image.name}</div></td>
                     <td>${getFileExtension(image.name).toUpperCase()}</td>
-                    <td style="text-align: right;">${formatFileSize(image.size)}</td>
+                    <td style="text-align:right;">${formatFileSize(image.size)}</td>
                 </tr>
             `).join('');
             
             if (uploadedImages.length > maxVisible) {
                 tableBody.innerHTML += `
                     <tr class="more-images-row">
-                        <td colspan="6" style="text-align: center; padding: 1rem; color: var(--text-muted);">
-                            +${uploadedImages.length - maxVisible}개 더 있음
-                        </td>
+                    <td colspan="5" style="text-align:center; padding:1rem; color:var(--text-muted);">
+                        +${uploadedImages.length - maxVisible}개 더 있음
+                    </td>
                     </tr>
                 `;
             }
@@ -2224,6 +2208,7 @@
                 await showImagePreview(image, index);
             }
             renderImageTable();
+            updateViewerNavVisibility();
         } 
 
         function loadVisibleThumbnails() {
@@ -2368,28 +2353,33 @@
 
         async function deleteSelectedImages() {
             if (selectedImages.length === 0) return;
-            
-            if (confirm(`선택된 ${selectedImages.length}개의 이미지를 삭제하시겠습니까?`)) {
-                uploadedImages = uploadedImages.filter(img => !selectedImages.includes(img.id));
+            if (!confirm(`선택된 ${selectedImages.length}개의 이미지를 삭제하시겠습니까?`)) return;
+
+            try {
+                const namesToDelete = uploadedImages
+                    .filter(img => selectedImages.includes(img.id))
+                    .map(img => img.name);
+
+                await Promise.all(
+                    namesToDelete.map(name =>
+                        fetch(`/api/projects/${selectedProjectId}/datasets/${selectedDatasetId}/images/${encodeURIComponent(name)}`, {
+                            method: 'DELETE'
+                        })
+                    )
+                );
+
+                await refreshImageList();
                 selectedImages = [];
-                
-                uploadedImages.forEach((img, index) => {
-                    img.order = index + 1;
-                });
-                
-                await saveCurrentDatasets(); // 이제 오류 없음
+                currentPreviewIndex = -1;
                 renderImageTable();
                 updateImageCount();
-                renderDatasets();
                 updateSelectionControls();
                 updateSelectAllCheckbox();
-                
-                if (currentPreviewIndex >= uploadedImages.length) {
-                    currentPreviewIndex = -1;
-                    showEmptyPreview();
-                } else if (currentPreviewIndex !== -1 && uploadedImages[currentPreviewIndex]) {
-                    showImagePreview(uploadedImages[currentPreviewIndex], currentPreviewIndex);
-                }
+                showEmptyPreview();
+                renderDatasets(); // (데이터셋 표에 이미지 수/용량 표시한다면)
+            } catch (e) {
+                console.error('이미지 삭제 오류:', e);
+                alert('이미지 삭제 중 오류가 발생했습니다.');
             }
         }
 
@@ -2440,11 +2430,8 @@
                     imageOffsetY = 0;
 
                     previewImage.onload = function() {
-                        console.log('이미지 로드 완료:', this.naturalWidth, 'x', this.naturalHeight);
-                        this.style.width = this.naturalWidth + 'px';
-                        this.style.height = this.naturalHeight + 'px';
-                        updateImageTransform();
                         document.getElementById('infoResolution').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
+                        fitToViewerCenter(); // ← 자동 센터 Fit
                     };
                     
                     previewImage.onerror = function() {
@@ -2477,6 +2464,26 @@
             }
         }
 
+        function updateViewerNavVisibility() {
+            const prevBtn = document.getElementById('viewerPrev');
+            const nextBtn = document.getElementById('viewerNext');
+            const hasImage = uploadedImages && uploadedImages.length > 0 && currentPreviewIndex >= 0;
+            if (prevBtn) prevBtn.style.display = hasImage ? 'flex' : 'none';
+            if (nextBtn) nextBtn.style.display = hasImage ? 'flex' : 'none';
+        }
+
+        function prevImage() {
+            if (!uploadedImages.length) return;
+            currentPreviewIndex = (currentPreviewIndex - 1 + uploadedImages.length) % uploadedImages.length;
+            selectImage(currentPreviewIndex);
+        }
+
+        function nextImage() {
+            if (!uploadedImages.length) return;
+            currentPreviewIndex = (currentPreviewIndex + 1) % uploadedImages.length;
+            selectImage(currentPreviewIndex);
+        }
+
         function showEmptyPreview() {
             const previewImage = document.getElementById('previewImage');
             const imageInfo = document.getElementById('imageInfo');
@@ -2487,6 +2494,8 @@
             previewImage.style.display = 'none';
             imageInfo.style.display = 'none';
             emptyPreview.style.display = 'flex';
+
+            updateViewerNavVisibility();
         }
 
         // 줌 및 이미지 조작 기능
@@ -2506,25 +2515,15 @@
             zoomAtPoint(centerX, centerY, 0.8);
         }
 
-        function resetZoom() {
-            currentZoom = 1;
-            imageOffsetX = 0;
-            imageOffsetY = 0;
-            updateImageTransform();
-        }
-
-        function fitImage() {
-            currentZoom = 1;
-            imageOffsetX = 0;
-            imageOffsetY = 0;
-            updateImageTransform();
-        }
+        function resetZoom() { fitToViewerCenter(); }
+        function fitImage()  { fitToViewerCenter(); }
 
         function updateImageTransform() {
-            const previewImage = document.getElementById('previewImage');
-            if (previewImage) {
-                previewImage.style.transform = `scale(${currentZoom}) translate(${imageOffsetX}px, ${imageOffsetY}px)`;
-            }
+            const img = document.getElementById('previewImage');
+            if(!img) return;
+            // 이미지 절대 중앙 기준 + 오프셋 + 스케일
+            img.style.transform =
+                `translate(calc(-50% + ${imageOffsetX}px), calc(-50% + ${imageOffsetY}px)) scale(${currentZoom})`;
         }
 
         // 유틸리티 함수
@@ -2558,66 +2557,87 @@
         }
 
         function initializeImageViewer() {
-            const previewImage = document.getElementById('previewImage');
-            const imagePreview = document.getElementById('imagePreview');
-            
-            // 마우스 휠 줌
-            imagePreview.addEventListener('wheel', (e) => {
-                const previewImage = document.getElementById('previewImage');
-                const emptyPreview = document.getElementById('emptyPreview');
-                
-                // 이미지가 표시되고 있을 때만 줌 기능 사용
-            if (previewImage.style.display === 'block' && emptyPreview.style.display === 'none') {
-                    isDragging = true;
-                    
-                    // 마우스 커서 위치로 정확히 설정
-                    const rect = imagePreview.getBoundingClientRect();
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    startOffsetX = imageOffsetX;
-                    startOffsetY = imageOffsetY;
-                    
-                    imagePreview.style.cursor = 'grabbing';
-                    e.preventDefault();
-                }
-            });
-            
-            // 마우스 드래그
-            let startX, startY, startOffsetX, startOffsetY;
+            // 1) 필요한 DOM을 "명시적으로" 조회
+            const container      = document.getElementById('previewContainer');  // 캔버스 영역
+            const imagePreview   = document.getElementById('imagePreview');      // 캔버스 + 정보 전체
+            const previewImage   = document.getElementById('previewImage');      // <img>
+            const zoomToolbar    = document.querySelector('.zoom-controls');     // 툴바(있으면)
+            const infoBox        = document.getElementById('imageInfo');         // 정보 영역(있으면)
+
+            // 2) 누락 시 조용히 종료 (초기 템플릿 상태에서 에러 안 나게)
+            if (!container || !imagePreview || !previewImage) return;
+
+            // 3) 휠 줌 (커서 기준)
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const factor = e.deltaY < 0 ? 1.1 : 0.9;
+                zoomAtPoint(e.clientX, e.clientY, factor);
+            }, { passive: false });
+
+            // 4) 드래그(그랩) — 캔버스에서만 시작, 데드존 + rAF로 부드럽게
+            let pointerDown = false;
+            let dragging = false;
+            let startX = 0, startY = 0;
+            let baseX = 0, baseY = 0;
+            let nextX = 0, nextY = 0;
+            let raf = null;
+            const DEADZONE = 4;
+
+            function applyTransformRaf() {
+                raf = null;
+                imageOffsetX = nextX;
+                imageOffsetY = nextY;
+                updateImageTransform();
+            }
 
             imagePreview.addEventListener('mousedown', (e) => {
-                isDragging = true;
+                // 툴바/우클릭 무시
+                if (e.button !== 0) return;
+                if (zoomToolbar && zoomToolbar.contains(e.target)) return;
+                pointerDown = true;
+                dragging = false;
                 startX = e.clientX;
                 startY = e.clientY;
-                startOffsetX = imageOffsetX;
-                startOffsetY = imageOffsetY;
-                imagePreview.style.cursor = 'grabbing';
+                baseX = imageOffsetX;
+                baseY = imageOffsetY;
+                imagePreview.classList.add('dragging'); // CSS로 커서 변경
                 e.preventDefault();
             });
 
             document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    // 드래그 거리 계산 (줌 레벨 고려)
-                    const deltaX = (e.clientX - startX) / currentZoom;
-                    const deltaY = (e.clientY - startY) / currentZoom;
-                    
-                    imageOffsetX = startOffsetX + deltaX;
-                    imageOffsetY = startOffsetY + deltaY;
-                    updateImageTransform();
+                if (!pointerDown) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (!dragging) {
+                if (Math.abs(dx) < DEADZONE && Math.abs(dy) < DEADZONE) return; // 데드존
+                dragging = true;
                 }
+
+                nextX = baseX + dx / currentZoom;
+                nextY = baseY + dy / currentZoom;
+                if (!raf) raf = requestAnimationFrame(applyTransformRaf);
             });
 
             document.addEventListener('mouseup', () => {
-                isDragging = false;
-                imagePreview.style.cursor = 'grab';
+                if (!pointerDown) return;
+                pointerDown = false;
+                if (dragging) {
+                dragging = false;
+                imagePreview.classList.remove('dragging');
+                }
             });
-            
-            // 우클릭 컨텍스트 메뉴
+
+            // 5) 우클릭 메뉴는 컨테이너에서만
             imagePreview.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 showContextMenu(e.clientX, e.clientY);
             });
-        }
+
+            // 6) 이미지 자체 드래그/선택 방지
+            previewImage.setAttribute('draggable', 'false');
+            previewImage.style.userSelect = 'none';
+            }
 
         // 컨텍스트 메뉴
         function showContextMenu(x, y) {
@@ -2661,6 +2681,26 @@
                 toggleAllIcon.className = 'fas fa-square';
                 toggleAllText.textContent = '전체 선택';
             }
+        }
+
+        function fitToViewerCenter(){
+            const img = document.getElementById('previewImage');
+            const box = document.getElementById('previewContainer');
+            if(!img || !img.src || !box) return;
+
+            const iw = img.naturalWidth, ih = img.naturalHeight;
+            const rect = box.getBoundingClientRect();
+            const vw = rect.width, vh = rect.height;
+
+            // 컨테이너에 맞춤(contain) + 원본 1배를 넘지 않음
+            const scaleToFit = Math.min(vw/iw, vh/ih);
+            currentZoom = Math.min(1, scaleToFit);
+
+            // 절대 중앙 배치 → 오프셋 0
+            imageOffsetX = 0;
+            imageOffsetY = 0;
+
+            updateImageTransform();
         }
 
         function zoomAtPoint(mouseX, mouseY, factor) {
@@ -2791,6 +2831,7 @@
                 uploaded: true
                 }));
 
+                await loadDatasets(selectedProjectId);
                 renderImageTable();
                 updateImageCount(); // 기존 카운터 UI 유지 (서버 값 쓰고 싶으면 아래 주석 사용)
                 // updateImageCountUI(data.imageCount, data.totalSize);
@@ -2798,7 +2839,7 @@
                 // 미리보기 갱신(첫 이미지 선택)
                 currentPreviewIndex = uploadedImages.length ? 0 : -1;
                 if (currentPreviewIndex >= 0) selectImage(currentPreviewIndex);
-                else showEmptyPreview();
+                else showEmptyPreview();                
 
             } catch (err) {
                 console.error('업로드 오류:', err);
@@ -2820,6 +2861,7 @@
                 order: idx + 1,
                 uploaded: true
                 }));
+                
                 renderImageTable();
                 updateImageCount();
             } catch (e) {

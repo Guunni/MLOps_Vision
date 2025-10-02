@@ -38,7 +38,17 @@ from model_manager import PatchCoreModelManager
 # 템플릿 (정적 HTML 렌더링)
 from fastapi.templating import Jinja2Templates
 
-app = FastAPI()
+
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# FastAPI 앱 생성
+app = FastAPI(
+    title="MLOps Vision Platform",
+    description="Vision 검사 MLOps 통합 플랫폼",
+    version="1.0.0"
+)
 
 DB_PATH = "mlops_vision.db"
 
@@ -72,6 +82,7 @@ def to_camel_case(row: dict) -> dict:
 def recalc_dataset_stats(conn, project_id: str, dataset_id: str):
     """폴더 기준으로 image_count/total_size 재계산 후 DB 반영"""
     ds_dir = BASE_DATA_PATH / project_id / dataset_id
+    ds_dir.mkdir(parents=True, exist_ok=True)
     count = 0
     total = 0
     if ds_dir.exists():
@@ -89,16 +100,124 @@ def recalc_dataset_stats(conn, project_id: str, dataset_id: str):
     conn.commit()
     return count, total
 
-# 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# 이미지 목록 조회 (통일된 v2)
+from typing import List  # 파일 상단에 이미 있다면 중복 import 무시
 
-# FastAPI 앱 생성
-app = FastAPI(
-    title="MLOps Vision Platform",
-    description="Vision 검사 MLOps 통합 플랫폼",
-    version="1.0.0"
-)
+@app.get("/api/projects/{project_id}/datasets/{dataset_id}/images")
+async def list_images_v2(project_id: str, dataset_id: str):
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+
+        # 데이터셋 존재 확인
+        cur.execute(
+            "SELECT 1 FROM project_datasets WHERE id=? AND project_id=?",
+            (dataset_id, project_id),
+        )
+        row = cur.fetchone()
+
+        ds_dir = BASE_DATA_PATH / project_id / dataset_id
+
+        # 🔥 디버깅 로그 추가
+        print("=== [DEBUG] list_images_v2 ===")
+        print(" project_id:", project_id)
+        print(" dataset_id:", dataset_id)
+        print(" DB row exists?:", bool(row))
+        print(" ds_dir path:", ds_dir)
+        print(" ds_dir.exists():", ds_dir.exists())
+        print("================================")
+
+        if not row:
+            if ds_dir.exists():
+                cur.execute(
+                    "INSERT INTO project_datasets (id, project_id, name, path, type) VALUES (?, ?, ?, ?, ?)",
+                    (dataset_id, project_id, dataset_id, str(ds_dir), "classify"),
+                )
+                conn.commit()
+            else:
+                conn.close()
+                raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다")
+
+        if not ds_dir.exists():
+            conn.close()
+            raise HTTPException(status_code=404, detail="데이터셋 디렉토리를 찾을 수 없습니다")
+
+        images = []
+        for file_path in ds_dir.glob("*.*"):
+            if file_path.suffix.lower() in [".jpg", ".jpeg", ".png", ".bmp", ".gif"]:
+                stat = file_path.stat()
+                images.append({
+                    "name": file_path.name,
+                    "size": stat.st_size,
+                    "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                })
+
+        conn.close()
+        return {"images": images}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("list_images_v2 error:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 이미지 업로드
+@app.post("/api/projects/{project_id}/datasets/{dataset_id}/images")
+async def upload_images_v2(project_id: str, dataset_id: str, files: List[UploadFile] = File(...)):
+    conn = None
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+
+        ds_dir = BASE_DATA_PATH / project_id / dataset_id
+        ds_dir.mkdir(parents=True, exist_ok=True)
+
+        # 데이터셋 존재 확인 (없으면 폴더 기준으로 자동 등록) - path 반드시 포함
+        cur.execute("SELECT 1 FROM project_datasets WHERE id=? AND project_id=?", (dataset_id, project_id))
+        if not cur.fetchone():
+            cur.execute("""
+                INSERT INTO project_datasets
+                    (id, project_id, name, path, image_count, created_at, type, description, total_size, updated_at)
+                VALUES
+                    (?,  ?,          ?,    ?,    0,           CURRENT_TIMESTAMP, ?,    ?,           0,          CURRENT_TIMESTAMP)
+            """, (dataset_id, project_id, dataset_id, str(ds_dir), "classify", ""))
+            conn.commit()
+
+        # 파일 저장
+        for file in files:
+            dst = ds_dir / file.filename
+            with open(dst, "wb") as f:
+                shutil.copyfileobj(file.file, f)
+
+        # 통계 갱신
+        count, total = recalc_dataset_stats(conn, project_id, dataset_id)
+
+        # 업로드 후 최신 이미지 목록 생성 (프론트가 기대하는 구조)
+        images = []
+        for file_path in ds_dir.glob("*.*"):
+            if file_path.suffix.lower() in [".jpg", ".jpeg", ".png", ".bmp", ".gif"]:
+                st = file_path.stat()
+                images.append({
+                    "name": file_path.name,
+                    "size": st.st_size,
+                    "created_at": datetime.fromtimestamp(st.st_ctime).isoformat(),
+                    "updated_at": datetime.fromtimestamp(st.st_mtime).isoformat(),
+                })
+
+        conn.commit()
+        return {"success": True, "images": images, "imageCount": count, "totalSize": total}
+
+    except HTTPException:
+        if conn: conn.close()
+        raise
+    except Exception as e:
+        if conn: conn.close()
+        logger.error(f"이미지 업로드 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"업로드 실패: {str(e)}")
+    finally:
+        if conn:
+            conn.close()
 
 # Static 파일과 템플릿 설정
 app.mount("/static", StaticFiles(directory="../static"), name="static")
@@ -109,7 +228,6 @@ patchcore_manager = PatchCoreManager()
 dataset_manager = DatasetManager()
 trainer = PatchCoreTrainer()
 model_manager = PatchCoreModelManager()
-trainer = PatchCoreTrainer()
 BASE_DATA_PATH = Path(__file__).resolve().parent / "data" / "processed"
 
 def init_database():
@@ -228,6 +346,7 @@ class TrainingConfigModel(BaseModel):
     epochs: int = 10
     train_ratio: float = 0.7
     val_ratio: float = 0.2
+    test_ratio: float = 0.1
 
 class SystemStatusResponse(BaseModel):
     """시스템 상태 응답 모델"""
@@ -1074,13 +1193,23 @@ async def delete_image_v2(project_id: str, dataset_id: str, filename: str):
         conn.row_factory = dict_factory
         cur = conn.cursor()
 
-        # 데이터셋 존재 확인
+        ds_dir = BASE_DATA_PATH / project_id / dataset_id
+        ds_dir.mkdir(parents=True, exist_ok=True)
+
+        # ✅ 데이터셋 존재 확인 → 없으면 폴더가 있을 때 자동 등록
         cur.execute("SELECT 1 FROM project_datasets WHERE id=? AND project_id=?", (dataset_id, project_id))
         if not cur.fetchone():
-            conn.close()
-            raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다")
+            if ds_dir.exists():
+                cur.execute("""
+                    INSERT INTO project_datasets (id, project_id, name, type, created_at, updated_at, image_count, total_size, description)
+                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, ?)
+                """, (dataset_id, project_id, dataset_id, "classify", ""))
+                conn.commit()
+            else:
+                conn.close()
+                raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다")
 
-        file_path = BASE_DATA_PATH / project_id / dataset_id / filename
+        file_path = ds_dir / filename
         if not file_path.exists():
             conn.close()
             raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다")
@@ -1092,10 +1221,13 @@ async def delete_image_v2(project_id: str, dataset_id: str, filename: str):
             conn.close()
             raise HTTPException(status_code=500, detail=f"파일 삭제 실패: {fe}")
 
-        # 통계 재계산
+        # 통계 갱신
         count, total = recalc_dataset_stats(conn, project_id, dataset_id)
+        conn.commit()
         conn.close()
+
         return {"success": True, "imageCount": count, "totalSize": total}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1203,9 +1335,17 @@ async def start_training(config: TrainingConfigModel):
             raise HTTPException(status_code=400, detail="이미 학습이 진행 중입니다")
         
         # 데이터셋 타입에 따른 학습 분기
-        dataset_type = dataset_info.get("type", "anomaly")  # 기본값 anomaly
+        raw_type = dataset_info.get("type", "anomaly")
+        dataset_type = "anomaly" if raw_type == "anomal" else raw_type
+                
+        logger.info(
+            f"Start training: ds={config.dataset_name} raw_type={raw_type} -> use={dataset_type} "
+            f"lr={config.learning_rate} bs={config.batch_size} epochs={config.epochs} "
+            f"split=({config.train_ratio}/{config.val_ratio}/{config.test_ratio}) "
+            f"training_type={config.training_type}"
+        )
         
-        if dataset_type == "anomal":  # Anomaly Detection
+        if dataset_type == "anomaly":  # Anomaly Detection
             # PatchCore 설정으로 학습
             patchcore_config = PatchCoreConfig(
                 backbone=config.backbone,

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -417,7 +418,7 @@
             color: var(--text-secondary);
             margin-bottom: 0.75rem;
             font-weight: 500;
-        }      
+        }
 
         .dataset-name {
             font-size: 0.75rem;
@@ -449,7 +450,8 @@
             padding: 0.75rem;
             border-bottom: 1px solid var(--border-color);
             align-items: center;
-            cursor: pointer; /* 커서 변경 */
+            cursor: pointer;
+            /* 커서 변경 */
             transition: background-color 0.2s ease;
         }
 
@@ -509,7 +511,7 @@
             font-size: 0.75rem;
             color: var(--text-muted);
             border: 1px dashed var(--border-color);
-        }        
+        }
 
         .project-meta {
             display: flex;
@@ -527,13 +529,13 @@
         }
 
         .project-actions .btn {
-        transition: all 0.2s ease;
+            transition: all 0.2s ease;
         }
 
         .project-actions .btn:hover,
         .section-title .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         }
 
         .empty-state {
@@ -662,15 +664,15 @@
             .sidebar {
                 transform: translateX(-100%);
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .content-header {
                 padding: 1rem;
             }
-            
+
             .content-body {
                 padding: 1rem;
             }
@@ -681,6 +683,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <!-- 사이드바 네비게이션 -->
@@ -688,26 +691,26 @@
             <div class="sidebar-header">
                 <h2>MLOps Vision</h2>
             </div>
-            
+
             <ul class="nav-menu">
                 <li><a href="/dashboard" class="nav-link">
-                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
-                </a></li>
+                        <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
+                    </a></li>
                 <li><a href="/ui/projects" class="nav-link active">
-                    <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트</span>
-                </a></li>
+                        <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트</span>
+                    </a></li>
                 <li><a href="/ui/datasets" class="nav-link">
-                    <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
-                </a></li>
+                        <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
+                    </a></li>
                 <li><a href="/ui/training" class="nav-link">
-                    <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
-                </a></li>
+                        <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
+                    </a></li>
                 <li><a href="/ui/models" class="nav-link">
-                    <i class="fas fa-chart-bar"></i> <span class="nav-text">성능 지표</span>
-                </a></li>
+                        <i class="fas fa-chart-bar"></i> <span class="nav-text">성능 지표</span>
+                    </a></li>
                 <li><a href="/ui/monitoring" class="nav-link">
-                    <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
-                </a></li>
+                        <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
+                    </a></li>
             </ul>
         </nav>
 
@@ -735,16 +738,23 @@
                         <h2 class="section-title">
                             <i class="fas fa-folder-open"></i>
                             프로젝트 목록
-                            <span style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary); font-weight: normal;" id="projectCount">총 0개</span>
+                            <span
+                                style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary); font-weight: normal;"
+                                id="projectCount">총 0개</span>
                             <button class="btn btn-success" onclick="openProjectModal()" style="margin-left: 1rem;">
                                 <i class="fas fa-plus"></i> 새 프로젝트
                             </button>
-                            <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()" style="margin-left: 1rem;">
+                            <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()"
+                                style="margin-left: 1rem;">
                                 <i class="fas fa-upload"></i> 가져오기
                             </button>
-                            <input type="file" id="importFileInput" style="display:none;" accept="application/json" onchange="importProjects(event)">
+                            <input type="file" id="importFileInput" style="display:none;" accept=".zip"
+                                onchange="importProjects(event)">
+                            </button>
+                            <input type="file" id="importFileInput" style="display:none;" accept="application/json"
+                                onchange="importProjects(event)">
                         </h2>
-                        
+
                         <div class="projects-grid" id="projectsGrid">
                             <div class="empty-state" id="emptyState">
                                 <div class="empty-icon">
@@ -777,7 +787,8 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">설명</label>
-                    <textarea id="projectDescription" class="form-input" rows="3" placeholder="프로젝트 설명을 입력하세요"></textarea>
+                    <textarea id="projectDescription" class="form-input" rows="3"
+                        placeholder="프로젝트 설명을 입력하세요"></textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">상태</label>
@@ -798,32 +809,32 @@
     <div class="modal" id="exportModal">
         <div class="modal-content">
             <div class="modal-header">
-            <h3 class="modal-title">프로젝트 내보내기</h3>
-            <button class="close-btn" onclick="closeExportModal()">&times;</button>
+                <h3 class="modal-title">프로젝트 내보내기</h3>
+                <button class="close-btn" onclick="closeExportModal()">&times;</button>
             </div>
             <div class="modal-body">
-            <p id="exportProjectName" style="margin-bottom:1rem;color:var(--text-secondary)"></p>
+                <p id="exportProjectName" style="margin-bottom:1rem;color:var(--text-secondary)"></p>
 
-            <div class="form-group">
-                <label class="form-label">모드 선택</label>
-                <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-                <button class="btn btn-outline" onclick="doExport('meta')">
-                    <i class="fas fa-database"></i> Meta Export
-                </button>
-                <button class="btn btn-primary" onclick="doExport('full')">
-                    <i class="fas fa-archive"></i> Full Export
-                </button>
+                <div class="form-group">
+                    <label class="form-label">모드 선택</label>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                        <button class="btn btn-outline" onclick="doExport('meta')">
+                            <i class="fas fa-database"></i> Meta Export
+                        </button>
+                        <button class="btn btn-primary" onclick="doExport('full')">
+                            <i class="fas fa-archive"></i> Full Export
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <small style="color:var(--text-muted);display:block;margin-top:.75rem">
-                Meta: 메타데이터만 (이미지 제외) · Full: 이미지 포함
-            </small>
+                <small style="color:var(--text-muted);display:block;margin-top:.75rem">
+                    Meta: 메타데이터만 (이미지 제외) · Full: 이미지 포함
+                </small>
 
-            <div id="exportStatus" style="margin-top:1rem;color:var(--text-secondary);display:none"></div>
+                <div id="exportStatus" style="margin-top:1rem;color:var(--text-secondary);display:none"></div>
             </div>
             <div class="modal-footer">
-            <button class="btn btn-outline" onclick="closeExportModal()">닫기</button>
+                <button class="btn btn-outline" onclick="closeExportModal()">닫기</button>
             </div>
         </div>
     </div>
@@ -857,9 +868,9 @@
             const projectsGrid = document.getElementById('projectsGrid');
             const emptyState = document.getElementById('emptyState');
             const projectCount = document.getElementById('projectCount');
-            
+
             projectCount.textContent = `총 ${projects.length}개`;
-            
+
             if (projects.length === 0) {
                 projectsGrid.innerHTML = `
                     <div class="empty-state">
@@ -875,13 +886,13 @@
                 `;
                 return;
             }
-            
+
             const statusLabels = {
                 'active': '활성',
                 'paused': '일시정지',
                 'completed': '완료'
             };
-            
+
             projectsGrid.innerHTML = projects.map(project => `
                 <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
                     onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
@@ -892,19 +903,19 @@
                         <div class="project-status-container">
                             <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
                             ${(() => {
-                                const dsCount =
-                                    (typeof project.datasetCount === 'number')
-                                        ? project.datasetCount
-                                        : (project.datasetList ? project.datasetList.length : (project.dataset_count || 0));
-                                const modelCount =
-                                    (typeof project.modelCount === 'number')
-                                        ? project.modelCount
-                                        : 0;
-                                return `
+                    const dsCount =
+                        (typeof project.datasetCount === 'number')
+                            ? project.datasetCount
+                            : (project.datasetList ? project.datasetList.length : (project.dataset_count || 0));
+                    const modelCount =
+                        (typeof project.modelCount === 'number')
+                            ? project.modelCount
+                            : 0;
+                    return `
                                     <span class="dataset-count">${dsCount.toLocaleString()}개 데이터셋</span>
                                     <span class="dataset-count">${modelCount.toLocaleString()}개 모델</span>
                                 `;
-                            })()}
+                })()}
                         </div>
                     </div>                    
                     <div class="project-description">${project.description || ''}</div>
@@ -918,21 +929,21 @@
                         <div class="datasets-label">데이터셋 목록:</div>
                         <div class="datasets-table">
                         ${(() => {
-                            const list = (project.datasetList || [])
-                            .slice()
-                            .sort((a,b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date)); // 오래된 순(ASC)
+                    const list = (project.datasetList || [])
+                        .slice()
+                        .sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date)); // 오래된 순(ASC)
 
-                            return list.length
-                            ? list.map(ds => `
+                    return list.length
+                        ? list.map(ds => `
                                 <div class="dataset-row"
-                                    onclick="openDatasetDirectly(event, '${project.id}', '${ds.id}', '${(ds.name||'').replace(/'/g, '\\\'')}')">
+                                    onclick="openDatasetDirectly(event, '${project.id}', '${ds.id}', '${(ds.name || '').replace(/'/g, '\\\'')}')">
                                     <span class="dataset-name">${ds.name}</span>
                                     <span class="dataset-type">${(ds.type || 'classify').toUpperCase()}</span>
                                     <span class="dataset-date">${formatDate(ds.createdAt || ds.date)}</span>
                                 </div>
                                 `).join('')
-                            : `<div class="dataset-row">등록된 데이터셋이 없습니다</div>`;
-                        })()}
+                        : `<div class="dataset-row">등록된 데이터셋이 없습니다</div>`;
+                })()}
                         </div>
                     </div>
                     <div class="project-actions" onclick="event.stopPropagation();">
@@ -960,92 +971,81 @@
         let exportProjectId = null;
 
         function openExportModal(projectId) {
-        exportProjectId = projectId;
-        const p = projects.find(pr => pr.id === projectId);
-        const nameEl = document.getElementById('exportProjectName');
-        if (nameEl) nameEl.textContent = p ? `프로젝트: ${p.name}` : `프로젝트 ID: ${projectId}`;
-        const status = document.getElementById('exportStatus');
-        if (status) { status.style.display = 'none'; status.textContent = ''; }
-        document.getElementById('exportModal').classList.add('show');
+            exportProjectId = projectId;
+            const p = projects.find(pr => pr.id === projectId);
+            const nameEl = document.getElementById('exportProjectName');
+            if (nameEl) nameEl.textContent = p ? `프로젝트: ${p.name}` : `프로젝트 ID: ${projectId}`;
+            const status = document.getElementById('exportStatus');
+            if (status) { status.style.display = 'none'; status.textContent = ''; }
+            document.getElementById('exportModal').classList.add('show');
         }
 
         function closeExportModal() {
-        document.getElementById('exportModal').classList.remove('show');
-        exportProjectId = null;
+            document.getElementById('exportModal').classList.remove('show');
+            exportProjectId = null;
         }
 
         function sanitizeFilename(name) {
-        return String(name).replace(/[\\/:*?"<>|]/g, '_').trim() || 'project';
+            return String(name).replace(/[\\/:*?"<>|]/g, '_').trim() || 'project';
         }
 
         async function doExport(mode) {
-        if (!exportProjectId) return;
-        const status = document.getElementById('exportStatus');
+            if (!exportProjectId) return;
+            const status = document.getElementById('exportStatus');
 
-        try {
-            if (status) { status.style.display = 'block'; status.textContent = '내보내기 준비 중...'; }
+            try {
+                if (status) { status.style.display = 'block'; status.textContent = '내보내기 준비 중...'; }
 
-            // 1차: 모드 지원 엔드포인트 시도
-            let res = await fetch(`/api/projects/${exportProjectId}/export?mode=${encodeURIComponent(mode)}`);
-            // 2차: 레거시 엔드포인트 폴백
-            if (!res.ok) {
-            res = await fetch(`/api/projects/${exportProjectId}/export`);
-            if (!res.ok) {
-                let msg = `HTTP ${res.status}`;
-                try { const j = await res.json(); msg = j.detail || j.error || msg; } catch (_) {}
-                throw new Error(msg);
+                // 1차: 모드 지원 엔드포인트 시도
+                let res = await fetch(`/api/projects/${exportProjectId}/export?mode=${encodeURIComponent(mode)}`);
+                // 2차: 레거시 엔드포인트 폴백
+                if (!res.ok) {
+                    res = await fetch(`/api/projects/${exportProjectId}/export`);
+                    if (!res.ok) {
+                        let msg = `HTTP ${res.status}`;
+                        try { const j = await res.json(); msg = j.detail || j.error || msg; } catch (_) { }
+                        throw new Error(msg);
+                    }
+                }
+
+                const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                const cd = res.headers.get('content-disposition') || '';
+                const blob = await res.blob();
+
+                const p = projects.find(pr => pr.id === exportProjectId);
+                const baseName = sanitizeFilename(p?.name || exportProjectId);
+                // zip이 기본, json도 지원
+                let ext = contentType.includes('application/json') ? '.json' : '.zip';
+
+                // 서버가 파일명을 내려주면 사용
+                let filename = '';
+                const cdMatch = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
+                if (cdMatch) {
+                    filename = decodeURIComponent(cdMatch[1] || cdMatch[2]);
+                } else {
+                    filename = `${baseName}_export_${mode}${ext}`;
+                }
+
+                const objUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = objUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(objUrl);
+
+                if (status) { status.textContent = '다운로드가 시작되었습니다.'; }
+            } catch (err) {
+                console.error('내보내기 오류:', err);
+                if (status) { status.style.display = 'block'; status.textContent = `오류: ${err.message}`; }
+                alert('내보내기에 실패했습니다: ' + (err.message || '알 수 없는 오류'));
             }
-            }
-
-            const contentType = (res.headers.get('content-type') || '').toLowerCase();
-            const cd = res.headers.get('content-disposition') || '';
-            const blob = await res.blob();
-
-            const p = projects.find(pr => pr.id === exportProjectId);
-            const baseName = sanitizeFilename(p?.name || exportProjectId);
-            // zip이 기본, json도 지원
-            let ext = contentType.includes('application/json') ? '.json' : '.zip';
-
-            // 서버가 파일명을 내려주면 사용
-            let filename = '';
-            const cdMatch = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
-            if (cdMatch) {
-            filename = decodeURIComponent(cdMatch[1] || cdMatch[2]);
-            } else {
-            filename = `${baseName}_export_${mode}${ext}`;
-            }
-
-            const objUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = objUrl;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(objUrl);
-
-            if (status) { status.textContent = '다운로드가 시작되었습니다.'; }
-        } catch (err) {
-            console.error('내보내기 오류:', err);
-            if (status) { status.style.display = 'block'; status.textContent = `오류: ${err.message}`; }
-            alert('내보내기에 실패했습니다: ' + (err.message || '알 수 없는 오류'));
-        }
         }
 
         // (호환) 기존 코드가 exportProject(projectId)를 호출하면 모달을 띄우도록
         function exportProject(projectId) {
-        openExportModal(projectId);
-        }
-
-        function openDatasetDirectly(e, projectId, datasetId, datasetName) {
-            // 카드 자체의 클릭/더블클릭 핸들러가 동시에 타지 않도록
-            if (e && e.stopPropagation) e.stopPropagation();
-
-            const url = new URL('/ui/datasets', window.location.origin);
-            url.searchParams.set('project', projectId);
-            if (datasetId) url.searchParams.set('dataset', datasetId);
-            else if (datasetName) url.searchParams.set('datasetName', datasetName);
-            window.location.href = url.toString();
+            openExportModal(projectId);
         }
 
         function handleProjectClick(projectId, event) {
@@ -1059,8 +1059,8 @@
             } else if (event.detail === 2) {
                 openProject(projectId);
             }
-        }  
-        
+        }
+
         function openDatasetDirectly(a, b, c, d) {
             // 호환: openDatasetDirectly(projectId, datasetName) 과
             //       openDatasetDirectly(event, projectId, datasetId, datasetName) 모두 지원
@@ -1102,7 +1102,7 @@
         function editProject(projectId) {
             const project = projects.find(p => p.id === projectId);
             if (!project) return;
-            
+
             editingProjectId = projectId;
             document.getElementById('modalTitle').textContent = '프로젝트 편집';
             document.getElementById('saveBtn').textContent = '저장';
@@ -1197,7 +1197,7 @@
 
         // 검색
         function searchProjects(searchTerm) {
-            const filteredProjects = projects.filter(project => 
+            const filteredProjects = projects.filter(project =>
                 project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (project.description || '').toLowerCase().includes(searchTerm.toLowerCase())
             );
@@ -1208,9 +1208,9 @@
             const projectsGrid = document.getElementById('projectsGrid');
             const emptyState = document.getElementById('emptyState');
             const projectCount = document.getElementById('projectCount');
-            
+
             projectCount.textContent = `총 ${filteredProjects.length}개`;
-            
+
             if (filteredProjects.length === 0) {
                 projectsGrid.innerHTML = `
                     <div class="empty-state">
@@ -1223,13 +1223,13 @@
                 `;
                 return;
             }
-            
+
             const statusLabels = {
                 'active': '활성',
                 'paused': '일시정지',
                 'completed': '완료'
             };
-            
+
             projectsGrid.innerHTML = filteredProjects.map(project => `
                     <div class="project-card ${selectedProjectId === project.id ? 'selected' : ''}" 
                         onclick="handleProjectClick('${project.id}', event)" data-id="${project.id}">
@@ -1278,7 +1278,7 @@
         }
 
         // 프로젝트 내보내기
-        async function exportProject(projectId) {
+        async function exportProjectLegacy(projectId) {
             try {
                 const response = await fetch(`/api/projects/${projectId}/export`);
                 const data = await response.json();
@@ -1299,46 +1299,46 @@
         }
 
         // 프로젝트 가져오기
-        function importProjects(event) {
+        async function importProjects(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const importedProjects = JSON.parse(e.target.result);
-                    if (Array.isArray(importedProjects)) {
-                        for (const proj of importedProjects) {
-                            await fetch('/api/projects', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(proj)
-                            });
-                        }
-                        alert('프로젝트 가져오기 완료');
-                        loadProjects();
-                    }
-                } catch (error) {
-                    alert('잘못된 파일 형식입니다.');
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch('/api/projects/import', {
+                    method: 'POST',
+                    body: fd
+                });
+                const j = await res.json();
+                if (!res.ok || !j.success) {
+                    throw new Error(j.detail || j.error || '가져오기 실패');
                 }
-            };
-            reader.readAsText(file);
+                alert('프로젝트 가져오기 완료');
+                loadProjects();
+            } catch (err) {
+                console.error('가져오기 오류:', err);
+                alert('가져오기에 실패했습니다: ' + (err.message || '알 수 없는 오류'));
+            } finally {
+                // 같은 파일 다시 선택 가능하도록 reset
+                event.target.value = '';
+            }
         }
 
         // 페이지 초기화
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             loadProjects();
-            handleKeyboardEvents();            
+            handleKeyboardEvents();
         });
-            
+
         // 모달 외부 클릭 시 닫기
-        document.getElementById('projectModal').addEventListener('click', function(e) {
+        document.getElementById('projectModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 // 모달 내부의 input이나 textarea가 포커스되어 있으면 닫지 않음
                 const focusedElement = document.activeElement;
                 const modalContent = this.querySelector('.modal-content');
-                
-                if (!modalContent.contains(focusedElement) || 
+
+                if (!modalContent.contains(focusedElement) ||
                     (focusedElement.tagName !== 'INPUT' && focusedElement.tagName !== 'TEXTAREA')) {
                     closeProjectModal();
                 }
@@ -1346,4 +1346,5 @@
         });
     </script>
 </body>
+
 </html>

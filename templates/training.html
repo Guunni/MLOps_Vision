@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -336,7 +337,8 @@
             width: 18px;
             height: 18px;
             cursor: help;
-            flex-shrink: 0;  /* 크기 고정 */
+            flex-shrink: 0;
+            /* 크기 고정 */
         }
 
         /* 툴팁 스타일 개선 */
@@ -659,6 +661,7 @@
             .config-grid {
                 grid-template-columns: 1fr;
             }
+
             .data-split-grid {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
@@ -669,15 +672,15 @@
             .sidebar {
                 transform: translateX(-100%);
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .content-header {
                 padding: 1rem;
             }
-            
+
             .training-config,
             .training-status,
             .training-history {
@@ -691,6 +694,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <!-- 사이드바 네비게이션 -->
@@ -698,26 +702,26 @@
             <div class="sidebar-header">
                 <h2>MLOps Vision</h2>
             </div>
-            
+
             <ul class="nav-menu">
                 <li><a href="/dashboard" class="nav-link">
-                    <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
-                </a></li>
+                        <i class="fas fa-tachometer-alt"></i> <span class="nav-text">대시보드</span>
+                    </a></li>
                 <li><a href="/ui/projects" class="nav-link">
-                    <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트</span>
-                </a></li>
+                        <i class="fas fa-folder-open"></i> <span class="nav-text">프로젝트</span>
+                    </a></li>
                 <li><a href="/ui/datasets" class="nav-link">
-                    <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
-                </a></li>
+                        <i class="fas fa-database"></i> <span class="nav-text">데이터셋</span>
+                    </a></li>
                 <li><a href="/ui/training" class="nav-link active">
-                    <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
-                </a></li>
+                        <i class="fas fa-brain"></i> <span class="nav-text">모델 학습</span>
+                    </a></li>
                 <li><a href="/ui/models" class="nav-link">
-                    <i class="fas fa-chart-bar"></i> <span class="nav-text">성능 지표</span>
-                </a></li>
+                        <i class="fas fa-chart-bar"></i> <span class="nav-text">성능 지표</span>
+                    </a></li>
                 <li><a href="/ui/monitoring" class="nav-link">
-                    <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
-                </a></li>
+                        <i class="fas fa-chart-line"></i> <span class="nav-text">모니터링</span>
+                    </a></li>
             </ul>
         </nav>
 
@@ -823,7 +827,7 @@
                                         • 새 학습: 처음부터 완전히 새로 학습<br>
                                         • 전이 학습: 기존 모델을 새 데이터에 맞게 조정<br>
                                         • 재학습: 기존 모델을 완전히 다시 학습<br>
-                                        처음에는 '새 학습'을 추천합니다.
+                                        ※처음에는 '새 학습'을 추천합니다.
                                     </div>
                                 </i>
                             </label>
@@ -870,8 +874,10 @@
                                 </i>
                             </label>
                             <div class="range-input-group">
-                                <input type="range" class="form-range" id="learningRateSlider" min="0.0001" max="0.1" step="0.0001" value="0.001">
-                                <input type="number" class="range-input" id="learningRateInput" min="0.0001" max="0.1" step="0.0001" value="0.001">
+                                <input type="range" class="form-range" id="learningRateSlider" min="0.0001" max="0.1"
+                                    step="0.0001" value="0.001">
+                                <input type="number" class="range-input" id="learningRateInput" min="0.0001" max="0.1"
+                                    step="0.0001" value="0.001">
                             </div>
                         </div>
 
@@ -908,8 +914,10 @@
                                 </i>
                             </label>
                             <div class="range-input-group">
-                                <input type="range" class="form-range" id="samplingRatioSlider" min="0.1" max="1.0" step="0.1" value="0.3">
-                                <input type="number" class="range-input" id="samplingRatioInput" min="0.1" max="1.0" step="0.1" value="0.3">
+                                <input type="range" class="form-range" id="samplingRatioSlider" min="0.1" max="1.0"
+                                    step="0.1" value="0.3">
+                                <input type="number" class="range-input" id="samplingRatioInput" min="0.1" max="1.0"
+                                    step="0.1" value="0.3">
                             </div>
                         </div>
 
@@ -922,7 +930,8 @@
                                         (배치 크기와는 다릅니다)<br>
                                         • 작은 크기: 빠른 학습, 낮은 정확도<br>
                                         • 큰 크기: 느린 학습, 높은 정확도<br>
-                                        256x256이 성능과 속도의 균형점입니다.
+                                        256x256이 성능과 속도의 균형점입니다.<br>
+                                        권장: <b>이미지 크기 ≤ 리사이즈</b>
                                     </div>
                                 </i>
                             </label>
@@ -930,7 +939,34 @@
                                 <option value="224">224x224</option>
                                 <option value="256" selected>256x256</option>
                                 <option value="320">320x320</option>
+                                <option value="384">384x384</option>
+                                <option value="448">448x448</option>
                                 <option value="512">512x512</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                리사이즈(전처리)
+                                <i class="fas fa-question-circle help-icon">
+                                    <div class="tooltip">
+                                        전처리에서 이미지의 해상도를 줄이는 값입니다.<br>
+                                        일반적으로 원본을 먼저 리사이즈 후<br>
+                                        이미지 크기로 학습에 맞춰 사용합니다.<br>
+                                        권장: <b>이미지 크기 ≤ 리사이즈</b>
+                                    </div>
+                                </i>
+                            </label>
+                            <select class="form-select" id="resizeSize">
+                                <option value="128">128x128</option>
+                                <option value="256">256x256</option>
+                                <option value="320" selected>320x320</option>
+                                <option value="384">384x384</option>
+                                <option value="448">448x448</option>
+                                <option value="512">512x512</option>
+                                <option value="640">640x640</option>
+                                <option value="1024">1024x1024</option>
+                                <option value="2048">2048x2048</option>
                             </select>
                         </div>
                     </div>
@@ -947,7 +983,7 @@
                                 • 학습용: 모델을 훈련시키는 데이터<br>
                                 • 검증용: 학습 중 성능을 확인하는 데이터<br>
                                 • 테스트용: 최종 성능을 평가하는 데이터<br>
-                                합계는 항상 100%가 됩니다.
+                                합계는 항상 100% 가 됩니다.
                             </div>
                         </i>
                     </h3>
@@ -955,10 +991,10 @@
                         <div class="form-group">
                             <label class="form-label">학습 데이터</label>
                             <div class="range-input-group">
-                                <input type="range" class="form-range" id="trainRatioSlider" min="0.5" max="0.9" step="0.05" value="0.7
-                                <div class="range-input-group">
-                                <input type="range" class="form-range" id="trainRatioSlider" min="0.5" max="0.9" step="0.05" value="0.7">
-                                <input type="number" class="range-input" id="trainRatioInput" min="0.5" max="0.9" step="0.05" value="0.7">
+                                <input type="range" class="form-range" id="trainRatioSlider" min="50" max="90" step="1"
+                                    value="70">
+                                <input type="number" class="range-input" id="trainRatioInput" min="50" max="90" step="1"
+                                    value="70">
                             </div>
                             <div class="split-item">
                                 <div class="split-percentage" id="trainPercentage">70%</div>
@@ -968,8 +1004,10 @@
                         <div class="form-group">
                             <label class="form-label">검증 데이터</label>
                             <div class="range-input-group">
-                                <input type="range" class="form-range" id="valRatioSlider" min="0.1" max="0.4" step="0.05" value="0.2">
-                                <input type="number" class="range-input" id="valRatioInput" min="0.1" max="0.4" step="0.05" value="0.2">
+                                <input type="range" class="form-range" id="valRatioSlider" min="10" max="40" step="1"
+                                    value="20">
+                                <input type="number" class="range-input" id="valRatioInput" min="10" max="40" step="1"
+                                    value="20">
                             </div>
                             <div class="split-item">
                                 <div class="split-percentage" id="valPercentage">20%</div>
@@ -978,9 +1016,15 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">테스트 데이터</label>
-                            <div class="split-item" style="margin-top: 2rem;">
+                            <div class="range-input-group">
+                                <input type="range" class="form-range" id="testRatioSlider" min="0" max="40" step="1"
+                                    value="10">
+                                <input type="number" class="range-input" id="testRatioInput" min="0" max="40" step="1"
+                                    value="10">
+                            </div>
+                            <div class="split-item">
                                 <div class="split-percentage" id="testPercentage">10%</div>
-                                <div class="split-label">테스트 (자동 계산)</div>
+                                <div class="split-label">테스트</div>
                             </div>
                         </div>
                     </div>
@@ -988,10 +1032,12 @@
 
                 <!-- 학습 시작 버튼 -->
                 <div style="margin-top: 2rem; text-align: center;">
-                    <button class="btn btn-success" onclick="startTraining()" id="startBtn" style="padding: 1rem 2rem; font-size: 1rem;">
+                    <button class="btn btn-success" onclick="startTraining()" id="startBtn"
+                        style="padding: 1rem 2rem; font-size: 1rem;">
                         <i class="fas fa-play"></i> 학습 시작
                     </button>
-                    <button class="btn btn-danger" onclick="stopTraining()" id="stopBtn" style="padding: 1rem 2rem; font-size: 1rem; display: none;">
+                    <button class="btn btn-danger" onclick="stopTraining()" id="stopBtn"
+                        style="padding: 1rem 2rem; font-size: 1rem; display: none;">
                         <i class="fas fa-stop"></i> 학습 중단
                     </button>
                 </div>
@@ -1007,12 +1053,12 @@
                         </h3>
                         <span class="status-badge status-idle" id="statusBadge">대기중</span>
                     </div>
-                    
+
                     <div id="trainingInfo" style="display: none;">
                         <p><strong>모델:</strong> <span id="currentModel">-</span></p>
                         <p><strong>데이터셋:</strong> <span id="currentDataset">-</span></p>
                         <p><strong>시작 시간:</strong> <span id="startTime">-</span></p>
-                        
+
                         <div class="progress-section">
                             <div class="progress-bar">
                                 <div class="progress-fill" id="progressFill"></div>
@@ -1043,7 +1089,7 @@
                         <i class="fas fa-history"></i>
                         학습 기록
                     </h3>
-                    
+
                     <div id="historyList">
                         <div class="empty-state">
                             <div class="empty-icon">
@@ -1060,688 +1106,529 @@
 
     <script>
         let projects = [];
+        let datasets = [];
         let selectedProjectId = null;
-        let projectDatasets = [];
+        let selectedDatasetId = null;
 
-        class TrainingManager {
-        constructor() {
-            this.progressInterval = null;
-            this.isTraining = false;
+        const typeLabelMap = {
+            anomaly: 'Anomaly Detection',
+            classification: 'Classification',
+            segmentation: 'Segmentation',
+            detection: 'Object Detection'
+        };
+        const dsTypeToModelType = {
+            classify: 'classification',
+            obd: 'detection',
+            seg: 'segmentation',
+            anomal: 'anomaly'
+        };
+
+        function getURLParam(name) { return new URLSearchParams(location.search).get(name); }
+        function setURLParam(name, value) {
+            const url = new URL(location.href);
+            if (value === null || value === undefined || value === '') url.searchParams.delete(name);
+            else url.searchParams.set(name, value);
+            history.replaceState({}, '', url);
         }
-        
-        async startTraining(config) {
-            try {
-                const response = await fetch('/training/start', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(config)
+
+        /** =========================
+         *  헤더/브레드크럼
+         *  ========================= */
+        function renderBreadcrumb(projectName, datasetName, modelType) {
+            const bc = document.getElementById('breadcrumbNav');
+            const typeText = modelType ? ` / ${typeLabelMap[modelType] || modelType}` : '';
+            const projText = projectName ? `프로젝트(${projectName})` : '프로젝트';
+            const dsText = datasetName ? `데이터셋(${datasetName})` : '데이터셋';
+
+            bc.innerHTML = `
+            <a href="/dashboard" class="breadcrumb-item">대시보드</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="/ui/projects" class="breadcrumb-item">${projText}</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="/ui/datasets?project=${encodeURIComponent(selectedProjectId || '')}" class="breadcrumb-item">${dsText}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active">모델 학습${typeText}</span>
+        `;
+        }
+
+        /** =========================
+         *  서버 연동 (datasets.html과 동일한 규약)
+         *  ========================= */
+        async function fetchProjects() {
+            const res = await fetch('/api/projects');
+            if (!res.ok) throw new Error('프로젝트 불러오기 실패');
+            const list = await res.json();
+            // createdAt 기준 오래된 순
+            list.sort((a, b) => new Date(a.createdAt || a.created_at) - new Date(b.createdAt || b.created_at));
+            return list;
+        }
+
+        async function fetchProjectDatasets(projectId) {
+            const res = await fetch(`/api/projects/${projectId}/datasets`);
+            if (!res.ok) throw new Error('데이터셋 불러오기 실패');
+            return await res.json();
+        }
+
+        /** =========================
+         *  셀렉터 채우기/동기화
+         *  ========================= */
+        function fillProjectSelectors() {
+            const ids = ['projectSelector', 'trainingProjectSelect'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '<option value="">프로젝트를 선택하세요</option>';
+                projects.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id; opt.textContent = p.name;
+                    el.appendChild(opt);
                 });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    this.updateUIForTrainingStart(config, data.dataset_type);
-                    this.startProgressMonitoring();
-                    return {success: true, message: data.message};
-                } else {
-                    throw new Error(data.error || '학습 시작 실패');
-                }
-            } catch (error) {
-                return {success: false, error: error.message};
-            }
-        }
-        
-        async stopTraining() {
-            try {
-                const response = await fetch('/training/stop', {method: 'POST'});
-                const data = await response.json();
-                
-                if (data.success) {
-                    this.stopProgressMonitoring();
-                    this.updateUIForTrainingStop();
-                    return {success: true, message: '학습이 중단되었습니다'};
-                } else {
-                    throw new Error(data.error || '학습 중단 실패');
-                }
-            } catch (error) {
-                return {success: false, error: error.message};
-            }
-        }
-        
-        startProgressMonitoring() {
-            this.progressInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/training/progress');
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        this.updateProgress(data.progress || 0);
-                        
-                        if (!data.is_active && this.isTraining) {
-                            this.stopProgressMonitoring();
-                            this.updateUIForTrainingComplete();
-                            this.isTraining = false;
-                        }
-                    }
-                } catch (error) {
-                    console.error('진행률 조회 실패:', error);
-                }
-            }, 3000);
-        }
-        
-        stopProgressMonitoring() {
-            if (this.progressInterval) {
-                clearInterval(this.progressInterval);
-                this.progressInterval = null;
-            }
-        }
-        
-        updateUIForTrainingStart(config, datasetType) {
-            this.isTraining = true;
-            
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('stopBtn').style.display = 'inline-flex';
-            document.getElementById('statusBadge').textContent = '학습중';
-            document.getElementById('statusBadge').className = 'status-badge status-training';
-            document.getElementById('trainingInfo').style.display = 'block';
-            document.getElementById('idleState').style.display = 'none';
-            
-            document.getElementById('currentModel').textContent = `${config.backbone} (${datasetType})`;
-            document.getElementById('currentDataset').textContent = config.dataset_name;
-            document.getElementById('startTime').textContent = new Date().toLocaleString();
-        }
-        
-        updateProgress(progress) {
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressText').textContent = progress + '%';
-        }
-        
-        updateUIForTrainingStop() {
-            this.isTraining = false;
-            
-            document.getElementById('startBtn').style.display = 'inline-flex';
-            document.getElementById('stopBtn').style.display = 'none';
-            document.getElementById('statusBadge').textContent = '대기중';
-            document.getElementById('statusBadge').className = 'status-badge status-idle';
-            document.getElementById('trainingInfo').style.display = 'none';
-            document.getElementById('idleState').style.display = 'block';
-        }
-        
-        updateUIForTrainingComplete() {
-            this.updateUIForTrainingStop();
-            alert('학습이 완료되었습니다!');
-        }
-    }
-
-        // 프로젝트 목록 로드
-        function loadProjects() {
-            const savedProjects = localStorage.getItem('mlops_projects');
-            if (savedProjects) {
-                projects = JSON.parse(savedProjects);
-                updateProjectSelectors();
-            } else {
-                projects = [];
-            }
-        }
-
-        // 프로젝트 선택기 업데이트
-        function updateProjectSelectors() {
-            const selectors = ['projectSelector', 'trainingProjectSelect'];
-            
-            selectors.forEach(selectorId => {
-                const selector = document.getElementById(selectorId);
-                if (selector) {
-                    selector.innerHTML = '<option value="">프로젝트를 선택하세요</option>';
-                    
-                    projects.forEach(project => {
-                        const option = document.createElement('option');
-                        option.value = project.id;
-                        option.textContent = project.name;
-                        selector.appendChild(option);
-                    });
-                }
+                el.value = selectedProjectId || '';
             });
         }
 
-        function onTrainingProjectSelect(projectId) {
-            console.log('프로젝트 변경:', projectId);
-            
-            selectedProjectId = projectId;
-            
-            // *** URL에서 type 파라미터 제거 ***
-            const url = new URL(window.location);
-            if (projectId) {
-                url.searchParams.set('project', projectId);
-            } else {
-                url.searchParams.delete('project');
-            }
-            url.searchParams.delete('type'); // 타입 파라미터 삭제
-            url.searchParams.delete('dataset');
-            url.searchParams.delete('datasetName');
-            window.history.pushState({}, '', url);
-            
-            // 데이터셋 셀렉터들 초기화
-            const datasetSelect = document.getElementById('datasetSelect');
-            const headerDatasetSelect = document.getElementById('datasetSelectorHeader');
-            
-            datasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
-            headerDatasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
-            
-            const selectedProject = projects.find(p => p.id === projectId);
-            
-            if (selectedProject && projectId) {
-                // 브레드크럼 업데이트 (타입 없이)
-                const breadcrumb = document.getElementById('breadcrumbNav');
-                breadcrumb.innerHTML = `
-                    <a href="/dashboard" class="breadcrumb-item">대시보드</a>
-                    <span class="breadcrumb-separator">/</span>
-                    <a href="/ui/projects" class="breadcrumb-item">프로젝트(${selectedProject.name})</a>
-                    <span class="breadcrumb-separator">/</span>
-                    <span class="breadcrumb-item active">모델 학습</span>
-                `;
-                
-                // 헤더 데이터셋 셀렉터 표시
-                headerDatasetSelect.style.display = 'inline-block';
-                
-                // 데이터셋 로드
-                const savedData = localStorage.getItem(`datasets_${projectId}`);
-                if (savedData) {
-                    try {
-                        const datasets = JSON.parse(savedData);
-                        datasets.forEach(dataset => {
-                            const option1 = document.createElement('option');
-                            option1.value = dataset.name;
-                            option1.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
-                            datasetSelect.appendChild(option1);
-                            
-                            const option2 = document.createElement('option');
-                            option2.value = dataset.name;
-                            option2.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
-                            headerDatasetSelect.appendChild(option2);
-                        });
-                    } catch (e) {
-                        console.error('데이터셋 파싱 오류:', e);
-                    }
-                }
-            } else {
-                const breadcrumb = document.getElementById('breadcrumbNav');
-                breadcrumb.innerHTML = `
-                    <a href="/dashboard" class="breadcrumb-item">대시보드</a>
-                    <span class="breadcrumb-separator">/</span>
-                    <a href="/ui/projects" class="breadcrumb-item">프로젝트</a>
-                    <span class="breadcrumb-separator">/</span>
-                    <span class="breadcrumb-item active">모델 학습</span>
-                `;
-                headerDatasetSelect.style.display = 'none';
-            }
-        }
+        function fillDatasetSelectors() {
+            const header = document.getElementById('datasetSelectorHeader');
+            const basic = document.getElementById('datasetSelect');
+            const baseOpt = '<option value="">데이터셋을 선택하세요</option>';
+            header.innerHTML = baseOpt; basic.innerHTML = baseOpt;
 
-        function updateHeaderDatasetSelector() {
-            const headerSelector = document.getElementById('datasetSelectorHeader');
-            const datasetSelect = document.getElementById('datasetSelect');
-            
-            // 기본 설정의 데이터셋 셀렉트와 동기화
-            headerSelector.innerHTML = datasetSelect.innerHTML;
-            headerSelector.value = datasetSelect.value;
-        }
+            datasets.forEach(d => {
+                const opt1 = document.createElement('option');
+                opt1.value = d.id; opt1.textContent = d.name;
+                header.appendChild(opt1);
 
-        function loadProjectDatasets(projectId) {
-            return loadProjectDatasetsFromStorage(projectId);
-        }
-
-        // 로컬스토리지에서 프로젝트 데이터셋 로드
-        function loadProjectDatasetsFromStorage(projectId) {
-            const datasetSelect = document.getElementById('datasetSelect');
-            const headerDatasetSelect = document.getElementById('datasetSelectorHeader');
-            
-            datasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
-            headerDatasetSelect.innerHTML = '<option value="">데이터셋을 선택하세요</option>';
-            
-            if (!projectId) {
-                return;
-            }
-            
-            try {
-                const savedDatasets = localStorage.getItem(`datasets_${projectId}`);
-                if (savedDatasets) {
-                    const datasets = JSON.parse(savedDatasets);
-                    
-                    datasets.forEach(dataset => {
-                        // 기본 설정 데이터셋 셀렉터
-                        const option1 = document.createElement('option');
-                        option1.value = dataset.name;
-                        option1.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
-                        datasetSelect.appendChild(option1);
-                        
-                        // 헤더 데이터셋 셀렉터
-                        const option2 = document.createElement('option');
-                        option2.value = dataset.name;
-                        option2.textContent = `${dataset.name} (${dataset.imageCount || 0}개 이미지)`;
-                        headerDatasetSelect.appendChild(option2);
-                    });
-                    
-                    return datasets;
-                }
-            } catch (e) {
-                console.error('데이터셋 로드 실패:', e);
-            }
-            
-            return [];
-        }
-
-        // 슬라이더와 입력 필드 동기화 함수
-        function syncSliderAndInput(sliderId, inputId, callback) {
-            const slider = document.getElementById(sliderId);
-            const input = document.getElementById(inputId);
-            
-            slider.addEventListener('input', function() {
-                input.value = this.value;
-                if (callback) callback();
+                const opt2 = document.createElement('option');
+                opt2.value = d.id; opt2.textContent = d.name;
+                basic.appendChild(opt2);
             });
-            
-            input.addEventListener('input', function() {
-                slider.value = this.value;
-                if (callback) callback();
-            });
+
+            header.style.display = 'inline-block';
+            header.value = selectedDatasetId || '';
+            basic.value = selectedDatasetId || '';
         }
 
-        // URL 파라미터 관리 함수들
-        function getURLParameter(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        function setURLParameter(name, value) {
-            const url = new URL(window.location);
-            if (value) {
-                url.searchParams.set(name, value);
-            } else {
-                url.searchParams.delete(name);
-            }
-            window.history.pushState({}, '', url);
-        }
-
-        function initializeFromURL() {
-            loadProjects();
-            
-            const projectId = getURLParameter('project');
-            const datasetName = getURLParameter('datasetName');
-            const modelType = getURLParameter('type');
-            
-            if (projectId) {
-                selectedProjectId = projectId;
-                
-                document.getElementById('projectSelector').value = projectId;
-                document.getElementById('trainingProjectSelect').value = projectId;
-                
-                const project = projects.find(p => p.id === projectId);
-                if (project) {
-                    // 데이터셋 로드
-                    loadProjectDatasetsFromStorage(projectId);
-                    
-                    // *** 헤더 데이터셋 셀렉터 표시 ***
-                    const headerDatasetSelect = document.getElementById('datasetSelectorHeader');
-                    headerDatasetSelect.style.display = 'inline-block';
-                    
-                    if (datasetName) {
-                        setTimeout(() => {
-                            const datasetSelect = document.getElementById('datasetSelect');
-                            const headerSelect = document.getElementById('datasetSelectorHeader');
-                            
-                            const option = Array.from(datasetSelect.options).find(opt => 
-                                opt.textContent.includes(datasetName)
-                            );
-                            
-                            if (option) {
-                                datasetSelect.value = option.value;
-                                headerSelect.value = option.value; // 헤더도 동기화
-                                updateDetailedBreadcrumb(project.name, datasetName, modelType);
-                            }
-                        }, 100);
-                    } else {
-                        // 데이터셋 없을 때 기본 브레드크럼
-                        updateBreadcrumb(project.name, modelType);
-                    }
-                    
-                    if (modelType) {
-                        updateBackboneOptions(modelType);
-                    }
-                }
-            }
-        }
-
-        function updateBreadcrumb(projectName, modelType) {
-            const breadcrumb = document.getElementById('breadcrumbNav');
-            
-            const typeText = modelType ? `(${getTypeLabel(modelType)})` : '';
-            
-            breadcrumb.innerHTML = `
-                <a href="/dashboard" class="breadcrumb-item">대시보드</a>
-                <span class="breadcrumb-separator">/</span>
-                <a href="/ui/projects" class="breadcrumb-item">프로젝트(${projectName})</a>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item active">모델 학습${typeText}</span>
+        /** =========================
+         *  백본 도움말/옵션 (type에 맞춰)
+         *  ========================= */
+        function applyBackboneByType(modelType) {
+            const sel = document.getElementById('backboneSelect');
+            const tip = sel.parentElement.querySelector('.help-icon .tooltip');
+            if (modelType === 'anomaly' || !modelType) {
+                sel.innerHTML = `
+            <option value="wideresnet50">Wide ResNet-50</option>
+            <option value="resnet18">ResNet-18</option>
+            <option value="resnet50">ResNet-50</option>
+            <option value="efficientnet_b0">EfficientNet-B0</option>
             `;
-        }
-
-        function updateDetailedBreadcrumb(projectName, datasetName, modelType) {
-            const breadcrumb = document.getElementById('breadcrumbNav');
-            
-            const typeText = modelType ? ` (${getTypeLabel(modelType)})` : '';
-            
-            breadcrumb.innerHTML = `
-                <a href="/dashboard" class="breadcrumb-item">대시보드</a>
-                <span class="breadcrumb-separator">/</span>
-                <a href="/ui/projects" class="breadcrumb-item">프로젝트(${projectName})</a>
-                <span class="breadcrumb-separator">/</span>
-                <a href="/ui/datasets?project=${selectedProjectId}" class="breadcrumb-item">데이터셋(${datasetName})</a>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item active">모델 학습${typeText}</span>
+                tip.innerHTML = `
+            이미지에서 특징을 추출하는 사전 훈련된 모델입니다.<br>
+            • Wide ResNet-50: 가장 좋은 성능 (권장)<br>
+            • ResNet-18: 빠른 속도, 가벼운 모델<br>
+            • ResNet-50: 높은 정확도, 더 무거운 모델<br>
+            • EfficientNet-B0: 메모리 효율적
             `;
-        }
-
-        function getTypeLabel(type) {
-            const typeLabels = {
-                'anomaly': 'Anomaly Detection',
-                'classification': 'Classification',
-                'segmentation': 'Segmentation',
-                'detection': 'Object Detection'
-            };
-            return typeLabels[type] || type;
-        }
-
-        function updateBackboneOptions(modelType) {
-            const backboneSelect = document.getElementById('backboneSelect');
-            const helpIcon = backboneSelect.parentElement.querySelector('.help-icon .tooltip');
-            
-            if (modelType === 'anomaly') {
-                backboneSelect.innerHTML = `
-                    <option value="wideresnet50">Wide ResNet-50</option>
-                    <option value="resnet18">ResNet-18</option>
-                    <option value="resnet50">ResNet-50</option>
-                    <option value="efficientnet_b0">EfficientNet-B0</option>
-                `;
-                
-                helpIcon.innerHTML = `
-                    이미지에서 특징을 추출하는 사전 훈련된 모델입니다.<br>
-                    • Wide ResNet-50: 가장 좋은 성능 (권장)<br>
-                    • ResNet-18: 빠른 속도, 가벼운 모델<br>
-                    • ResNet-50: 높은 정확도, 더 무거운 모델<br>
-                    • EfficientNet-B0: 메모리 효율적
-                `;
             } else if (modelType === 'classification') {
-                backboneSelect.innerHTML = `
-                    <option value="resnet50">ResNet-50 (추가 예정)</option>
-                `;
-                
-                helpIcon.innerHTML = `
-                    분류 모델의 백본은 곧 추가됩니다.<br>
-                    다양한 분류 모델을 지원할 예정입니다.
-                `;
+                sel.innerHTML = `<option value="resnet50">ResNet-50 (추가 예정)</option>`;
+                tip.innerHTML = `분류 백본은 곧 추가됩니다.`;
             } else if (modelType === 'segmentation') {
-                backboneSelect.innerHTML = `
-                    <option value="unet">U-Net (추가 예정)</option>
-                `;
-                
-                helpIcon.innerHTML = `
-                    세그멘테이션 모델의 백본은 곧 추가됩니다.<br>
-                    다양한 세그멘테이션 모델을 지원할 예정입니다.
-                `;
+                sel.innerHTML = `<option value="unet">U-Net (추가 예정)</option>`;
+                tip.innerHTML = `세그멘테이션 백본은 곧 추가됩니다.`;
             } else if (modelType === 'detection') {
-                backboneSelect.innerHTML = `
-                    <option value="yolo">YOLO (추가 예정)</option>
-                `;
-                
-                helpIcon.innerHTML = `
-                    객체 검출 모델의 백본은 곧 추가됩니다.<br>
-                    다양한 검출 모델을 지원할 예정입니다.
-                `;
+                sel.innerHTML = `<option value="yolo">YOLO (추가 예정)</option>`;
+                tip.innerHTML = `객체 검출 백본은 곧 추가됩니다.`;
             }
         }
 
-        // 브레드크럼 업데이트 함수
-        function updateBreadcrumb(projectName) {
-            const projectSeparator = document.getElementById('projectSeparator');
-            const projectBreadcrumb = document.getElementById('selectedProjectBreadcrumb');
-            
-            if (projectName) {
-                projectSeparator.style.display = 'inline';
-                projectBreadcrumb.style.display = 'inline';
-                projectBreadcrumb.textContent = projectName;
+        /** =========================
+         *  URL → 화면 초기화
+         *  ========================= */
+        async function initializeFromURL() {
+            // 1) URL 파라미터 파싱
+            const projectParam = getURLParam('project');
+            const datasetIdParam = getURLParam('dataset');
+            const datasetNameParam = getURLParam('datasetName');
+            let modelType = getURLParam('type'); // anomaly/classification/segmentation/detection
+
+            // 2) 프로젝트 목록
+            projects = await fetchProjects();
+
+            // project 선택 복원(있으면)
+            if (projectParam && projects.some(p => String(p.id) === String(projectParam))) {
+                selectedProjectId = projectParam;
             } else {
-                projectSeparator.style.display = 'none';
-                projectBreadcrumb.style.display = 'none';
+                selectedProjectId = ''; // 비선택
             }
-        }
+            fillProjectSelectors();
 
-        // 데이터 분할 비율 업데이트
-        function updateDataSplitRatios() {
-            const trainRatio = parseFloat(document.getElementById('trainRatioInput').value);
-            const valRatio = parseFloat(document.getElementById('valRatioInput').value);
-            const testRatio = Math.max(0, 1.0 - trainRatio - valRatio);
-            
-            // 비율 검증 및 조정
-            if (trainRatio + valRatio > 1.0) {
-                const adjustedValRatio = 1.0 - trainRatio;
-                document.getElementById('valRatioSlider').value = adjustedValRatio;
-                document.getElementById('valRatioInput').value = adjustedValRatio;
-            }
-            
-            // 퍼센티지 표시 업데이트
-            document.getElementById('trainPercentage').textContent = (trainRatio * 100).toFixed(0) + '%';
-            document.getElementById('valPercentage').textContent = (parseFloat(document.getElementById('valRatioInput').value) * 100).toFixed(0) + '%';
-            document.getElementById('testPercentage').textContent = (testRatio * 100).toFixed(0) + '%';
-        }
+            // 3) 프로젝트가 있으면 해당 데이터셋 로드
+            if (selectedProjectId) {
+                datasets = await fetchProjectDatasets(selectedProjectId);
 
-        // 이벤트 리스너 추가
-        document.addEventListener('DOMContentLoaded', function() {
-            // 슬라이더 동기화
-            syncSliderAndInput('learningRateSlider', 'learningRateInput');
-            syncSliderAndInput('samplingRatioSlider', 'samplingRatioInput');
-            syncSliderAndInput('trainRatioSlider', 'trainRatioInput', updateDataSplitRatios);
-            syncSliderAndInput('valRatioSlider', 'valRatioInput', updateDataSplitRatios);
-            
-            updateDataSplitRatios();
-            
-            // 먼저 프로젝트 로드하고 URL 초기화
-            loadProjects();
-            initializeFromURL();
-            
-            // 학습 상태 확인
-            refreshTraining();
-            
-            // 프로젝트 선택 이벤트 리스너
-            document.getElementById('trainingProjectSelect').addEventListener('change', function() {
-                onTrainingProjectSelect(this.value);
-                document.getElementById('projectSelector').value = this.value;
-            });
-            
-            document.getElementById('projectSelector').addEventListener('change', function() {
-                onTrainingProjectSelect(this.value);
-                document.getElementById('trainingProjectSelect').value = this.value;
-            });
-
-            document.getElementById('datasetSelectorHeader').addEventListener('change', function() {
-                const datasetSelect = document.getElementById('datasetSelect');
-                datasetSelect.value = this.value;
-                
-                // 동일한 이벤트 발생 (위의 로직이 실행됨)
-                const changeEvent = new Event('change');
-                datasetSelect.dispatchEvent(changeEvent);
-            });
-
-            document.getElementById('datasetSelect').addEventListener('change', function() {
-                document.getElementById('datasetSelectorHeader').value = this.value;
-                
-                const selectedDatasetName = this.options[this.selectedIndex].text;
-                const datasetName = selectedDatasetName.split(' (')[0];
-                const selectedProject = projects.find(p => p.id === selectedProjectId);
-                
-                if (this.value && selectedProjectId && selectedProject) {
-                    // *** 데이터셋의 실제 타입을 가져오기 ***
-                    let modelType = null;
-                    
-                    // localStorage에서 해당 데이터셋 찾기
-                    const savedData = localStorage.getItem(`datasets_${selectedProjectId}`);
-                    if (savedData) {
-                        try {
-                            const datasets = JSON.parse(savedData);
-                            const selectedDataset = datasets.find(d => d.name === datasetName);
-                            if (selectedDataset) {
-                                // 데이터셋 타입을 모델 타입으로 변환
-                                const typeMapping = {
-                                    'classify': 'classification',
-                                    'obd': 'detection',
-                                    'seg': 'segmentation',
-                                    'anomal': 'anomaly'
-                                };
-                                modelType = typeMapping[selectedDataset.type] || 'anomaly';
-                                
-                                // URL 파라미터 업데이트
-                                setURLParameter('type', modelType);
-                                
-                                // 백본 옵션 업데이트
-                                updateBackboneOptions(modelType);
-                            }
-                        } catch (e) {
-                            console.error('데이터셋 타입 가져오기 실패:', e);
-                        }
-                    }
-                    
-                    updateDetailedBreadcrumb(selectedProject.name, datasetName, modelType);
-                } else if (selectedProjectId && selectedProject) {
-                    // 데이터셋 선택 해제 시
-                    const url = new URL(window.location);
-                    url.searchParams.delete('type');
-                    window.history.pushState({}, '', url);
-                    
-                    const breadcrumb = document.getElementById('breadcrumbNav');
-                    breadcrumb.innerHTML = `
-                        <a href="/dashboard" class="breadcrumb-item">대시보드</a>
-                        <span class="breadcrumb-separator">/</span>
-                        <a href="/ui/projects" class="breadcrumb-item">프로젝트(${selectedProject.name})</a>
-                        <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-item active">모델 학습</span>
-                    `;
+                // dataset 해석: id 우선, 없으면 name
+                let found = null;
+                if (datasetIdParam) {
+                    found = datasets.find(d => String(d.id) === String(datasetIdParam));
+                } else if (datasetNameParam) {
+                    found = datasets.find(d => d.name === datasetNameParam);
                 }
-            });
-                
-            // 프로젝트 선택 이벤트
-            document.getElementById('trainingProjectSelect').addEventListener('change', function() {
-                onTrainingProjectSelect(this.value);
-                document.getElementById('projectSelector').value = this.value;
-            });
-            
-            document.getElementById('projectSelector').addEventListener('change', function() {
-                onTrainingProjectSelect(this.value);
-                document.getElementById('trainingProjectSelect').value = this.value;
-            });
-        });      
+                selectedDatasetId = found ? found.id : '';
 
-        function refreshTraining() {
-            console.log('학습 상태 새로고침');
-            
-            // 서버에서 현재 학습 상태 가져오기
-            fetch('/training/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.is_training_active) {
-                        // 학습 진행 중인 경우
-                        document.getElementById('startBtn').style.display = 'none';
-                        document.getElementById('stopBtn').style.display = 'inline-flex';
-                        document.getElementById('statusBadge').textContent = '학습중';
-                        document.getElementById('statusBadge').className = 'status-badge status-training';
-                        document.getElementById('trainingInfo').style.display = 'block';
-                        document.getElementById('idleState').style.display = 'none';
-                        
-                        // 진행률 업데이트
-                        const progress = data.current_training?.progress || 0;
-                        document.getElementById('progressFill').style.width = progress + '%';
-                        document.getElementById('progressText').textContent = progress + '%';
-                    } else {
-                        // 학습 대기 상태
-                        document.getElementById('startBtn').style.display = 'inline-flex';
-                        document.getElementById('stopBtn').style.display = 'none';
-                        document.getElementById('statusBadge').textContent = '대기중';
-                        document.getElementById('statusBadge').className = 'status-badge status-idle';
-                        document.getElementById('trainingInfo').style.display = 'none';
-                        document.getElementById('idleState').style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('학습 상태 새로고침 실패:', error);
-                });
+                // type이 없으면 데이터셋의 type -> modelType 매핑 시도
+                if (!modelType && found && found.type) {
+                    modelType = dsTypeToModelType[found.type] || 'anomaly';
+                    setURLParam('type', modelType);
+                }
+
+                fillDatasetSelectors();
+            } else {
+                datasets = [];
+                fillDatasetSelectors();
+            }
+
+            // 4) 헤더/기본설정 셀렉터 값 동기화
+            document.getElementById('projectSelector').value = selectedProjectId || '';
+            document.getElementById('trainingProjectSelect').value = selectedProjectId || '';
+            document.getElementById('datasetSelectorHeader').value = selectedDatasetId || '';
+            document.getElementById('datasetSelect').value = selectedDatasetId || '';
+
+            // 5) 브레드크럼 & 백본 도움말
+            const projectName = (projects.find(p => p.id === selectedProjectId) || {}).name || '';
+            const datasetName = (datasets.find(d => d.id === selectedDatasetId) || {}).name || datasetNameParam || '';
+            renderBreadcrumb(projectName, datasetName, modelType);
+            applyBackboneByType(modelType);
+
+            // 6) 기본 설정 내 값 사전 채우기(데이터셋명 표기용)
+            //    서버의 /training/start는 dataset_name 이름을 받으니 id→이름 변환해서 넣게 함
+            //    (startTraining()에서 읽습니다)
         }
 
+        /** =========================
+         *  이벤트
+         *  ========================= */
+        function wireEvents() {
+            // 프로젝트 변경(헤더/기본설정 동일 동작)
+            const onProjectChange = async (projectId) => {
+                selectedProjectId = projectId || '';
+                setURLParam('project', selectedProjectId || null);
+
+                // 프로젝트 변경 시 데이터셋 초기화
+                selectedDatasetId = '';
+                setURLParam('dataset', null);
+                setURLParam('datasetName', null);
+
+                if (selectedProjectId) {
+                    datasets = await fetchProjectDatasets(selectedProjectId);
+                } else {
+                    datasets = [];
+                }
+                fillDatasetSelectors();
+
+                const projectName = (projects.find(p => p.id === selectedProjectId) || {}).name || '';
+                renderBreadcrumb(projectName, '', getURLParam('type') || 'anomaly');
+            };
+
+            document.getElementById('projectSelector').addEventListener('change', e => {
+                document.getElementById('trainingProjectSelect').value = e.target.value;
+                onProjectChange(e.target.value);
+            });
+            document.getElementById('trainingProjectSelect').addEventListener('change', e => {
+                document.getElementById('projectSelector').value = e.target.value;
+                onProjectChange(e.target.value);
+            });
+
+            // 데이터셋 변경(헤더/기본설정 양방향 동기화)
+            const onDatasetChange = (datasetId) => {
+                selectedDatasetId = datasetId || '';
+                const ds = datasets.find(d => d.id === selectedDatasetId);
+                const projectName = (projects.find(p => p.id === selectedProjectId) || {}).name || '';
+                const datasetName = ds ? ds.name : '';
+                setURLParam('dataset', selectedDatasetId || null);
+                setURLParam('datasetName', datasetName || null);
+
+                // type 자동 결정(데이터셋 실제 type 사용)
+                if (ds && ds.type) {
+                    const modelType = dsTypeToModelType[ds.type] || 'anomaly';
+                    setURLParam('type', modelType);
+                    applyBackboneByType(modelType);
+                    renderBreadcrumb(projectName, datasetName, modelType);
+                } else {
+                    renderBreadcrumb(projectName, datasetName, getURLParam('type'));
+                }
+            };
+
+            document.getElementById('datasetSelectorHeader').addEventListener('change', e => {
+                document.getElementById('datasetSelect').value = e.target.value;
+                onDatasetChange(e.target.value);
+            });
+            document.getElementById('datasetSelect').addEventListener('change', e => {
+                document.getElementById('datasetSelectorHeader').value = e.target.value;
+                onDatasetChange(e.target.value);
+            });
+
+            // 공용 sync 유틸
+            function sync(sid, iid, cb) {
+                const s = document.getElementById(sid);
+                const i = document.getElementById(iid);
+                if (!s || !i) return;
+
+                // 슬라이더는 즉시 반영 + 콜백
+                s.addEventListener('input', () => {
+                    i.value = s.value;
+                    cb && cb('slider');
+                });
+
+                // 숫자 인풋은 타이핑 허용 → 유효할 때/엔터/블러에 커밋
+                let t = null;
+                const tryCommit = () => cb && cb('input');
+                i.addEventListener('input', () => {
+                    s.value = i.value;
+                    if (t) clearTimeout(t);
+                    t = setTimeout(() => {
+                        const min = parseInt(i.min || '0', 10);
+                        const max = parseInt(i.max || '100', 10);
+                        const v = parseInt(i.value, 10);
+                        if (!Number.isNaN(v) && v >= min && v <= max) tryCommit();
+                    }, 250);
+                });
+                i.addEventListener('change', tryCommit);
+                i.addEventListener('blur', tryCommit);
+                i.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); i.blur(); tryCommit(); } });
+            }
+
+            // ========= [여기부터] 분할 상수/유틸을 최상단에 배치 (TDZ 방지) =========
+            const TR_MIN = 50, TR_MAX = 90;
+            const VR_MIN = 10, VR_MAX = 40;
+            const TE_MIN = 0, TE_MAX = 40;
+
+            const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+            function setTriple(baseId, v) {
+                const s = document.getElementById(baseId + 'Slider');
+                const i = document.getElementById(baseId + 'Input');
+                const label = document.getElementById(baseId.replace('Ratio', '') + 'Percentage');
+                if (s) s.value = String(v);
+                if (i) i.value = String(v);
+                if (label) label.textContent = `${v}%`;
+            }
+
+            // S = 100 - test 내부에서 train/val 페어를 경계에 맞게 보정
+            function adjustPairToBounds(S, tr, vr) {
+                if (tr + vr !== S) vr = S - tr;
+                if (vr < VR_MIN) { vr = VR_MIN; tr = S - vr; }
+                if (vr > VR_MAX) { vr = VR_MAX; tr = S - vr; }
+                if (tr < TR_MIN) { tr = TR_MIN; vr = S - tr; }
+                if (tr > TR_MAX) { tr = TR_MAX; vr = S - tr; }
+                tr = clamp(tr, TR_MIN, TR_MAX);
+                vr = clamp(S - tr, VR_MIN, VR_MAX);
+                tr = S - vr;
+                return { tr, vr };
+            }
+
+            function onTrainChange(src) {
+                const te = clamp(parseInt(document.getElementById('testRatioInput').value || '0', 10), TE_MIN, TE_MAX);
+                const S = 100 - te;
+                const trRaw = parseInt(document.getElementById(src === 'input' ? 'trainRatioInput' : 'trainRatioSlider').value || '0', 10);
+                let tr = clamp(trRaw, TR_MIN, TR_MAX);
+                let vr = S - tr;
+                ({ tr, vr } = adjustPairToBounds(S, tr, vr));
+                setTriple('trainRatio', tr);
+                setTriple('valRatio', vr);
+                setTriple('testRatio', te);
+            }
+
+            function onValChange(src) {
+                const te = clamp(parseInt(document.getElementById('testRatioInput').value || '0', 10), TE_MIN, TE_MAX);
+                const S = 100 - te;
+                const vrRaw = parseInt(document.getElementById(src === 'input' ? 'valRatioInput' : 'valRatioSlider').value || '0', 10);
+                let vr = clamp(vrRaw, VR_MIN, VR_MAX);
+                let tr = S - vr;
+                ({ tr, vr } = adjustPairToBounds(S, tr, vr));
+                setTriple('trainRatio', tr);
+                setTriple('valRatio', vr);
+                setTriple('testRatio', te);
+            }
+
+            function onTestChange(src) {
+                const teRaw = parseInt(document.getElementById(src === 'input' ? 'testRatioInput' : 'testRatioSlider').value || '0', 10);
+                const te = clamp(teRaw, TE_MIN, TE_MAX);
+                const S = 100 - te;
+
+                let currTr = clamp(parseInt(document.getElementById('trainRatioInput').value || '0', 10), TR_MIN, TR_MAX);
+                let currVr = clamp(parseInt(document.getElementById('valRatioInput').value || '0', 10), VR_MIN, VR_MAX);
+                let sumTV = currTr + currVr;
+                if (sumTV < 60) { currTr = 50; currVr = 10; sumTV = 60; }
+
+                const r = currTr / sumTV;
+                const rawTrain = r * S;
+                let tr = Number.isInteger(rawTrain) ? rawTrain : Math.ceil(rawTrain);
+                let vr = S - tr;
+
+                ({ tr, vr } = adjustPairToBounds(S, tr, vr));
+                setTriple('trainRatio', tr);
+                setTriple('valRatio', vr);
+                setTriple('testRatio', te);
+            }
+            // ========= [여기까지] TDZ 방지 재배치 완료 =========
+
+            // 학습률/샘플링 동기화 (한 번만 바인딩)
+            sync('learningRateSlider', 'learningRateInput');
+            sync('samplingRatioSlider', 'samplingRatioInput');
+
+            // 분할 비율 바인딩 (한 번만 바인딩)
+            sync('trainRatioSlider', 'trainRatioInput', onTrainChange);
+            sync('valRatioSlider', 'valRatioInput', onValChange);
+            sync('testRatioSlider', 'testRatioInput', onTestChange);
+
+            // 초기 정리 (현재 값 기준으로 일관화, 한 번만 호출)
+            onTestChange('input');
+        }
+
+        /** =========================
+         *  학습 매니저 (기존 코드 사용 + 인스턴스 생성)
+         *  ========================= */
+        class TrainingManager {
+            constructor() { this.progressInterval = null; this.isTraining = false; }
+            async startTraining(config) {
+                const res = await fetch('/training/start', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.isTraining = true;
+                    document.getElementById('startBtn').style.display = 'none';
+                    document.getElementById('stopBtn').style.display = 'inline-flex';
+                    document.getElementById('statusBadge').textContent = '학습중';
+                    document.getElementById('statusBadge').className = 'status-badge status-training';
+                    document.getElementById('trainingInfo').style.display = 'block';
+                    document.getElementById('idleState').style.display = 'none';
+                    document.getElementById('currentModel').textContent = `${config.backbone} (${data.dataset_type || '-'})`;
+                    document.getElementById('currentDataset').textContent = config.dataset_name || '-';
+                    document.getElementById('startTime').textContent = new Date().toLocaleString();
+                    this.progressInterval = setInterval(refreshTraining, 3000);
+                    return { success: true, message: data.message };
+                }
+                throw new Error(data.error || '학습 시작 실패');
+            }
+            async stopTraining() {
+                const res = await fetch('/training/stop', { method: 'POST' });
+                const data = await res.json();
+                clearInterval(this.progressInterval); this.progressInterval = null; this.isTraining = false;
+                document.getElementById('startBtn').style.display = 'inline-flex';
+                document.getElementById('stopBtn').style.display = 'none';
+                document.getElementById('statusBadge').textContent = '대기중';
+                document.getElementById('statusBadge').className = 'status-badge status-idle';
+                document.getElementById('trainingInfo').style.display = 'none';
+                document.getElementById('idleState').style.display = 'block';
+                return data;
+            }
+        }
+        const trainingManager = new TrainingManager();
+
+        /** =========================
+         *  진행률 폴링(기존 엔드포인트 그대로)
+         *  ========================= */
+        async function refreshTraining() {
+            try {
+                const res = await fetch('/training/status');
+                const data = await res.json();
+                if (data.is_training_active) {
+                    document.getElementById('startBtn').style.display = 'none';
+                    document.getElementById('stopBtn').style.display = 'inline-flex';
+                    document.getElementById('statusBadge').textContent = '학습중';
+                    document.getElementById('statusBadge').className = 'status-badge status-training';
+                    document.getElementById('trainingInfo').style.display = 'block';
+                    document.getElementById('idleState').style.display = 'none';
+                    const p = (data.current_training?.progress || 0);
+                    document.getElementById('progressFill').style.width = p + '%';
+                    document.getElementById('progressText').textContent = p + '%';
+                } else {
+                    document.getElementById('startBtn').style.display = 'inline-flex';
+                    document.getElementById('stopBtn').style.display = 'none';
+                    document.getElementById('statusBadge').textContent = '대기중';
+                    document.getElementById('statusBadge').className = 'status-badge status-idle';
+                    document.getElementById('trainingInfo').style.display = 'none';
+                    document.getElementById('idleState').style.display = 'block';
+                }
+            } catch (e) { console.error('학습 상태 새로고침 실패:', e); }
+        }
+
+        /** =========================
+         *  시작/중단 버튼 핸들러
+         *  ========================= */
         async function startTraining() {
-            const datasetName = document.getElementById('datasetSelect').value;
-            if (!datasetName) {
+            if (!selectedDatasetId) {
                 alert('데이터셋을 선택해주세요.');
                 return;
             }
-            
+            const ds = datasets.find(d => d.id === selectedDatasetId);
+            const datasetName = ds?.name;
+            if (!datasetName) { alert('데이터셋 이름을 확인할 수 없습니다.'); return; }
+
+            const trainPct = parseInt(document.getElementById('trainRatioInput').value, 10) || 0;
+            const valPct = parseInt(document.getElementById('valRatioInput').value, 10) || 0;
+            const testPct = parseInt(document.getElementById('testRatioInput').value, 10) || 0;
+
+            const imageSize = parseInt(document.getElementById('imageSize').value, 10);
+            let resizeSize = parseInt(document.getElementById('resizeSize').value, 10);
+
+            // 검증/보정: 이미지 크기는 리사이즈보다 클 수 없음
+            if (Number.isFinite(imageSize) && Number.isFinite(resizeSize) && imageSize > resizeSize) {
+                resizeSize = imageSize;
+                // 필요 시 안내: alert('리사이즈(전처리)를 이미지 크기 이상으로 자동 보정했습니다.');
+            }
+
+            const epochs = parseInt(document.getElementById('epochs').value, 10) || 10;
+            const batchSize = parseInt(document.getElementById('batchSize').value, 10) || 32;
+            const learningRate = parseFloat(document.getElementById('learningRateInput').value) || 0.001;
+
             const config = {
                 dataset_name: datasetName,
                 backbone: document.getElementById('backboneSelect').value,
                 layers: ["layer2", "layer3"],
                 anomaly_scorer_num_nn: 7,
                 sampling_ratio: parseFloat(document.getElementById('samplingRatioInput').value),
-                resize_size: 320,
-                image_size: parseInt(document.getElementById('imageSize').value),
-                gpu_id: 0
+                resize_size: resizeSize,
+                image_size: imageSize,
+                gpu_id: 0,
+
+                // 추가 전송
+                training_type: document.getElementById('trainingType').value,
+                learning_rate: learningRate,
+                batch_size: batchSize,
+                epochs: epochs,
+                train_ratio: trainPct / 100,
+                val_ratio: valPct / 100,
+                test_ratio: testPct / 100
             };
-            
-            console.log('학습 시작:', config);
-            
-            const result = await trainingManager.startTraining(config);
-            
-            if (result.success) {
-                alert(result.message);
-            } else {
-                alert('학습 시작 실패: ' + result.error);
-            }
+
+            try {
+                const r = await trainingManager.startTraining(config);
+                alert(r.message || '학습을 시작했습니다.');
+            } catch (e) { alert('학습 시작 실패: ' + e.message); }
         }
 
         async function stopTraining() {
-            if (confirm('학습을 중단하시겠습니까?')) {
-                const result = await trainingManager.stopTraining();
-                
-                if (result.success) {
-                    alert(result.message);
-                } else {
-                    alert('학습 중단 실패: ' + result.error);
-                }
-            }
+            if (!confirm('학습을 중단하시겠습니까?')) return;
+            try {
+                const r = await trainingManager.stopTraining();
+                alert(r.message || '학습이 중단되었습니다.');
+            } catch (e) { alert('학습 중단 실패: ' + e.message); }
         }
 
-        // 페이지 로드 시 학습 상태 확인
-        document.addEventListener('DOMContentLoaded', function() {
-            // 슬라이더 동기화
-            syncSliderAndInput('learningRateSlider', 'learningRateInput');
-            syncSliderAndInput('samplingRatioSlider', 'samplingRatioInput');
-            syncSliderAndInput('trainRatioSlider', 'trainRatioInput', updateDataSplitRatios);
-            syncSliderAndInput('valRatioSlider', 'valRatioInput', updateDataSplitRatios);
-            
-            updateDataSplitRatios();
-            
-            // 먼저 프로젝트 로드하고 URL 초기화
-            loadProjects();
-            initializeFromURL();
-            
-            // 학습 상태 확인
-            refreshTraining();
-            
-            // 프로젝트 선택 이벤트 리스너
-            document.getElementById('trainingProjectSelect').addEventListener('change', function() {
-                onTrainingProjectSelect(this.value);
-                document.getElementById('projectSelector').value = this.value;
-            });
-            
-            document.getElementById('projectSelector').addEventListener('change', function() {
-                onTrainingProjectSelect(this.value);
-                document.getElementById('trainingProjectSelect').value = this.value;
-            });
+        /** =========================
+         *  부트스트랩
+         *  ========================= */
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initializeFromURL();
+                wireEvents();
+                refreshTraining();
+            } catch (e) {
+                console.error(e);
+            }
         });
     </script>
 </body>
+
 </html>
