@@ -8,8 +8,9 @@ function Pick-File([string]$title, [string]$filter) {
     $dlg.Filter = $filter
     $dlg.Multiselect = $false
     $dlg.RestoreDirectory = $true
+    $dlg.InitialDirectory = [Environment]::GetFolderPath('MyVideos')
     if ($dlg.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        throw "선택이 취소되었습니다: $title"
+        throw "Selection cancelled: $title"
     }
     return $dlg.FileName
 }
@@ -34,13 +35,13 @@ $ffprobe = Find-Exe 'ffprobe.exe' @(
 )
 
 if (-not $ffmpeg -or -not $ffprobe) {
-    [System.Windows.Forms.MessageBox]::Show("ffmpeg / ffprobe를 찾지 못했습니다.", "오류") | Out-Null
+    [System.Windows.Forms.MessageBox]::Show('ffmpeg / ffprobe not found.', 'Error') | Out-Null
     exit 1
 }
 
 try {
-    $video = Pick-File '원본 영상 선택 (39~49초에 문구 적용)' 'Video Files|*.mp4;*.mov;*.mkv;*.avi|All Files|*.*'
-    $image = Pick-File '문구 이미지 선택 (PNG/JPG/WebP)' 'Image Files|*.png;*.jpg;*.jpeg;*.webp;*.bmp|All Files|*.*'
+    $video = Pick-File 'Select source video' 'Video Files|*.mp4;*.mov;*.mkv;*.avi|All Files|*.*'
+    $image = Pick-File 'Select title image for 39-49 sec' 'Image Files|*.png;*.jpg;*.jpeg;*.webp;*.bmp|All Files|*.*'
 
     $durationText = (& $ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 $video).Trim()
     $duration = [double]::Parse($durationText, [System.Globalization.CultureInfo]::InvariantCulture)
@@ -48,26 +49,22 @@ try {
     $dir = Split-Path $video -Parent
     $base = [System.IO.Path]::GetFileNameWithoutExtension($video)
     $out = Join-Path $dir ($base + '_WELCOME_39_49.mp4')
-
     if (Test-Path $out) { Remove-Item $out -Force }
 
-    # 39~49초 / 자연스럽게 등장-유지-퇴장
-    # 투명 PNG 권장. 검은 배경 이미지는 colorkey로 자동 제거.
     $fc = @"
 [1:v]scale=-2:520,format=rgba,colorkey=0x000000:0.18:0.06,fade=t=in:st=39:d=0.85:alpha=1,fade=t=out:st=48.15:d=0.85:alpha=1[title];
 [0:v][title]overlay=x=(W-w)/2:y='if(lt(t,39.85),1040-12*(t-39)/0.85,if(gt(t,48.15),1028+10*(t-48.15)/0.85,1028))':enable='between(t,39,49)':format=auto[v]
 "@
 
-    Write-Host "[INFO] Video   : $video"
-    Write-Host "[INFO] Image   : $image"
-    Write-Host "[INFO] Output  : $out"
-    Write-Host "[INFO] Duration: $duration"
+    Write-Host "Video  : $video"
+    Write-Host "Image  : $image"
+    Write-Host "Output : $out"
 
     & $ffmpeg -y `
         -i $video `
         -loop 1 -framerate 60 -i $image `
         -filter_complex $fc `
-        -map '[v]' -map 0:a? `
+        -map '[v]' -map '0:a?' `
         -t $duration `
         -c:v libx264 -preset fast -crf 14 `
         -profile:v high -level:v 5.2 -pix_fmt yuv420p `
@@ -75,19 +72,14 @@ try {
         -movflags +faststart `
         $out
 
-    if ($LASTEXITCODE -ne 0) { throw 'FFmpeg 렌더링 실패' }
+    if ($LASTEXITCODE -ne 0) { throw "FFmpeg failed with code $LASTEXITCODE" }
 
-    & $ffprobe -v error `
-        -show_entries stream=codec_name,width,height,avg_frame_rate `
-        -show_entries format=duration,size `
-        -of default=nw=1 `
-        $out
-
+    & $ffprobe -v error -show_entries stream=codec_name,width,height,avg_frame_rate -show_entries format=duration,size -of default=nw=1 $out
     Start-Process explorer.exe -ArgumentList "/select,`"$out`""
-    [System.Windows.Forms.MessageBox]::Show("완료되었습니다.`n`n$out", "완료") | Out-Null
+    [System.Windows.Forms.MessageBox]::Show("Completed.`n`n$out", 'Done') | Out-Null
 }
 catch {
-    Write-Error $_
-    [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, "실행 중 오류") | Out-Null
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Error') | Out-Null
     exit 1
 }
